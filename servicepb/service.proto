@@ -1,0 +1,26 @@
+syntax = "proto3";
+package puppet.service;
+
+import "datapb/data.proto";
+
+option go_package = "github.com/puppetlabs/go-servicesdk/servicepb";
+
+message MetadataResponse {
+  puppet.datapb.Data typeset = 1;
+  puppet.datapb.Data definitions = 2;
+}
+
+message InvokeRequest {
+  puppet.datapb.Data identifier = 1;
+  string method = 2;
+  puppet.datapb.Data arguments = 3;
+}
+
+message MetadataRequest {
+}
+
+service DefinitionService {
+  rpc Invoke (InvokeRequest) returns (puppet.datapb.Data) {};
+
+  rpc Metadata (MetadataRequest) returns (MetadataResponse) {};
+}
