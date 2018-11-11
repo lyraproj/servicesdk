@@ -1,6 +1,8 @@
-package service
+package serviceapi
 
-import "github.com/puppetlabs/go-evaluator/eval"
+import (
+	"github.com/puppetlabs/go-evaluator/eval"
+)
 
 type Metadata interface {
 	Metadata() (typeSet eval.TypeSet, definitions []Definition)

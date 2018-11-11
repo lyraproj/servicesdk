@@ -3,43 +3,9 @@ package service
 import (
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/types"
+	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"io"
 )
-
-// Identifier TypedName namespaces. Used by a service to identify what the type of entity to look for.
-
-// Interface denotes an entity that must have an "interface" property that appoints
-// an object type which in turn contains a declaration of the methods that the interface
-// implements.
-const Interface = eval.Namespace(`interface`)
-
-// Activity denotes an entity that can participate in a workflow. The entity must
-// declare input and output parameters. An activity of type "action" may also be an interface
-// in which case it must have an "interface" property
-const Activity = eval.Namespace(`activity`)
-
-// ServiceId TypedName namespaces. Used by the Loader to determine the right type
-// of RPC mechanism to use when communicating with the service.
-
-// Plugin denotes a service that is a Hashicorp go-plugin
-const Plugin = eval.Namespace(`plugin`)
-
-// RESTFul denotes a service that is a RESTFul http or https service.
-const RESTFul = eval.Namespace(`RESTFul`)
-
-type Definition interface {
-	eval.Value
-
-	// Identifier returns a TypedName that uniquely identifies the activity within the service.
-	Identifier() eval.TypedName
-
-	// ServiceId is the identifier of the service
-	ServiceId() eval.TypedName
-
-	// Properties is an ordered map of properties of this definition. Will be of type
-	// Hash[Pattern[/\A[a-z][A-Za-z]+\z/],RichData]
-	Properties() eval.OrderedMap
-}
 
 var Definition_Type eval.Type
 
@@ -52,23 +18,25 @@ func init() {
     }
   }`,
 
-	func(ctx eval.Context, args []eval.Value) eval.Value {
-		identity := args[0].(eval.TypedName)
-		service_id := args[1].(eval.TypedName)
-		properties := args[2].(eval.OrderedMap)
-		return NewDefinition(identity, service_id, properties)
-	},
+		func(ctx eval.Context, args []eval.Value) eval.Value {
+			identity := args[0].(eval.TypedName)
+			service_id := args[1].(eval.TypedName)
+			properties := args[2].(eval.OrderedMap)
+			return newDefinition(identity, service_id, properties)
+		},
 
-	func(ctx eval.Context, args []eval.Value) eval.Value {
-		h := args[0].(*types.HashValue)
-		identity := h.Get5(`identity`, eval.UNDEF).(eval.TypedName)
-		service_id := h.Get5(`serviceId`, eval.UNDEF).(eval.TypedName)
-		properties := h.Get5(`properties`, eval.EMPTY_MAP).(eval.OrderedMap)
-		return NewDefinition(identity, service_id, properties)
-	})
+		func(ctx eval.Context, args []eval.Value) eval.Value {
+			h := args[0].(*types.HashValue)
+			identity := h.Get5(`identity`, eval.UNDEF).(eval.TypedName)
+			service_id := h.Get5(`serviceId`, eval.UNDEF).(eval.TypedName)
+			properties := h.Get5(`properties`, eval.EMPTY_MAP).(eval.OrderedMap)
+			return newDefinition(identity, service_id, properties)
+		})
+
+	serviceapi.NewDefinition = newDefinition
 }
 
-func NewDefinition(identity, serviceId eval.TypedName, properties eval.OrderedMap) Definition {
+func newDefinition(identity, serviceId eval.TypedName, properties eval.OrderedMap) serviceapi.Definition {
 	return &definition{identity, serviceId, properties}
 }
 

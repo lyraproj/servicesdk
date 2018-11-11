@@ -11,7 +11,7 @@ message MetadataResponse {
 }
 
 message InvokeRequest {
-  puppet.datapb.Data identifier = 1;
+  string identifier = 1;
   string method = 2;
   puppet.datapb.Data arguments = 3;
 }
