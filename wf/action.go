@@ -7,17 +7,17 @@ import (
 
 type action struct {
 	activity
-	crd wfapi.CRD
+	api interface{}
 }
 
-func NewAction(name string, when wfapi.Condition, input, output []eval.Parameter, crd wfapi.CRD) wfapi.Action {
-	return &action{activity{name, when, input, output}, crd}
+func NewAction(name string, when wfapi.Condition, input, output []eval.Parameter, api interface{}) wfapi.Action {
+	return &action{activity{name, when, input, output}, api}
 }
 
 func (a *action) Label() string {
 	return `action ` + a.name
 }
 
-func (a *action) Interface() wfapi.CRD {
-	return a.crd
+func (a *action) Interface() interface{} {
+	return a.api
 }

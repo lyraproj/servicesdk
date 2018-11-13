@@ -92,9 +92,9 @@ func ExampleServer_Metadata_definitions() {
 			b.Name(`Test`)
 			b.Resource(func(w wfapi.ResourceBuilder) {
 				w.Name(`X`)
-				w.Input(`a`, `String`)
-				w.Input(`b`, `String`)
-				w.State(&MyRes{Name:`Bob`, Phone:`12345`})
+				w.Input(w.Parameter(`a`, `String`))
+				w.Input(w.Parameter(`b`, `String`))
+				w.StateFunc(func(eval.OrderedMap) (interface{}, error) { return &MyRes{Name:`Bob`, Phone:`12345`}, nil })
 			})
 		}))
 
@@ -136,10 +136,7 @@ func ExampleServer_Metadata_definitions() {
 	//               'name' => 'b',
 	//               'type' => String
 	//             )],
-	//           'state' => My::Service::MyRes(
-	//             'name' => 'Bob',
-	//             'phone' => '12345'
-	//           ),
+	//           'state' => 'My::Service::GetX',
 	//           'style' => 'resource'
 	//         }
 	//       )],
@@ -202,18 +199,5 @@ func ExampleServer_Metadata_api() {
 	//     }
 	//   }
 	// }]
-	// Service::Definition(
-	//   'identifier' => TypedName(
-	//     'namespace' => 'activity',
-	//     'name' => 'Identity'
-	//   ),
-	//   'serviceId' => TypedName(
-	//     'namespace' => 'service',
-	//     'name' => 'My::Service'
-	//   ),
-	//   'properties' => {
-	//     'interface' => 'My::Service::Identity'
-	//   }
-	// )
 	//
 }

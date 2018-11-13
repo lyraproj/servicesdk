@@ -7,10 +7,10 @@ import (
 
 type resource struct {
 	activity
-	state eval.PuppetObject
+	state wfapi.StateRetriever
 }
 
-func NewResource(name string, when wfapi.Condition, input, output []eval.Parameter, state  eval.PuppetObject) wfapi.Resource {
+func NewResource(name string, when wfapi.Condition, input, output []eval.Parameter, state  wfapi.StateRetriever) wfapi.Resource {
 	return &resource{activity{name, when, input, output}, state}
 }
 
@@ -18,6 +18,6 @@ func (r *resource) Label() string {
 	return `resource ` + r.name
 }
 
-func (r *resource) State() eval.PuppetObject {
+func (r *resource) State() wfapi.StateRetriever {
 	return r.state
 }

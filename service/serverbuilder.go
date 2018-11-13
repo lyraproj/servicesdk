@@ -18,6 +18,7 @@ type ServerBuilder struct {
 	handlerFor map[string]reflect.Value
 	activities map[string]serviceapi.Definition
 	callables  map[string]reflect.Value
+	callableObjects []eval.PuppetObject
 }
 
 func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
@@ -25,6 +26,7 @@ func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
 		ctx:        ctx,
 		serviceId:  assertTypeName(serviceName),
 		callables:  make(map[string]reflect.Value),
+		callableObjects: make([]eval.PuppetObject, 0),
 		handlerFor: make(map[string]reflect.Value),
 		activities: make(map[string]serviceapi.Definition),
 		types:      make(map[string]eval.Type)}
@@ -41,9 +43,13 @@ func assertTypeName(name string) string {
 // actual receiver the calls.
 func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 	name = assertTypeName(name)
-	rv := reflect.ValueOf(callable)
-	ds.registerType(name, ds.ctx.Reflector().ObjectTypeFromReflect(ds.serviceId+`::`+name, nil, rv.Type()))
-	ds.registerCallable(name, rv)
+	if po, ok := callable.(eval.PuppetObject); ok {
+		ds.callableObjects = append(ds.callableObjects, po)
+	} else {
+		rv := reflect.ValueOf(callable)
+		ds.registerType(name, ds.ctx.Reflector().ObjectTypeFromReflect(ds.serviceId+`::`+name, nil, rv.Type()))
+		ds.registerCallable(name, rv)
+	}
 }
 
 // RegisterHandler registers a callable struct as an invokable capable of handling a state. The
@@ -133,11 +139,13 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(serviceId, activity.(wfapi.Workflow).Activities())))
 	case wfapi.Resource:
 		style = `resource`
-		props = append(props, types.WrapHashEntry2(`state`, activity.(wfapi.Resource).State()))
+		sb := activity.(wfapi.Resource).State()
+		retrieverName := `Get` + name
+		ds.RegisterAPI(retrieverName, sb)
+		props = append(props, types.WrapHashEntry2(`state`, types.WrapString(ds.types[retrieverName].Name())))
 	case wfapi.Action:
 		style = `action`
-		crd := activity.(wfapi.Action).Interface()
-		ds.RegisterAPI(name, crd)
+		ds.RegisterAPI(name, activity.(wfapi.Action).Interface())
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
 	case wfapi.Stateless:
 		style = `stateless`
@@ -183,12 +191,22 @@ func (ds *ServerBuilder) Server() *Server {
 
 	// Create invokable definitions for callables
 	for k := range ds.callables {
-		props := make([]*types.HashEntry, 0, 2)
-		props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(ds.types[k].Name())))
 		if state, ok := ds.handlerFor[k]; ok {
+			props := make([]*types.HashEntry, 0, 2)
+			props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(ds.types[k].Name())))
 			props = append(props, types.WrapHashEntry2(`handlerFor`, eval.WrapReflected(ds.ctx, state).PType()))
+			defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
+	}
+
+	for _, po := range ds.callableObjects {
+		k := po.(issue.Named).Name()
+		if state, ok := ds.handlerFor[k]; ok {
+			props := make([]*types.HashEntry, 0, 2)
+			props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(po.PType().Name())))
+			props = append(props, types.WrapHashEntry2(`handlerFor`, eval.WrapReflected(ds.ctx, state).PType()))
+			defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
+		}
 	}
 
 	// Add registered activities
@@ -199,9 +217,13 @@ func (ds *ServerBuilder) Server() *Server {
 		return defs[i].(serviceapi.Definition).Identifier().Name() < defs[j].(serviceapi.Definition).Identifier().Name()
 	})
 
-	callables := make(map[string]eval.Value, len(ds.callables))
+	callables := make(map[string]eval.Value, len(ds.callables) + len(ds.callableObjects))
 	for k, v := range ds.callables {
 		callables[k] = eval.WrapReflected(ds.ctx, v)
+	}
+
+	for _, po := range ds.callableObjects {
+		callables[po.(issue.Named).Name()] = po
 	}
 
 	return &Server{context: ds.ctx, typeSet: ts, metadata: types.WrapValues(defs), callables: callables}
