@@ -23,7 +23,7 @@ func (*testAPI) Second(args eval.OrderedMap) string {
 
 func ExampleServer_Invoke() {
 	eval.Puppet.Do(func(c eval.Context) {
-		api := `TheApi`
+		api := `My::TheApi`
 		sb := service.NewServerBuilder(c, `My::Service`)
 		sb.RegisterAPI(api, &testAPI{})
 		s := sb.Server()
@@ -44,10 +44,10 @@ type MyRes struct {
 
 func ExampleServer_Metadata_typeSet() {
 	eval.Puppet.Do(func(c eval.Context) {
-		api := `TheApi`
+		api := `My::TheApi`
 		sb := service.NewServerBuilder(c, `My::Service`)
 		sb.RegisterAPI(api, &testAPI{})
-		sb.RegisterTypes(&MyRes{})
+		sb.RegisterTypes("My", &MyRes{})
 
 		s := sb.Server()
 		ts, _ := s.Metadata()
@@ -60,7 +60,7 @@ func ExampleServer_Metadata_typeSet() {
 	//   pcore_uri => 'http://puppet.com/2016.1/pcore',
 	//   pcore_version => '1.0.0',
 	//   name_authority => 'http://puppet.com/2016.1/runtime',
-	//   name => 'My::Service',
+	//   name => 'My',
 	//   version => '0.1.0',
 	//   types => {
 	//     MyRes => {
@@ -87,14 +87,14 @@ func ExampleServer_Metadata_definitions() {
 	eval.Puppet.Do(func(c eval.Context) {
 		sb := service.NewServerBuilder(c, `My::Service`)
 
-		sb.RegisterTypes(&MyRes{})
+		sb.RegisterTypes("My", &MyRes{})
 		sb.RegisterActivity(wfapi.NewWorkflow(c, func(b wfapi.WorkflowBuilder) {
-			b.Name(`Test`)
+			b.Name(`My::Test`)
 			b.Resource(func(w wfapi.ResourceBuilder) {
 				w.Name(`X`)
 				w.Input(w.Parameter(`a`, `String`))
 				w.Input(w.Parameter(`b`, `String`))
-				w.StateFunc(func(eval.OrderedMap) (interface{}, error) { return &MyRes{Name:`Bob`, Phone:`12345`}, nil })
+				w.StateStruct(&MyRes{Name:`Bob`, Phone:`12345`})
 			})
 		}))
 
@@ -109,7 +109,7 @@ func ExampleServer_Metadata_definitions() {
 	// Service::Definition(
 	//   'identifier' => TypedName(
 	//     'namespace' => 'activity',
-	//     'name' => 'Test'
+	//     'name' => 'My::Test'
 	//   ),
 	//   'serviceId' => TypedName(
 	//     'namespace' => 'service',
@@ -120,7 +120,7 @@ func ExampleServer_Metadata_definitions() {
 	//       Service::Definition(
 	//         'identifier' => TypedName(
 	//           'namespace' => 'activity',
-	//           'name' => 'X'
+	//           'name' => 'My::Test::X'
 	//         ),
 	//         'serviceId' => TypedName(
 	//           'namespace' => 'service',
@@ -136,7 +136,6 @@ func ExampleServer_Metadata_definitions() {
 	//               'name' => 'b',
 	//               'type' => String
 	//             )],
-	//           'state' => 'My::Service::GetX',
 	//           'style' => 'resource'
 	//         }
 	//       )],
@@ -169,7 +168,7 @@ func ExampleServer_Metadata_api() {
 	eval.Puppet.Do(func(c eval.Context) {
 		sb := service.NewServerBuilder(c, `My::Service`)
 
-		sb.RegisterAPI(`Identity`, &MyIdentityService{map[string]eval.URI{}, map[eval.URI]string{}})
+		sb.RegisterAPI(`My::Identity`, &MyIdentityService{map[string]eval.URI{}, map[eval.URI]string{}})
 
 		s := sb.Server()
 		ts, defs := s.Metadata()
@@ -184,7 +183,7 @@ func ExampleServer_Metadata_api() {
 	//   pcore_uri => 'http://puppet.com/2016.1/pcore',
 	//   pcore_version => '1.0.0',
 	//   name_authority => 'http://puppet.com/2016.1/runtime',
-	//   name => 'My::Service',
+	//   name => 'My',
 	//   version => '0.1.0',
 	//   types => {
 	//     Identity => {

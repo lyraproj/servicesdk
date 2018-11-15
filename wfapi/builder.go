@@ -17,6 +17,7 @@ type Builder interface {
 	Input(...eval.Parameter)
 	Output(...eval.Parameter)
 	GetInput() []eval.Parameter
+	GetName() string
 	Parameter(name, typeName string) eval.Parameter
 }
 
@@ -42,8 +43,8 @@ type IteratorBuilder interface {
 
 type ResourceBuilder interface {
 	Builder
-	State(retriever StateRetriever)
-	StateFunc(stateFunc func(eval.OrderedMap) (interface{}, error))
+	State(state State)
+	StateStruct(state interface{})
 }
 
 type StatelessBuilder interface {

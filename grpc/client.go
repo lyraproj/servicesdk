@@ -52,3 +52,12 @@ func (c *Client) Metadata() (typeSet eval.TypeSet, definitions []serviceapi.Defi
 	ds.EachWithIndex(func(d eval.Value, i int) { definitions[i] = d.(serviceapi.Definition) })
 	return
 }
+
+func (c *Client) State(identifier string, input eval.OrderedMap) eval.PuppetObject {
+	rq := servicepb.StateRequest{Identifier: identifier, Input: ToDataPB(input)}
+	rr, err := c.client.State(c.ctx, &rq)
+	if err != nil {
+		panic(err)
+	}
+	return FromDataPB(c.ctx, rr).(eval.PuppetObject)
+}
