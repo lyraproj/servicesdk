@@ -7,9 +7,9 @@ import (
 
 type iterator struct {
 	activity
-	style wfapi.IterationStyle
-	producer wfapi.Activity
-	over []eval.Parameter
+	style     wfapi.IterationStyle
+	producer  wfapi.Activity
+	over      []eval.Parameter
 	variables []eval.Parameter
 }
 

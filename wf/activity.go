@@ -6,9 +6,9 @@ import (
 )
 
 type activity struct {
-	name string
-	when wfapi.Condition
-	input []eval.Parameter
+	name   string
+	when   wfapi.Condition
+	input  []eval.Parameter
 	output []eval.Parameter
 }
 
@@ -27,4 +27,3 @@ func (a *activity) Input() []eval.Parameter {
 func (a *activity) Output() []eval.Parameter {
 	return a.output
 }
-

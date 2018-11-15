@@ -94,7 +94,7 @@ func ExampleServer_Metadata_definitions() {
 				w.Name(`X`)
 				w.Input(w.Parameter(`a`, `String`))
 				w.Input(w.Parameter(`b`, `String`))
-				w.StateStruct(&MyRes{Name:`Bob`, Phone:`12345`})
+				w.StateStruct(&MyRes{Name: `Bob`, Phone: `12345`})
 			})
 		}))
 

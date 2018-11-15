@@ -38,8 +38,8 @@ func (ik *Server) Invoke(api, name string, arguments ...eval.Value) eval.Value {
 	panic(eval.Error(WF_NO_SUCH_METHOD, issue.H{`api`: api, `method`: name}))
 }
 
-func (m *Server) Metadata() (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
-	ds := make([]serviceapi.Definition, m.metadata.Len())
-	m.metadata.EachWithIndex(func(v eval.Value, i int) { ds[i] = v.(serviceapi.Definition) })
-	return m.typeSet, ds
+func (ik *Server) Metadata() (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
+	ds := make([]serviceapi.Definition, ik.metadata.Len())
+	ik.metadata.EachWithIndex(func(v eval.Value, i int) { ds[i] = v.(serviceapi.Definition) })
+	return ik.typeSet, ds
 }

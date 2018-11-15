@@ -7,7 +7,6 @@ import (
 	"github.com/puppetlabs/go-servicesdk/condition"
 	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"github.com/puppetlabs/go-servicesdk/wfapi"
-	"math"
 	"reflect"
 	"sort"
 	"strings"
@@ -31,27 +30,27 @@ func (s *GoState) State() interface{} {
 }
 
 type ServerBuilder struct {
-	ctx        eval.Context
-	serviceId  string
-	stateConv  wfapi.StateConverter
-	types      map[string]eval.Type
-	handlerFor map[string]reflect.Value
-	activities map[string]serviceapi.Definition
-	callables  map[string]reflect.Value
-	states     map[string]wfapi.State
+	ctx             eval.Context
+	serviceId       string
+	stateConv       wfapi.StateConverter
+	types           map[string]eval.Type
+	handlerFor      map[string]eval.Type
+	activities      map[string]serviceapi.Definition
+	callables       map[string]reflect.Value
+	states          map[string]wfapi.State
 	callableObjects []eval.PuppetObject
 }
 
 func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
 	return &ServerBuilder{
-		ctx:        ctx,
-		serviceId:  assertTypeName(serviceName),
-		callables:  make(map[string]reflect.Value),
+		ctx:             ctx,
+		serviceId:       assertTypeName(serviceName),
+		callables:       make(map[string]reflect.Value),
 		callableObjects: make([]eval.PuppetObject, 0),
-		handlerFor: make(map[string]reflect.Value),
-		activities: make(map[string]serviceapi.Definition),
-		types:      make(map[string]eval.Type),
-    states:     make(map[string]wfapi.State)}
+		handlerFor:      make(map[string]eval.Type),
+		activities:      make(map[string]serviceapi.Definition),
+		types:           make(map[string]eval.Type),
+		states:          make(map[string]wfapi.State)}
 }
 
 func assertTypeName(name string) string {
@@ -94,21 +93,24 @@ func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
 	ds.states[name] = state
 }
 
-// RegisterHandler registers a callable struct as an invokable capable of handling a state. The
-// callable instance given as the argument becomes the actual receiver the calls.
-func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, state interface{}) {
+// RegisterHandler registers a callable struct as an invokable capable of handling a state described using
+// eval.Type. The callable instance given as the argument becomes the actual receiver the calls.
+func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stateType eval.Type) {
 	ds.RegisterAPI(name, callable)
-	ds.handlerFor[name] = reflect.ValueOf(state)
+	ds.types[stateType.Name()] = stateType
+	ds.handlerFor[name] = stateType
 }
 
 // RegisterTypes registers arbitrary Go types to the TypeSet exported by this service.
 //
 // A value is typically a pointer to the zero value of a struct. The name of the generated type for
 // that struct will be the struct name prefixed by the service ID.
-func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) {
-	for _, v := range values {
-		ds.registerReflectedType(namespace, reflect.TypeOf(v))
+func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) []eval.Type {
+	ts := make([]eval.Type, len(values))
+	for i, v := range values {
+		ts[i] = ds.registerReflectedType(namespace, reflect.TypeOf(v))
 	}
+	return ts
 }
 
 func (ds *ServerBuilder) registerReflectedType(namespace string, typ reflect.Type) eval.Type {
@@ -216,43 +218,6 @@ func (ds *ServerBuilder) activitiesAsList(serviceId eval.TypedName, activities [
 	return types.WrapValues(as)
 }
 
-func FindCommonNamespace(v []string) (string, bool) {
-	sv := make([][]string, len(v))
-	mi := int(math.MaxInt32)
-	for i, k := range v {
-		ks := strings.Split(k, `::`)
-		ls := len(ks)
-		if ls < mi {
-			if ls < 2 {
-				return ``, false
-			}
-			mi = ls
-		}
-		sv[i] = ks
-	}
-
-	mi--
-	ns := ``
-	for i := 0; i < mi; i++ {
-		s := ``
-		for _, segs := range sv {
-			if s == `` {
-				s = segs[i]
-				continue
-			}
-			if segs[i] != s {
-				return ns, i > 0
-			}
-		}
-		if i == 0 {
-			ns = s
-		} else {
-			ns = ns + `::` + s
-		}
-	}
-	return ns, true
-}
-
 func CreateTypeSet(ts map[string]eval.Type) eval.TypeSet {
 	result := make(map[string]interface{})
 	for k, t := range ts {
@@ -352,20 +317,20 @@ func (ds *ServerBuilder) Server() *Server {
 
 	// Create invokable definitions for callables
 	for k := range ds.callables {
-		if state, ok := ds.handlerFor[k]; ok {
+		if stateType, ok := ds.handlerFor[k]; ok {
 			props := make([]*types.HashEntry, 0, 2)
 			props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(ds.types[k].Name())))
-			props = append(props, types.WrapHashEntry2(`handlerFor`, eval.WrapReflected(ds.ctx, state).PType()))
+			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 			defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
 		}
 	}
 
 	for _, po := range ds.callableObjects {
 		k := po.(issue.Named).Name()
-		if state, ok := ds.handlerFor[k]; ok {
+		if stateType, ok := ds.handlerFor[k]; ok {
 			props := make([]*types.HashEntry, 0, 2)
 			props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(po.PType().Name())))
-			props = append(props, types.WrapHashEntry2(`handlerFor`, eval.WrapReflected(ds.ctx, state).PType()))
+			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 			defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
 		}
 	}
@@ -378,7 +343,7 @@ func (ds *ServerBuilder) Server() *Server {
 		return defs[i].(serviceapi.Definition).Identifier().Name() < defs[j].(serviceapi.Definition).Identifier().Name()
 	})
 
-	callables := make(map[string]eval.Value, len(ds.callables) + len(ds.callableObjects))
+	callables := make(map[string]eval.Value, len(ds.callables)+len(ds.callableObjects))
 	for k, v := range ds.callables {
 		callables[k] = eval.WrapReflected(ds.ctx, v)
 	}

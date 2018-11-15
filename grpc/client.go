@@ -19,19 +19,19 @@ func (a *Plugin) GRPCServer(*plugin.GRPCBroker, *grpc.Server) error {
 }
 
 func (a *Plugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, clientConn *grpc.ClientConn) (interface{}, error) {
-	return &Client{ctx: ctx.(eval.Context), client: servicepb.NewDefinitionServiceClient(clientConn) }, nil
+	return &Client{ctx: ctx.(eval.Context), client: servicepb.NewDefinitionServiceClient(clientConn)}, nil
 }
 
 type Client struct {
-	ctx eval.Context
+	ctx    eval.Context
 	client servicepb.DefinitionServiceClient
 }
 
 func (c *Client) Invoke(identifier, name string, arguments ...eval.Value) eval.Value {
 	rq := servicepb.InvokeRequest{
 		Identifier: identifier,
-		Method: name,
-		Arguments: ToDataPB(types.WrapValues(arguments)),
+		Method:     name,
+		Arguments:  ToDataPB(types.WrapValues(arguments)),
 	}
 	rr, err := c.client.Invoke(c.ctx, &rq)
 	if err != nil {

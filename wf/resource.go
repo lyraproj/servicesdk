@@ -10,7 +10,7 @@ type resource struct {
 	state wfapi.State
 }
 
-func NewResource(name string, when wfapi.Condition, input, output []eval.Parameter, state  wfapi.State) wfapi.Resource {
+func NewResource(name string, when wfapi.Condition, input, output []eval.Parameter, state wfapi.State) wfapi.Resource {
 	return &resource{activity{name, when, input, output}, state}
 }
 
