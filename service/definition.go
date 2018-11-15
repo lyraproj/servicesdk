@@ -12,32 +12,32 @@ var Definition_Type eval.Type
 func init() {
 	Definition_Type = eval.NewObjectType(`Service::Definition`, `{
     attributes => {
-      identity => TypedName,
+      identifier => TypedName,
       serviceId => TypedName,
       properties => Hash[String,RichData]
     }
   }`,
 
 		func(ctx eval.Context, args []eval.Value) eval.Value {
-			identity := args[0].(eval.TypedName)
+			identifier := args[0].(eval.TypedName)
 			service_id := args[1].(eval.TypedName)
 			properties := args[2].(eval.OrderedMap)
-			return newDefinition(identity, service_id, properties)
+			return newDefinition(identifier, service_id, properties)
 		},
 
 		func(ctx eval.Context, args []eval.Value) eval.Value {
 			h := args[0].(*types.HashValue)
-			identity := h.Get5(`identity`, eval.UNDEF).(eval.TypedName)
+			identifier := h.Get5(`identifier`, eval.UNDEF).(eval.TypedName)
 			service_id := h.Get5(`serviceId`, eval.UNDEF).(eval.TypedName)
 			properties := h.Get5(`properties`, eval.EMPTY_MAP).(eval.OrderedMap)
-			return newDefinition(identity, service_id, properties)
+			return newDefinition(identifier, service_id, properties)
 		})
 
 	serviceapi.NewDefinition = newDefinition
 }
 
-func newDefinition(identity, serviceId eval.TypedName, properties eval.OrderedMap) serviceapi.Definition {
-	return &definition{identity, serviceId, properties}
+func newDefinition(identifier, serviceId eval.TypedName, properties eval.OrderedMap) serviceapi.Definition {
+	return &definition{identifier, serviceId, properties}
 }
 
 type definition struct {
