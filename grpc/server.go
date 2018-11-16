@@ -24,10 +24,13 @@ func NewServer(impl *service.Server) *Server {
 
 func (d *Server) Invoke(c context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
 	err = eval.Puppet.TryWithParent(c, func(ec eval.Context) error {
-		result = ToDataPB(d.impl.Invoke(
+		wrappedArgs := FromDataPB(ec, r.Arguments)
+		arguments := wrappedArgs.(*types.ArrayValue).AppendTo([]eval.Value{})
+		rrr := d.impl.Invoke(
 			r.Identifier,
 			r.Method,
-			FromDataPB(ec, r.Arguments).(eval.OrderedMap)))
+			arguments...)
+		result = ToDataPB(rrr)
 		return nil
 	})
 	return result, err
@@ -57,7 +60,7 @@ func (d *Server) State(c context.Context, r *servicepb.StateRequest) (result *da
 }
 
 func ToDataPB(v eval.Value) *datapb.Data {
-	return proto.ToPBData(serialization.NewToDataConverter(eval.EMPTY_MAP).Convert(v))
+	return proto.ToPBData(serialization.NewToDataConverter(types.SingletonHash2(`rich_data`, types.Boolean_TRUE)).Convert(v))
 }
 
 func FromDataPB(c eval.Context, d *datapb.Data) eval.Value {
