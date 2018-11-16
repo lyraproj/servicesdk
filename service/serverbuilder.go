@@ -29,6 +29,10 @@ func (s *GoState) State() interface{} {
 	return s.v
 }
 
+func GoStateConverter(c eval.Context, state wfapi.State, input eval.OrderedMap) eval.PuppetObject {
+	return eval.WrapReflected(c, state.State().(reflect.Value)).(eval.PuppetObject)
+}
+
 type ServerBuilder struct {
 	ctx             eval.Context
 	serviceId       string
@@ -352,5 +356,5 @@ func (ds *ServerBuilder) Server() *Server {
 		callables[po.(issue.Named).Name()] = po
 	}
 
-	return &Server{context: ds.ctx, typeSet: ts, metadata: types.WrapValues(defs), stateConv: ds.stateConv, callables: callables}
+	return &Server{context: ds.ctx, typeSet: ts, metadata: types.WrapValues(defs), stateConv: ds.stateConv, callables: callables, states: ds.states}
 }

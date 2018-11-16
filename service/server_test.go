@@ -145,6 +145,33 @@ func ExampleServer_Metadata_definitions() {
 	//
 }
 
+func ExampleServer_Metadata_state() {
+	eval.Puppet.Do(func(c eval.Context) {
+		sb := service.NewServerBuilder(c, `My::Service`)
+
+		sb.RegisterTypes("My", &MyRes{})
+		sb.RegisterStateConverter(service.GoStateConverter)
+		sb.RegisterActivity(wfapi.NewWorkflow(c, func(b wfapi.WorkflowBuilder) {
+			b.Name(`My::Test`)
+			b.Resource(func(w wfapi.ResourceBuilder) {
+				w.Name(`X`)
+				w.Input(w.Parameter(`a`, `String`))
+				w.Input(w.Parameter(`b`, `String`))
+				w.StateStruct(&MyRes{Name: `Bob`, Phone: `12345`})
+			})
+		}))
+
+		s := sb.Server()
+		fmt.Println(eval.ToPrettyString(s.State(`My::Test::X`, eval.EMPTY_MAP)))
+	})
+
+	// Output:
+	// My::MyRes(
+	//   'name' => 'Bob',
+	//   'phone' => '12345'
+	// )
+}
+
 type MyIdentityService struct {
 	extToId map[string]eval.URI
 	idToExt map[eval.URI]string
