@@ -46,6 +46,16 @@ func (d *Server) Metadata(c context.Context, r *servicepb.MetadataRequest) (resu
 	return result, err
 }
 
+func (d *Server) State(c context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
+	err = eval.Puppet.TryWithParent(c, func(ec eval.Context) error {
+		result = ToDataPB(d.impl.State(
+			r.Identifier,
+			FromDataPB(ec, r.Input).(eval.OrderedMap)))
+		return nil
+	})
+	return result, err
+}
+
 func ToDataPB(v eval.Value) *datapb.Data {
 	return proto.ToPBData(serialization.NewToDataConverter(eval.EMPTY_MAP).Convert(v))
 }

@@ -19,8 +19,15 @@ message InvokeRequest {
 message MetadataRequest {
 }
 
+message StateRequest {
+  string identifier = 1;
+  puppet.datapb.Data input = 2;
+}
+
 service DefinitionService {
   rpc Invoke (InvokeRequest) returns (puppet.datapb.Data) {};
 
   rpc Metadata (MetadataRequest) returns (MetadataResponse) {};
+
+  rpc State (StateRequest) returns (puppet.datapb.Data) {};
 }
