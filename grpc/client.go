@@ -9,17 +9,26 @@ import (
 	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"google.golang.org/grpc"
+	"net/rpc"
 )
 
-type Plugin struct {
+type PluginClient struct {
 }
 
-func (a *Plugin) GRPCServer(*plugin.GRPCBroker, *grpc.Server) error {
+func (a *PluginClient) Server(*plugin.MuxBroker) (interface{}, error) {
+	return nil, fmt.Errorf(`%T has no server implementation for rpc`, a)
+}
+
+func (a *PluginClient) Client(*plugin.MuxBroker, *rpc.Client) (interface{}, error) {
+	return nil, fmt.Errorf(`%T has no RPC client implementation for rpc`, a)
+}
+
+func (a *PluginClient) GRPCServer(*plugin.GRPCBroker, *grpc.Server) error {
 	return fmt.Errorf(`%T has no server implementation for rpc`, a)
 }
 
-func (a *Plugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, clientConn *grpc.ClientConn) (interface{}, error) {
-	return &Client{ctx: ctx.(eval.Context), client: servicepb.NewDefinitionServiceClient(clientConn)}, nil
+func (a *PluginClient) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, clientConn *grpc.ClientConn) (interface{}, error) {
+	return &Client{ctx: eval.CurrentContext(), client: servicepb.NewDefinitionServiceClient(clientConn)}, nil
 }
 
 type Client struct {

@@ -32,7 +32,23 @@ func (ik *Server) State(name string, input eval.OrderedMap) eval.PuppetObject {
 func (ik *Server) Invoke(api, name string, arguments ...eval.Value) eval.Value {
 	if iv, ok := ik.callables[api]; ok {
 		if m, ok := iv.PType().(eval.TypeWithCallableMembers).Member(name); ok {
-			return m.Call(ik.context, iv, nil, arguments)
+			return func() (result eval.Value) {
+				defer func() {
+					if x := recover(); x != nil {
+						if err, ok := x.(issue.Reported); ok {
+							result = eval.ErrorFromReported(ik.context, err)
+							return
+						}
+						if err, ok := x.(error); ok {
+							result = eval.NewError(ik.context, err.Error(), `undefined`, eval.EVAL_FAILURE, nil, nil)
+							return
+						}
+						panic(x)
+					}
+				}()
+				result = m.Call(ik.context, iv, nil, arguments)
+				return
+			}()
 		}
 	}
 	panic(eval.Error(WF_NO_SUCH_METHOD, issue.H{`api`: api, `method`: name}))

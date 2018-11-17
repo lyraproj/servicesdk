@@ -136,6 +136,13 @@ func ExampleServer_Metadata_definitions() {
 	//               'name' => 'b',
 	//               'type' => String
 	//             )],
+	//           'resource_type' => Object[{
+	//             name => 'My::MyRes',
+	//             attributes => {
+	//               'name' => String,
+	//               'phone' => String
+	//             }
+	//           }],
 	//           'style' => 'resource'
 	//         }
 	//       )],
