@@ -187,7 +187,9 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(serviceId, activity.(wfapi.Workflow).Activities())))
 	case wfapi.Resource:
 		style = `resource`
-		ds.RegisterState(name, activity.(wfapi.Resource).State())
+		state := activity.(wfapi.Resource).State()
+		ds.RegisterState(name, state)
+		props = append(props, types.WrapHashEntry2(`resource_type`, state.Type()))
 	case wfapi.Action:
 		style = `action`
 		ds.RegisterAPI(name, activity.(wfapi.Action).Interface())
