@@ -30,22 +30,23 @@ type CrdResource struct {
 type CrdHandler struct {
 }
 
-func (c *CrdHandler) Create(desiredState interface{}) string {
-	if _, ok := desiredState.(CrdResource); !ok {
-		panic(fmt.Sprintf("desiredState was not an instance of CrdResource, it was %T", desiredState))
-	}
+// The Type of an exported API is reflected which means that the parameter types and return types
+// are reflected too. They should not be of type interface when the type is known (which it should
+// be)
+
+func (c *CrdHandler) Create(desiredState *CrdResource) string {
 	return "anExternalID"
 }
 
-func (c *CrdHandler) Read(externalID string) interface{} {
+func (c *CrdHandler) Read(externalID string) *CrdResource {
 	return &CrdResource{
 		Name: "readie",
 		Age:  12,
 	}
 }
 
-func (c *CrdHandler) Update(externalID string, desiredState interface{}) interface{} {
-	return desiredState.(CrdHandler)
+func (c *CrdHandler) Update(externalID string, desiredState *CrdResource) *CrdResource {
+	return desiredState
 }
 
 func (c *CrdHandler) Delete(externalID string) error {

@@ -3,15 +3,15 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"net/rpc"
-	"os/exec"
-	hclog "github.com/hashicorp/go-hclog"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"google.golang.org/grpc"
+	"net/rpc"
+	"os/exec"
 )
 
 var handshake = plugin.HandshakeConfig{
@@ -80,7 +80,7 @@ func (c *Client) State(identifier string, input eval.OrderedMap) eval.PuppetObje
 }
 
 // Load  ...
-func Load(cmd *exec.Cmd) (serviceapi.Invokable, error) {
+func Load(cmd *exec.Cmd) (serviceapi.Service, error) {
 
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshake,
@@ -104,6 +104,5 @@ func Load(cmd *exec.Cmd) (serviceapi.Invokable, error) {
 		hclog.Default().Error("error dispensing plugin", "plugin", pluginName, "error", err)
 		return nil, err
 	}
-	invokable := raw.(serviceapi.Invokable)
-	return invokable, nil
+	return raw.(serviceapi.Service), nil
 }

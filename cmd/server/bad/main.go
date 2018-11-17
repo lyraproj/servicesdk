@@ -19,16 +19,14 @@ func main() {
 		//what is the correct way to register a handler?
 
 		//option 1:
-		//plugin.go: panic: type/typeset clash
-		evs := sb.RegisterTypes("Foo::Foo3", resource.CrdResource{})
-		sb.RegisterHandler("Foo::Foo3", &resource.CrdHandler{}, evs[0])
-
-		//option 2: uncomment these 2 lines to see the error:
-		//plugin.go: panic: registered types share no common namespace
-		// res := eval.Wrap(c, resource.CrdResource{})
-		// sb.RegisterHandler("Foo::Foo3", &resource.CrdHandler{}, res.PType())
+		// TH: This is the correct way. Types must be registered before an
+		// attempt is made to register a handler for that type unless the
+		// type is previously known to the eval.Context used when creating
+		// the builder
+		evs := sb.RegisterTypes("Foo::CrdResource", resource.CrdResource{})
+		sb.RegisterHandler("Foo::CrdHandler", &resource.CrdHandler{}, evs[0])
 
 		s := sb.Server()
-		grpc.Serve(s)
+		grpc.Serve(c, s)
 	})
 }
