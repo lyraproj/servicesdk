@@ -9,7 +9,7 @@ import (
 	"github.com/puppetlabs/go-evaluator/proto"
 	"github.com/puppetlabs/go-evaluator/serialization"
 	"github.com/puppetlabs/go-evaluator/threadlocal"
-	"github.com/puppetlabs/go-servicesdk/service"
+	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -22,7 +22,7 @@ import (
 
 type GRPCServer struct {
 	ctx eval.Context
-	impl *service.Server
+	impl serviceapi.Service
 }
 
 func (a *GRPCServer) Server(*plugin.MuxBroker) (interface{}, error) {
@@ -99,7 +99,7 @@ func FromDataPB(c eval.Context, d *datapb.Data) eval.Value {
 }
 
 // Serve the supplied Server as a go-plugin
-func Serve(c eval.Context, s *service.Server) {
+func Serve(c eval.Context, s serviceapi.Service) {
 	cfg := &plugin.ServeConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{
