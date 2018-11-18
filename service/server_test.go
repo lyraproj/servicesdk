@@ -6,6 +6,8 @@ import (
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-servicesdk/service"
 	"github.com/puppetlabs/go-servicesdk/wfapi"
+	"os"
+
 	// Initialize pcore
 	_ "github.com/puppetlabs/go-evaluator/pcore"
 	_ "github.com/puppetlabs/go-servicesdk/wf"
@@ -52,7 +54,8 @@ func ExampleServer_Metadata_typeSet() {
 		s := sb.Server()
 		ts, _ := s.Metadata()
 
-		fmt.Println(eval.ToPrettyString(ts))
+		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		fmt.Println()
 	})
 
 	// Output:
@@ -136,13 +139,7 @@ func ExampleServer_Metadata_definitions() {
 	//               'name' => 'b',
 	//               'type' => String
 	//             )],
-	//           'resource_type' => Object[{
-	//             name => 'My::MyRes',
-	//             attributes => {
-	//               'name' => String,
-	//               'phone' => String
-	//             }
-	//           }],
+	//           'resource_type' => My::MyRes,
 	//           'style' => 'resource'
 	//         }
 	//       )],
@@ -206,7 +203,8 @@ func ExampleServer_Metadata_api() {
 
 		s := sb.Server()
 		ts, defs := s.Metadata()
-		fmt.Println(eval.ToPrettyString(ts))
+		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		fmt.Println()
 		for _, def := range defs {
 			fmt.Println(eval.ToPrettyString(def))
 		}
