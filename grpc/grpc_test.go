@@ -109,7 +109,7 @@ func TestRegisterServer_WithHandlerRegistration(t *testing.T) {
 	eval.Puppet.Do(func(c eval.Context) {
 		// the bad/main.go attempts to register a handler in one of two different ways
 		// but fails
-		cmd := exec.Command("/usr/local/go/bin/go", "run", "../cmd/server/bad/main.go")
+		cmd := exec.Command("go", "run", "../cmd/server/bad/main.go")
 		_, err := Load(cmd)
 		require.NoError(t, err)
 	})
@@ -119,14 +119,14 @@ func TestRegisterServer_TwoReturnValues(t *testing.T) {
 	eval.Puppet.Do(func(c eval.Context) {
 		// the bad2/main.go attempts to register an api which returns a tuple (string, string)
 		// but fails
-		cmd := exec.Command("/usr/local/go/bin/go", "run", "../cmd/server/bad2/main.go")
+		cmd := exec.Command("go", "run", "../cmd/server/bad2/main.go")
 		_, err := Load(cmd)
 		require.NoError(t, err)
 	})
 }
 
 func invokable(c eval.Context, t *testing.T) serviceapi.Service {
-	cmd := exec.Command("/usr/local/go/bin/go", "run", "../cmd/server/main.go")
+	cmd := exec.Command("go", "run", "../cmd/server/main.go")
 	server, err := Load(cmd)
 	require.NoError(t, err)
 
