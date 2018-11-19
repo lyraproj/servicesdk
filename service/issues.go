@@ -10,6 +10,7 @@ const (
 	WF_NO_SUCH_STATE       = `WF_NO_SUCH_STATE`
 	WF_NOT_PUPPET_OBJECT   = `WF_NOT_PUPPET_OBJECT`
 	WF_NO_STATE_CONVERTER  = `WF_NO_STATE_CONVERTER`
+	WF_TYPE_NAME_CLASH     = `WF_TYPE_NAME_CLASH`
 )
 
 func init() {
@@ -20,4 +21,5 @@ func init() {
 	issue.Hard(WF_NO_SUCH_STATE, `state '%{name}' not found`)
 	issue.Hard(WF_NO_STATE_CONVERTER, `no state converter has been registered`)
 	issue.Hard(WF_NOT_PUPPET_OBJECT, `expected resource to produce an Object, got '%{actual}'`)
+	issue.Hard(WF_TYPE_NAME_CLASH, `attempt to register '%{go_name}' using both '%{old_name}' and '%{new_name}'`)
 }

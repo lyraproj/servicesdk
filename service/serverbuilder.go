@@ -79,11 +79,15 @@ func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 		rv := reflect.ValueOf(callable)
 		rt := rv.Type()
 		pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
-		if !ok {
+		if ok {
+			if pt.Name() != name {
+				panic(eval.Error(WF_TYPE_NAME_CLASH, issue.H{`go_type`: rt.Name(), `new_type`: name, `old_type`: pt.Name()}))
+			}
+		} else {
 			pt = ds.ctx.Reflector().ObjectTypeFromReflect(name, nil, rt)
 		}
 		if _, ok := ds.types[name]; !ok {
-			ds.registerType(name, pt)
+			ds.RegisterType(pt)
 		}
 		ds.registerCallable(name, rv)
 	}
@@ -93,7 +97,7 @@ func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
 	t := state.Type()
 	if _, ok := ds.types[t.Name()]; !ok {
-		ds.registerType(t.Name(), t)
+		ds.RegisterType(t)
 	}
 	ds.states[name] = state
 }
@@ -160,7 +164,8 @@ func (ds *ServerBuilder) registerCallable(name string, callable reflect.Value) {
 	ds.callables[name] = callable
 }
 
-func (ds *ServerBuilder) registerType(name string, typ eval.Type) {
+func (ds *ServerBuilder) RegisterType(typ eval.Type) {
+	name := typ.Name()
 	if _, found := ds.types[name]; found {
 		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.TYPE, `identifier`: name}))
 	}
