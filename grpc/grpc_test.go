@@ -117,11 +117,11 @@ func TestRegisterServer_WithHandlerRegistration(t *testing.T) {
 
 func TestRegisterServer_TwoReturnValues(t *testing.T) {
 	eval.Puppet.Do(func(c eval.Context) {
-		// the bad2/main.go attempts to register an api which returns a tuple (string, string)
-		// but fails
-		cmd := exec.Command("go", "run", "../cmd/server/bad2/main.go")
-		_, err := Load(cmd)
-		require.NoError(t, err)
+		ik := invokable(c, t)
+		actual := ik.Invoke("Foo::Bar", "hello", types.WrapString("Tibbs"))
+		fmt.Println(eval.ToPrettyString(actual))
+		actualType := fmt.Sprintf("%T", actual)
+		require.NotEqual(t, "*types.errorObj", actualType)
 	})
 }
 

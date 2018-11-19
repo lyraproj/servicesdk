@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"net/rpc"
 	"os/exec"
+	"os"
 )
 
 var handshake = plugin.HandshakeConfig{
@@ -82,12 +83,18 @@ func (c *Client) State(identifier string, input eval.OrderedMap) eval.PuppetObje
 // Load  ...
 func Load(cmd *exec.Cmd) (serviceapi.Service, error) {
 
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Debug,
+		Output:     os.Stdout,
+		JSONFormat: true,
+	})
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{
 			"server": &PluginClient{},
 		},
 		Cmd:              cmd,
+		Logger: logger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 	})
 

@@ -19,6 +19,8 @@ func main() {
 		sb.RegisterAPI("Foo::CrdResource", &resource.CrdResource{})
 		sb.RegisterAPI("Foo::CrdHandler", &resource.CrdHandler{})
 
+		sb.RegisterAPI("Foo::Bar", &resource.Bar{})
+
 		s := sb.Server()
 		grpc.Serve(c, s)
 	})
