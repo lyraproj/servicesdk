@@ -16,9 +16,9 @@ func main() {
 
 		sb := service.NewServerBuilder(c, `Foo`)
 
-		sb.RegisterAPI("Foo::Foo2", &resource.Bar{})
+		sb.RegisterAPI("Foo::Bar", &resource.Bar{})
 
 		s := sb.Server()
-		grpc.Serve(s)
+		grpc.Serve(c, s)
 	})
 }

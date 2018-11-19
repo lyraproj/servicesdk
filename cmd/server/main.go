@@ -15,10 +15,11 @@ func main() {
 	eval.Puppet.Do(func(c eval.Context) {
 
 		sb := service.NewServerBuilder(c, `Foo`)
-		sb.RegisterAPI("Foo::Foo2", &resource.Foo{})
-		sb.RegisterAPI("Foo::Foo3", &resource.CrdHandler{})
+		sb.RegisterAPI("Foo::Foo", &resource.Foo{})
+		sb.RegisterAPI("Foo::CrdResource", &resource.CrdResource{})
+		sb.RegisterAPI("Foo::CrdHandler", &resource.CrdHandler{})
 
 		s := sb.Server()
-		grpc.Serve(s)
+		grpc.Serve(c, s)
 	})
 }
