@@ -11,8 +11,8 @@ import (
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"google.golang.org/grpc"
 	"net/rpc"
-	"os/exec"
 	"os"
+	"os/exec"
 )
 
 var handshake = plugin.HandshakeConfig{
@@ -81,13 +81,14 @@ func (c *Client) State(identifier string, input eval.OrderedMap) eval.PuppetObje
 }
 
 // Load  ...
-func Load(cmd *exec.Cmd) (serviceapi.Service, error) {
-
-	logger := hclog.New(&hclog.LoggerOptions{
-		Level:      hclog.Debug,
-		Output:     os.Stdout,
-		JSONFormat: true,
-	})
+func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
+	if logger == nil {
+		logger = hclog.New(&hclog.LoggerOptions{
+			Level:      hclog.Debug,
+			Output:     os.Stdout,
+			JSONFormat: true,
+		})
+	}
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{

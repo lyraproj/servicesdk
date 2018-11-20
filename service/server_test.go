@@ -3,7 +3,6 @@ package service_test
 import (
 	"fmt"
 	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-servicesdk/service"
 	"github.com/puppetlabs/go-servicesdk/wfapi"
 	"os"
@@ -15,23 +14,24 @@ import (
 
 type testAPI struct{}
 
-func (*testAPI) First(args eval.OrderedMap) string {
+func (*testAPI) First() string {
 	return `first`
 }
 
-func (*testAPI) Second(args eval.OrderedMap) string {
-	return `second ` + args.Get5(`suffix`, types.WrapString(`nothing`)).String()
+func (*testAPI) Second(suffix string) string {
+	return `second ` + suffix
 }
 
 func ExampleServer_Invoke() {
 	eval.Puppet.Do(func(c eval.Context) {
 		api := `My::TheApi`
 		sb := service.NewServerBuilder(c, `My::Service`)
-		sb.RegisterAPI(api, &testAPI{})
-		s := sb.Server()
 
-		fmt.Println(s.Invoke(api, `first`, eval.EMPTY_MAP))
-		fmt.Println(s.Invoke(api, `second`, eval.Wrap(c, map[string]string{`suffix`: `place`})))
+		sb.RegisterAPI(api, &testAPI{})
+
+		s := sb.Server()
+		fmt.Println(s.Invoke(api, `first`))
+		fmt.Println(s.Invoke(api, `second`, eval.Wrap(c, `place`)))
 	})
 
 	// Output:
@@ -46,14 +46,13 @@ type MyRes struct {
 
 func ExampleServer_Metadata_typeSet() {
 	eval.Puppet.Do(func(c eval.Context) {
-		api := `My::TheApi`
 		sb := service.NewServerBuilder(c, `My::Service`)
-		sb.RegisterAPI(api, &testAPI{})
+
+		sb.RegisterAPI(`My::TheApi`, &testAPI{})
 		sb.RegisterTypes("My", &MyRes{})
 
 		s := sb.Server()
 		ts, _ := s.Metadata()
-
 		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
 		fmt.Println()
 	})
@@ -75,10 +74,10 @@ func ExampleServer_Metadata_typeSet() {
 	//     TheApi => {
 	//       functions => {
 	//         'first' => Callable[
-	//           [Hash],
+	//           [0, 0],
 	//           String],
 	//         'second' => Callable[
-	//           [Hash],
+	//           [String],
 	//           String]
 	//       }
 	//     }

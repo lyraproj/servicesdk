@@ -2,6 +2,7 @@ module github.com/puppetlabs/go-servicesdk
 
 require (
 	github.com/golang/protobuf v1.2.0
+	github.com/hashicorp/go-hclog v0.0.0-20180709165350-ff2cf002a8dd
 	github.com/hashicorp/go-plugin v0.0.0-20181030172320-54b6ff97d818
 	github.com/puppetlabs/data-protobuf v0.0.0-20181112120528-77dff819c942
 	github.com/puppetlabs/go-evaluator v0.0.0-20181118152542-cabefbd9f531
