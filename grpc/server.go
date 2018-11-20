@@ -9,6 +9,7 @@ import (
 	"github.com/puppetlabs/go-evaluator/proto"
 	"github.com/puppetlabs/go-evaluator/serialization"
 	"github.com/puppetlabs/go-evaluator/threadlocal"
+	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"golang.org/x/net/context"
@@ -45,7 +46,7 @@ func (a *GRPCServer) GRPCClient(context.Context, *plugin.GRPCBroker, *grpc.Clien
 func (a *GRPCServer) Do(doer func(c eval.Context)) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			if e, ok := x.(error); ok {
+			if e, ok := x.(issue.Reported); ok {
 				err = e
 			} else {
 				panic(x)
