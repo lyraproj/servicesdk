@@ -21,7 +21,7 @@ import (
 )
 
 type GRPCServer struct {
-	ctx eval.Context
+	ctx  eval.Context
 	impl serviceapi.Service
 }
 
@@ -59,7 +59,7 @@ func (a *GRPCServer) Do(doer func(c eval.Context)) (err error) {
 }
 
 func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
-	err = d.Do(func (c eval.Context) {
+	err = d.Do(func(c eval.Context) {
 		wrappedArgs := FromDataPB(c, r.Arguments)
 		arguments := wrappedArgs.(*types.ArrayValue).AppendTo([]eval.Value{})
 		rrr := d.impl.Invoke(
@@ -72,7 +72,7 @@ func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (resu
 }
 
 func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.MetadataRequest) (result *servicepb.MetadataResponse, err error) {
-	err = d.Do(func (c eval.Context) {
+	err = d.Do(func(c eval.Context) {
 		ts, ds := d.impl.Metadata()
 		vs := make([]eval.Value, len(ds))
 		for i, d := range ds {
@@ -84,14 +84,14 @@ func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.MetadataRequest) (
 }
 
 func (d *GRPCServer) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
-	err = d.Do(func (c eval.Context) {
+	err = d.Do(func(c eval.Context) {
 		result = ToDataPB(d.impl.State(r.Identifier, FromDataPB(c, r.Input).(eval.OrderedMap)))
 	})
 	return
 }
 
 func ToDataPB(v eval.Value) *datapb.Data {
-	return proto.ToPBData(serialization.NewToDataConverter(types.SingletonHash2(`rich_data`, types.Boolean_TRUE)).Convert(v))
+	return proto.ToPBData(serialization.NewToDataConverter(eval.EMPTY_MAP).Convert(v))
 }
 
 func FromDataPB(c eval.Context, d *datapb.Data) eval.Value {
@@ -103,7 +103,7 @@ func Serve(c eval.Context, s serviceapi.Service) {
 	cfg := &plugin.ServeConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{
-			"server": &GRPCServer{ctx: c, impl:s},
+			"server": &GRPCServer{ctx: c, impl: s},
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
 		Logger:     hclog.Default(),
