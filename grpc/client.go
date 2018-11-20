@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/types"
@@ -10,7 +11,15 @@ import (
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"google.golang.org/grpc"
 	"net/rpc"
+	"os/exec"
+	"os"
 )
+
+var handshake = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "PLUGIN_MAGIC_COOKIE",
+	MagicCookieValue: "7468697320697320616e20616d617a696e67206d6167696320636f6f6b69652c206e6f6d206e6f6d206e6f6d",
+}
 
 type PluginClient struct {
 }
@@ -69,4 +78,38 @@ func (c *Client) State(identifier string, input eval.OrderedMap) eval.PuppetObje
 		panic(err)
 	}
 	return FromDataPB(c.ctx, rr).(eval.PuppetObject)
+}
+
+// Load  ...
+func Load(cmd *exec.Cmd) (serviceapi.Service, error) {
+
+	logger := hclog.New(&hclog.LoggerOptions{
+		Level:      hclog.Debug,
+		Output:     os.Stdout,
+		JSONFormat: true,
+	})
+	client := plugin.NewClient(&plugin.ClientConfig{
+		HandshakeConfig: handshake,
+		Plugins: map[string]plugin.Plugin{
+			"server": &PluginClient{},
+		},
+		Cmd:              cmd,
+		Logger: logger,
+		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+	})
+
+	grpcClient, err := client.Client()
+	if err != nil {
+		hclog.Default().Error("error creating GRPC client", "error", err)
+		return nil, err
+	}
+
+	// Request the plugin
+	pluginName := "server"
+	raw, err := grpcClient.Dispense(pluginName)
+	if err != nil {
+		hclog.Default().Error("error dispensing plugin", "plugin", pluginName, "error", err)
+		return nil, err
+	}
+	return raw.(serviceapi.Service), nil
 }
