@@ -12,10 +12,12 @@ func LeafName(name string) string {
 
 type Builder interface {
 	Context() eval.Context
+	Build() Activity
 	Name(string)
 	When(string)
 	Input(...eval.Parameter)
 	Output(...eval.Parameter)
+	QualifyName(childName string) string
 	GetInput() []eval.Parameter
 	GetName() string
 	Parameter(name, typeName string) eval.Parameter
@@ -27,6 +29,7 @@ type ChildBuilder interface {
 	Resource(func(ResourceBuilder))
 	Workflow(func(WorkflowBuilder))
 	Stateless(func(StatelessBuilder))
+	AddChild(Builder)
 }
 
 type ActionBuilder interface {

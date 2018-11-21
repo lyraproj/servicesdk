@@ -205,6 +205,13 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 		fc := activity.(wfapi.Stateless).Interface()
 		ds.RegisterAPI(name, fc)
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
+	case wfapi.Iterator:
+		style = `iterator`
+		iter := activity.(wfapi.Iterator)
+		props = append(props, types.WrapHashEntry2(`iteration_style`, types.WrapString(iter.IterationStyle().String())))
+		props = append(props, types.WrapHashEntry2(`over`, paramsAsList(iter.Over())))
+		props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(iter.Variables())))
+		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(serviceId, iter.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
 	return serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, name), serviceId, types.WrapHash(props))

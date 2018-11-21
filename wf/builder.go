@@ -14,31 +14,31 @@ func init() {
 	wfapi.NewAction = func(ctx eval.Context, bf func(wfapi.ActionBuilder)) wfapi.Action {
 		bld := &actionBuilder{builder: builder{ctx: ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
 		bf(bld)
-		return bld.build()
+		return bld.Build().(wfapi.Action)
 	}
 
 	wfapi.NewIterator = func(ctx eval.Context, bf func(wfapi.IteratorBuilder)) wfapi.Iterator {
 		bld := &iteratorBuilder{childBuilder: childBuilder{builder: builder{ctx: ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}}
 		bf(bld)
-		return bld.build()
+		return bld.Build().(wfapi.Iterator)
 	}
 
 	wfapi.NewResource = func(ctx eval.Context, bf func(wfapi.ResourceBuilder)) wfapi.Resource {
 		bld := &resourceBuilder{builder: builder{ctx: ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
 		bf(bld)
-		return bld.build()
+		return bld.Build().(wfapi.Resource)
 	}
 
 	wfapi.NewStateless = func(ctx eval.Context, bf func(wfapi.StatelessBuilder)) wfapi.Stateless {
 		bld := &statelessBuilder{builder: builder{ctx: ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
 		bf(bld)
-		return bld.build()
+		return bld.Build().(wfapi.Stateless)
 	}
 
 	wfapi.NewWorkflow = func(ctx eval.Context, bf func(wfapi.WorkflowBuilder)) wfapi.Workflow {
 		bld := &workflowBuilder{childBuilder: childBuilder{builder: builder{ctx: ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}}
 		bf(bld)
-		return bld.build()
+		return bld.Build().(wfapi.Workflow)
 	}
 }
 
@@ -81,9 +81,13 @@ func (b *builder) GetInput() []eval.Parameter {
 	return b.input
 }
 
+func (b *builder) QualifyName(childName string) string {
+		return b.GetName() + `::` + childName
+}
+
 func (b *builder) GetName() string {
 	if b.parent != nil {
-		return b.parent.GetName() + `::` + b.name
+		return b.parent.QualifyName(b.name)
 	}
 	return b.name
 }
@@ -113,7 +117,7 @@ func (b *actionBuilder) API(c interface{}) {
 	b.api = c
 }
 
-func (b *actionBuilder) build() wfapi.Action {
+func (b *actionBuilder) Build() wfapi.Activity {
 	b.validate()
 	return NewAction(b.GetName(), b.when, b.input, b.output, b.api)
 }
@@ -123,28 +127,32 @@ type childBuilder struct {
 	children []wfapi.Activity
 }
 
-func (b *childBuilder) Action(bld func(b wfapi.ActionBuilder)) {
-	ab := &actionBuilder{builder: builder{parent: b, ctx: b.ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
+func actionChild(b wfapi.ChildBuilder, bld func(b wfapi.ActionBuilder)) {
+	ab := &actionBuilder{builder: builder{parent: b, ctx: b.Context(), when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
 	bld(ab)
-	b.children = append(b.children, ab.build())
+	b.AddChild(ab)
 }
 
-func (b *childBuilder) Resource(bld func(b wfapi.ResourceBuilder)) {
-	ab := &resourceBuilder{builder: builder{parent: b, ctx: b.ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
+func resourceChild(b wfapi.ChildBuilder, bld func(b wfapi.ResourceBuilder)) {
+	ab := &resourceBuilder{builder: builder{parent: b, ctx: b.Context(), when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
 	bld(ab)
-	b.children = append(b.children, ab.build())
+	b.AddChild(ab)
 }
 
-func (b *childBuilder) Workflow(bld func(b wfapi.WorkflowBuilder)) {
-	ab := &workflowBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}}
+func workflowChild(b wfapi.ChildBuilder, bld func(b wfapi.WorkflowBuilder)) {
+	ab := &workflowBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.Context(), when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}}
 	bld(ab)
-	b.children = append(b.children, ab.build())
+	b.AddChild(ab)
 }
 
-func (b *childBuilder) Stateless(bld func(b wfapi.StatelessBuilder)) {
-	ab := &statelessBuilder{builder: builder{parent: b, ctx: b.ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
+func statelessChild(b wfapi.ChildBuilder, bld func(b wfapi.StatelessBuilder)) {
+	ab := &statelessBuilder{builder: builder{parent: b, ctx: b.Context(), when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}
 	bld(ab)
-	b.children = append(b.children, ab.build())
+	b.AddChild(ab)
+}
+
+func (b *childBuilder) 	AddChild(child wfapi.Builder) {
+	b.children = append(b.children, child.Build())
 }
 
 type iteratorBuilder struct {
@@ -152,6 +160,39 @@ type iteratorBuilder struct {
 	style     wfapi.IterationStyle
 	over      []eval.Parameter
 	variables []eval.Parameter
+}
+
+func (b *iteratorBuilder) Action(bld func(b wfapi.ActionBuilder)) {
+	actionChild(b, bld)
+}
+
+func (b *iteratorBuilder) Resource(bld func(b wfapi.ResourceBuilder)) {
+	resourceChild(b, bld)
+}
+
+func (b *iteratorBuilder) Workflow(bld func(b wfapi.WorkflowBuilder)) {
+	workflowChild(b, bld)
+}
+
+func (b *iteratorBuilder) Stateless(bld func(b wfapi.StatelessBuilder)) {
+	statelessChild(b, bld)
+}
+
+func (b *iteratorBuilder) GetName() string {
+	if b.name == `` {
+		if len(b.children) != 1 {
+			panic(`ouch`)
+		}
+		return b.children[0].Name()
+	}
+	return b.parent.QualifyName(b.name)
+}
+
+func (b *iteratorBuilder) QualifyName(childName string) string {
+	if b.parent == nil {
+		return childName
+	}
+	return b.parent.QualifyName(childName)
 }
 
 func (b *iteratorBuilder) Style(style wfapi.IterationStyle) {
@@ -174,7 +215,7 @@ func (b *iteratorBuilder) Variables(variables ...eval.Parameter) {
 	}
 }
 
-func (b *iteratorBuilder) build() wfapi.Iterator {
+func (b *iteratorBuilder) Build() wfapi.Activity {
 	b.validate()
 	return NewIterator(b.GetName(), b.when, b.input, b.output, b.style, b.children[0], b.over, b.variables)
 }
@@ -183,10 +224,6 @@ func (b *iteratorBuilder) validate() {
 	if len(b.children) != 1 {
 		panic(eval.Error(wfapi.WF_ITERATOR_NOT_ONE_ACTIVITY, issue.NO_ARGS))
 	}
-	if b.name == `` {
-		b.name = b.children[0].Name()
-	}
-	b.builder.validate()
 }
 
 type resourceBuilder struct {
@@ -194,7 +231,7 @@ type resourceBuilder struct {
 	state wfapi.State
 }
 
-func (b *resourceBuilder) build() wfapi.Resource {
+func (b *resourceBuilder) Build() wfapi.Activity {
 	b.validate()
 	return NewResource(b.GetName(), b.when, b.input, b.output, b.state)
 }
@@ -219,15 +256,31 @@ type workflowBuilder struct {
 	childBuilder
 }
 
-func (b *workflowBuilder) build() wfapi.Workflow {
+func (b *workflowBuilder) Build() wfapi.Activity {
 	b.validate()
 	return NewWorkflow(b.GetName(), b.when, b.input, b.output, b.children)
+}
+
+func (b *workflowBuilder) Action(bld func(b wfapi.ActionBuilder)) {
+	actionChild(b, bld)
+}
+
+func (b *workflowBuilder) Resource(bld func(b wfapi.ResourceBuilder)) {
+	resourceChild(b, bld)
+}
+
+func (b *workflowBuilder) Workflow(bld func(b wfapi.WorkflowBuilder)) {
+	workflowChild(b, bld)
+}
+
+func (b *workflowBuilder) Stateless(bld func(b wfapi.StatelessBuilder)) {
+	statelessChild(b, bld)
 }
 
 func (b *workflowBuilder) Iterator(bld func(b wfapi.IteratorBuilder)) {
 	ab := &iteratorBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}}
 	bld(ab)
-	b.children = append(b.children, ab.build())
+	b.children = append(b.children, ab.Build())
 }
 
 type statelessBuilder struct {
@@ -235,7 +288,7 @@ type statelessBuilder struct {
 	doer wfapi.Doer
 }
 
-func (b *statelessBuilder) build() wfapi.Stateless {
+func (b *statelessBuilder) Build() wfapi.Activity {
 	b.validate()
 	return NewStateless(b.GetName(), b.when, b.input, b.output, b.doer)
 }
