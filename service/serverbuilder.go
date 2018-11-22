@@ -339,7 +339,7 @@ func (ds *ServerBuilder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props := make([]*types.HashEntry, 0, 2)
 			props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(ds.types[k].Name())))
-			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
+			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 			defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
 		}
 	}
@@ -349,7 +349,7 @@ func (ds *ServerBuilder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props := make([]*types.HashEntry, 0, 2)
 			props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(po.PType().Name())))
-			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
+			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 			defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(serviceapi.NsActivity, k), serviceId, types.WrapHash(props)))
 		}
 	}
