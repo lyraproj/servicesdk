@@ -4,27 +4,6 @@ import (
 	"github.com/puppetlabs/go-evaluator/eval"
 )
 
-// Identifier TypedName namespaces. Used by a service to identify what the type of entity to look for.
-
-// Interface denotes an entity that must have an "interface" property that appoints
-// an object type which in turn contains a declaration of the methods that the interface
-// implements.
-const NsInterface = eval.Namespace(`interface`)
-
-// Activity denotes an entity that can participate in a workflow. The entity must
-// declare input and output parameters. An activity of type "action" may also be an interface
-// in which case it must have an "interface" property
-const NsActivity = eval.Namespace(`activity`)
-
-// ServiceId TypedName namespaces. Used by the Loader to determine the right type
-// of RPC mechanism to use when communicating with the service.
-
-// Plugin denotes a service that is a Hashicorp go-plugin
-const NsService = eval.Namespace(`service`)
-
-// RESTFul denotes a service that is a RESTFul http or https service.
-const RESTFul = eval.Namespace(`RESTFul`)
-
 type Definition interface {
 	eval.Value
 
