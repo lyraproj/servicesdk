@@ -327,6 +327,7 @@ func addName(ks []string, tree map[string]interface{}, t eval.Type) {
 	}
 }
 
+
 func (ds *ServerBuilder) Server() *Server {
 	ts := CreateTypeSet(ds.types)
 	ds.ctx.AddTypes(ts)
@@ -334,24 +335,27 @@ func (ds *ServerBuilder) Server() *Server {
 	serviceId := eval.NewTypedName(eval.NsService, ds.serviceId)
 	defs := make([]eval.Value, 0, len(ds.callables)+len(ds.activities))
 
+	callableStyle := types.WrapString(`callable`)
 	// Create invokable definitions for callables
 	for k := range ds.callables {
 		props := make([]*types.HashEntry, 0, 2)
 		props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(ds.types[k].Name())))
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, k), serviceId, types.WrapHash(props)))
+		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 		}
+		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, k), serviceId, types.WrapHash(props)))
 	}
 
 	for _, po := range ds.callableObjects {
 		k := po.(issue.Named).Name()
 		props := make([]*types.HashEntry, 0, 2)
 		props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(po.PType().Name())))
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, k), serviceId, types.WrapHash(props)))
+		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 		}
+		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, k), serviceId, types.WrapHash(props)))
 	}
 
 	// Add registered activities
