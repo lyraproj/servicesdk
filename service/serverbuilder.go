@@ -152,7 +152,7 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, typ reflect.Typ
 func (ds *ServerBuilder) RegisterActivity(activity wfapi.Activity) {
 	name := activity.Name()
 	if _, found := ds.activities[name]; found {
-		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsActivity, `identifier`: name}))
+		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsDefinition, `identifier`: name}))
 	}
 	ds.activities[name] = ds.createActivityDefinition(eval.NewTypedName(eval.NsService, ds.serviceId), activity)
 }
@@ -214,7 +214,7 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(serviceId, iter.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
-	return serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, name), serviceId, types.WrapHash(props))
+	return serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, name), serviceId, types.WrapHash(props))
 }
 
 func paramsAsList(params []eval.Parameter) eval.List {
@@ -344,7 +344,7 @@ func (ds *ServerBuilder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, k), serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), serviceId, types.WrapHash(props)))
 	}
 
 	for _, po := range ds.callableObjects {
@@ -355,7 +355,7 @@ func (ds *ServerBuilder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsActivity, k), serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), serviceId, types.WrapHash(props)))
 	}
 
 	// Add registered activities

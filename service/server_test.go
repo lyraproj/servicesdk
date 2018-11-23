@@ -110,7 +110,7 @@ func ExampleServer_Metadata_definitions() {
 	// Output:
 	// Service::Definition(
 	//   'identifier' => TypedName(
-	//     'namespace' => 'activity',
+	//     'namespace' => 'definition',
 	//     'name' => 'My::Test'
 	//   ),
 	//   'serviceId' => TypedName(
@@ -121,7 +121,7 @@ func ExampleServer_Metadata_definitions() {
 	//     'activities' => [
 	//       Service::Definition(
 	//         'identifier' => TypedName(
-	//           'namespace' => 'activity',
+	//           'namespace' => 'definition',
 	//           'name' => 'My::Test::X'
 	//         ),
 	//         'serviceId' => TypedName(
@@ -231,7 +231,7 @@ func ExampleServer_Metadata_api() {
 	// }]
 	// Service::Definition(
 	//   'identifier' => TypedName(
-	//     'namespace' => 'activity',
+	//     'namespace' => 'definition',
 	//     'name' => 'My::Identity'
 	//   ),
 	//   'serviceId' => TypedName(

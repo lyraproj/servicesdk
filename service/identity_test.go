@@ -77,6 +77,6 @@ func ExampleServerBuilder_RegisterAPI_identity() {
 	//     }
 	//   }
 	// }]
-	//[Service::Definition('identifier' => TypedName('namespace' => 'activity', 'name' => 'Lyra::Identity'), 'serviceId' => TypedName('namespace' => 'service', 'name' => 'My::Identity::Service'), 'properties' => {'interface' => 'Lyra::Identity', 'style' => 'callable'})]
+	//[Service::Definition('identifier' => TypedName('namespace' => 'definition', 'name' => 'Lyra::Identity'), 'serviceId' => TypedName('namespace' => 'service', 'name' => 'My::Identity::Service'), 'properties' => {'interface' => 'Lyra::Identity', 'style' => 'callable'})]
 
 }
