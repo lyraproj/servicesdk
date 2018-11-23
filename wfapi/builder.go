@@ -32,6 +32,11 @@ type ChildBuilder interface {
 	AddChild(Builder)
 }
 
+type APIBuilder interface {
+	Builder
+	API(interface{})
+}
+
 type ActionBuilder interface {
 	Builder
 	API(interface{})
