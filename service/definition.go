@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/puppetlabs/go-evaluator/eval"
 	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-servicesdk/serviceapi"
@@ -44,6 +45,10 @@ type definition struct {
 	identifier eval.TypedName
 	serviceId  eval.TypedName
 	properties eval.OrderedMap
+}
+
+func (d *definition) Label() string {
+	return fmt.Sprintf(`%s %s`, d.serviceId.String(), d.identifier.String())
 }
 
 func (d *definition) Get(key string) (value eval.Value, ok bool) {

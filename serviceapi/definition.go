@@ -2,10 +2,12 @@ package serviceapi
 
 import (
 	"github.com/puppetlabs/go-evaluator/eval"
+	"github.com/puppetlabs/go-issues/issue"
 )
 
 type Definition interface {
 	eval.Value
+	issue.Labeled
 
 	// Identifier returns a TypedName that uniquely identifies the activity within the service.
 	Identifier() eval.TypedName
