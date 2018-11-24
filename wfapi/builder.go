@@ -57,7 +57,7 @@ type ResourceBuilder interface {
 
 type StatelessBuilder interface {
 	Builder
-	Doer(Doer)
+	Doer(interface{})
 }
 
 type WorkflowBuilder interface {

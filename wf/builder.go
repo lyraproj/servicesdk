@@ -285,7 +285,7 @@ func (b *workflowBuilder) Iterator(bld func(b wfapi.IteratorBuilder)) {
 
 type statelessBuilder struct {
 	builder
-	doer wfapi.Doer
+	doer interface{}
 }
 
 func (b *statelessBuilder) Build() wfapi.Activity {
@@ -293,6 +293,40 @@ func (b *statelessBuilder) Build() wfapi.Activity {
 	return NewStateless(b.GetName(), b.when, b.input, b.output, b.doer)
 }
 
-func (b *statelessBuilder) Doer(d wfapi.Doer) {
+func (b *statelessBuilder) Doer(d interface{}) {
+	rd := reflect.ValueOf(d)
+	if rd.Kind() == reflect.Func {
+		d = &doer{rd}
+	}
 	b.doer = d
+}
+
+type doer struct {
+	f reflect.Value
+}
+
+func (d* doer) Do(input ...interface{}) interface{} {
+	is := make([]reflect.Value, len(input))
+	for i, v := range input {
+		is[i] = reflect.ValueOf(v)
+	}
+	result := d.f.Call(is)
+	switch len(result) {
+	case 0:
+		return nil
+	case 1:
+		v := result[0]
+		if v.CanInterface() {
+			return v.Interface()
+		}
+		return nil
+	default:
+		vs := make([]interface{}, len(result))
+		for i, r := range result {
+			if r.CanInterface() {
+				vs[i] = r.Interface()
+			}
+		}
+		return vs
+	}
 }
