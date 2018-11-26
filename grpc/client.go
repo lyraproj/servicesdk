@@ -45,6 +45,14 @@ type Client struct {
 	client servicepb.DefinitionServiceClient
 }
 
+func (c *Client) Identifier() eval.TypedName {
+	rr, err := c.client.Identity(c.ctx, &servicepb.EmptyRequest{})
+	if err != nil {
+		panic(err)
+	}
+	return FromDataPB(c.ctx, rr).(eval.TypedName)
+}
+
 func (c *Client) Invoke(identifier, name string, arguments ...eval.Value) eval.Value {
 	rq := servicepb.InvokeRequest{
 		Identifier: identifier,
@@ -59,8 +67,7 @@ func (c *Client) Invoke(identifier, name string, arguments ...eval.Value) eval.V
 }
 
 func (c *Client) Metadata() (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
-	rq := servicepb.MetadataRequest{}
-	rr, err := c.client.Metadata(c.ctx, &rq)
+	rr, err := c.client.Metadata(c.ctx, &servicepb.EmptyRequest{})
 	if err != nil {
 		panic(err)
 	}

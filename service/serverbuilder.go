@@ -36,7 +36,7 @@ func GoStateConverter(c eval.Context, state wfapi.State, input eval.OrderedMap) 
 
 type ServerBuilder struct {
 	ctx             eval.Context
-	serviceId       string
+	serviceId       eval.TypedName
 	stateConv       wfapi.StateConverter
 	types           map[string]eval.Type
 	handlerFor      map[string]eval.Type
@@ -49,7 +49,7 @@ type ServerBuilder struct {
 func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
 	return &ServerBuilder{
 		ctx:             ctx,
-		serviceId:       assertTypeName(serviceName),
+		serviceId:       eval.NewTypedName(eval.NsService, assertTypeName(serviceName)),
 		callables:       make(map[string]reflect.Value),
 		callableObjects: make([]eval.PuppetObject, 0),
 		handlerFor:      make(map[string]eval.Type),
@@ -79,15 +79,11 @@ func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 		rv := reflect.ValueOf(callable)
 		rt := rv.Type()
 		pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
-		if ok {
-			if pt.Name() != name {
-				panic(eval.Error(WF_TYPE_NAME_CLASH, issue.H{`go_type`: rt.Name(), `new_type`: name, `old_type`: pt.Name()}))
-			}
-		} else {
+		if !ok {
 			pt = ds.ctx.Reflector().ObjectTypeFromReflect(name, nil, rt)
 		}
 		if _, ok := ds.types[name]; !ok {
-			ds.RegisterType(pt)
+			ds.registerType(name, pt)
 		}
 		ds.registerCallable(name, rv)
 	}
@@ -154,7 +150,7 @@ func (ds *ServerBuilder) RegisterActivity(activity wfapi.Activity) {
 	if _, found := ds.activities[name]; found {
 		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsDefinition, `identifier`: name}))
 	}
-	ds.activities[name] = ds.createActivityDefinition(eval.NewTypedName(eval.NsService, ds.serviceId), activity)
+	ds.activities[name] = ds.createActivityDefinition(activity)
 }
 
 func (ds *ServerBuilder) registerCallable(name string, callable reflect.Value) {
@@ -165,14 +161,17 @@ func (ds *ServerBuilder) registerCallable(name string, callable reflect.Value) {
 }
 
 func (ds *ServerBuilder) RegisterType(typ eval.Type) {
-	name := typ.Name()
+	ds.registerType(typ.Name(), typ)
+}
+
+func (ds *ServerBuilder) registerType(name string, typ eval.Type) {
 	if _, found := ds.types[name]; found {
 		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsType, `identifier`: name}))
 	}
 	ds.types[name] = typ
 }
 
-func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, activity wfapi.Activity) serviceapi.Definition {
+func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) serviceapi.Definition {
 	props := make([]*types.HashEntry, 0, 5)
 
 	if input := paramsAsList(activity.Input()); input != nil {
@@ -190,7 +189,7 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 	switch activity.(type) {
 	case wfapi.Workflow:
 		style = `workflow`
-		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(serviceId, activity.(wfapi.Workflow).Activities())))
+		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(activity.(wfapi.Workflow).Activities())))
 	case wfapi.Resource:
 		style = `resource`
 		state := activity.(wfapi.Resource).State()
@@ -202,8 +201,7 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
 	case wfapi.Stateless:
 		style = `stateless`
-		fc := activity.(wfapi.Stateless).Interface()
-		ds.RegisterAPI(name, fc)
+		ds.RegisterAPI(name, activity.(wfapi.Stateless).Function())
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
 	case wfapi.Iterator:
 		style = `iterator`
@@ -211,10 +209,10 @@ func (ds *ServerBuilder) createActivityDefinition(serviceId eval.TypedName, acti
 		props = append(props, types.WrapHashEntry2(`iteration_style`, types.WrapString(iter.IterationStyle().String())))
 		props = append(props, types.WrapHashEntry2(`over`, paramsAsList(iter.Over())))
 		props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(iter.Variables())))
-		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(serviceId, iter.Producer())))
+		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(iter.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
-	return serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, name), serviceId, types.WrapHash(props))
+	return serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, name), ds.serviceId, types.WrapHash(props))
 }
 
 func paramsAsList(params []eval.Parameter) eval.List {
@@ -229,10 +227,10 @@ func paramsAsList(params []eval.Parameter) eval.List {
 	return types.WrapValues(ps)
 }
 
-func (ds *ServerBuilder) activitiesAsList(serviceId eval.TypedName, activities []wfapi.Activity) eval.List {
+func (ds *ServerBuilder) activitiesAsList(activities []wfapi.Activity) eval.List {
 	as := make([]eval.Value, len(activities))
 	for i, a := range activities {
-		as[i] = ds.createActivityDefinition(serviceId, a)
+		as[i] = ds.createActivityDefinition(a)
 	}
 	return types.WrapValues(as)
 }
@@ -332,30 +330,29 @@ func (ds *ServerBuilder) Server() *Server {
 	ts := CreateTypeSet(ds.types)
 	ds.ctx.AddTypes(ts)
 
-	serviceId := eval.NewTypedName(eval.NsService, ds.serviceId)
 	defs := make([]eval.Value, 0, len(ds.callables)+len(ds.activities))
 
 	callableStyle := types.WrapString(`callable`)
 	// Create invokable definitions for callables
 	for k := range ds.callables {
 		props := make([]*types.HashEntry, 0, 2)
-		props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(ds.types[k].Name())))
+		props = append(props, types.WrapHashEntry2(`interface`, ds.types[k]))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	for _, po := range ds.callableObjects {
-		k := po.(issue.Named).Name()
+		k := po.PType().Name()
 		props := make([]*types.HashEntry, 0, 2)
-		props = append(props, types.WrapHashEntry2(`interface`, types.WrapString(po.PType().Name())))
+		props = append(props, types.WrapHashEntry2(`interface`, po.PType()))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	// Add registered activities
@@ -372,8 +369,8 @@ func (ds *ServerBuilder) Server() *Server {
 	}
 
 	for _, po := range ds.callableObjects {
-		callables[po.(issue.Named).Name()] = po
+		callables[po.PType().Name()] = po
 	}
 
-	return &Server{context: ds.ctx, typeSet: ts, metadata: types.WrapValues(defs), stateConv: ds.stateConv, callables: callables, states: ds.states}
+	return &Server{context: ds.ctx, id: ds.serviceId, typeSet: ts, metadata: types.WrapValues(defs), stateConv: ds.stateConv, callables: callables, states: ds.states}
 }

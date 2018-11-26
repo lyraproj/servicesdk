@@ -59,6 +59,10 @@ func (a *GRPCServer) Do(doer func(c eval.Context)) (err error) {
 	return nil
 }
 
+func (d *GRPCServer) Identity(context.Context, *servicepb.EmptyRequest) (result *datapb.Data, err error) {
+	return ToDataPB(d.impl.Identifier()), nil
+}
+
 func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
 	err = d.Do(func(c eval.Context) {
 		wrappedArgs := FromDataPB(c, r.Arguments)
@@ -72,7 +76,7 @@ func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (resu
 	return
 }
 
-func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.MetadataRequest) (result *servicepb.MetadataResponse, err error) {
+func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result *servicepb.MetadataResponse, err error) {
 	err = d.Do(func(c eval.Context) {
 		ts, ds := d.impl.Metadata()
 		vs := make([]eval.Value, len(ds))

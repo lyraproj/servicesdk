@@ -16,7 +16,7 @@ message InvokeRequest {
   puppet.datapb.Data arguments = 3;
 }
 
-message MetadataRequest {
+message EmptyRequest {
 }
 
 message StateRequest {
@@ -25,9 +25,11 @@ message StateRequest {
 }
 
 service DefinitionService {
+  rpc Identity (EmptyRequest) returns (puppet.datapb.Data) {};
+
   rpc Invoke (InvokeRequest) returns (puppet.datapb.Data) {};
 
-  rpc Metadata (MetadataRequest) returns (MetadataResponse) {};
+  rpc Metadata (EmptyRequest) returns (MetadataResponse) {};
 
   rpc State (StateRequest) returns (puppet.datapb.Data) {};
 }

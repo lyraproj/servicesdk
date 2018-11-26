@@ -3,5 +3,5 @@ package wfapi
 type Stateless interface {
 	Activity
 
-	Interface() interface{}
+	Function() interface{}
 }

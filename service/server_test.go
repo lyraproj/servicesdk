@@ -239,7 +239,7 @@ func ExampleServer_Metadata_api() {
 	//     'name' => 'My::Service'
 	//   ),
 	//   'properties' => {
-	//     'interface' => 'My::Identity',
+	//     'interface' => My::Identity,
 	//     'style' => 'callable'
 	//   }
 	// )

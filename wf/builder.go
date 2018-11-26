@@ -280,53 +280,19 @@ func (b *workflowBuilder) Stateless(bld func(b wfapi.StatelessBuilder)) {
 func (b *workflowBuilder) Iterator(bld func(b wfapi.IteratorBuilder)) {
 	ab := &iteratorBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.ctx, when: condition.Always, input: eval.NoParameters, output: eval.NoParameters}}}
 	bld(ab)
-	b.children = append(b.children, ab.Build())
+	b.AddChild(ab)
 }
 
 type statelessBuilder struct {
 	builder
-	doer interface{}
+	function interface{}
 }
 
 func (b *statelessBuilder) Build() wfapi.Activity {
 	b.validate()
-	return NewStateless(b.GetName(), b.when, b.input, b.output, b.doer)
+	return NewStateless(b.GetName(), b.when, b.input, b.output, b.function)
 }
 
 func (b *statelessBuilder) Doer(d interface{}) {
-	rd := reflect.ValueOf(d)
-	if rd.Kind() == reflect.Func {
-		d = &doer{rd}
-	}
-	b.doer = d
-}
-
-type doer struct {
-	f reflect.Value
-}
-
-func (d* doer) Do(input ...interface{}) interface{} {
-	is := make([]reflect.Value, len(input))
-	for i, v := range input {
-		is[i] = reflect.ValueOf(v)
-	}
-	result := d.f.Call(is)
-	switch len(result) {
-	case 0:
-		return nil
-	case 1:
-		v := result[0]
-		if v.CanInterface() {
-			return v.Interface()
-		}
-		return nil
-	default:
-		vs := make([]interface{}, len(result))
-		for i, r := range result {
-			if r.CanInterface() {
-				vs[i] = r.Interface()
-			}
-		}
-		return vs
-	}
+	b.function = d
 }
