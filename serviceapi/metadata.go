@@ -5,5 +5,5 @@ import (
 )
 
 type Metadata interface {
-	Metadata() (typeSet eval.TypeSet, definitions []Definition)
+	Metadata(eval.Context) (typeSet eval.TypeSet, definitions []Definition)
 }

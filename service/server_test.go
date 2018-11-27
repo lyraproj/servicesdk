@@ -30,8 +30,8 @@ func ExampleServer_Invoke() {
 		sb.RegisterAPI(api, &testAPI{})
 
 		s := sb.Server()
-		fmt.Println(s.Invoke(api, `first`))
-		fmt.Println(s.Invoke(api, `second`, eval.Wrap(c, `place`)))
+		fmt.Println(s.Invoke(c, api, `first`))
+		fmt.Println(s.Invoke(c, api, `second`, eval.Wrap(c, `place`)))
 	})
 
 	// Output:
@@ -52,7 +52,7 @@ func ExampleServer_Metadata_typeSet() {
 		sb.RegisterTypes("My", &MyRes{})
 
 		s := sb.Server()
-		ts, _ := s.Metadata()
+		ts, _ := s.Metadata(c)
 		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
 		fmt.Println()
 	})
@@ -101,7 +101,7 @@ func ExampleServer_Metadata_definitions() {
 		}))
 
 		s := sb.Server()
-		_, defs := s.Metadata()
+		_, defs := s.Metadata(c)
 		for _, def := range defs {
 			fmt.Println(eval.ToPrettyString(def))
 		}
@@ -165,7 +165,7 @@ func ExampleServer_Metadata_state() {
 		}))
 
 		s := sb.Server()
-		fmt.Println(eval.ToPrettyString(s.State(`My::Test::X`, eval.EMPTY_MAP)))
+		fmt.Println(eval.ToPrettyString(s.State(c, `My::Test::X`, eval.EMPTY_MAP)))
 	})
 
 	// Output:
@@ -201,7 +201,7 @@ func ExampleServer_Metadata_api() {
 		sb.RegisterAPI(`My::Identity`, &MyIdentityService{map[string]eval.URI{}, map[eval.URI]string{}})
 
 		s := sb.Server()
-		ts, defs := s.Metadata()
+		ts, defs := s.Metadata(c)
 		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
 		fmt.Println()
 		for _, def := range defs {

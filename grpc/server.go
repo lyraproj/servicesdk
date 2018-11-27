@@ -53,14 +53,18 @@ func (a *GRPCServer) Do(doer func(c eval.Context)) (err error) {
 			}
 		}
 	}()
+	c := a.ctx.Fork()
 	threadlocal.Init()
-	threadlocal.Set(eval.PuppetContextKey, a.ctx)
-	doer(a.ctx)
+	threadlocal.Set(eval.PuppetContextKey, c)
+	doer(c)
 	return nil
 }
 
 func (d *GRPCServer) Identity(context.Context, *servicepb.EmptyRequest) (result *datapb.Data, err error) {
-	return ToDataPB(d.impl.Identifier()), nil
+	err = d.Do(func(c eval.Context) {
+		result = ToDataPB(d.impl.Identifier(c))
+	})
+	return
 }
 
 func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
@@ -68,6 +72,7 @@ func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (resu
 		wrappedArgs := FromDataPB(c, r.Arguments)
 		arguments := wrappedArgs.(*types.ArrayValue).AppendTo([]eval.Value{})
 		rrr := d.impl.Invoke(
+			c,
 			r.Identifier,
 			r.Method,
 			arguments...)
@@ -78,7 +83,7 @@ func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (resu
 
 func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result *servicepb.MetadataResponse, err error) {
 	err = d.Do(func(c eval.Context) {
-		ts, ds := d.impl.Metadata()
+		ts, ds := d.impl.Metadata(c)
 		vs := make([]eval.Value, len(ds))
 		for i, d := range ds {
 			vs[i] = d
@@ -90,7 +95,7 @@ func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.EmptyRequest) (res
 
 func (d *GRPCServer) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
 	err = d.Do(func(c eval.Context) {
-		result = ToDataPB(d.impl.State(r.Identifier, FromDataPB(c, r.Input).(eval.OrderedMap)))
+		result = ToDataPB(d.impl.State(c, r.Identifier, FromDataPB(c, r.Input).(eval.OrderedMap)))
 	})
 	return
 }

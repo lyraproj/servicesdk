@@ -46,7 +46,7 @@ func ExampleServerBuilder_RegisterAPI_identity() {
 		sb := service.NewServerBuilder(c, `My::Identity::Service`)
 		sb.RegisterAPI(serviceapi.IdentityName, api)
 		s := sb.Server()
-		ts, defs := s.Metadata()
+		ts, defs := s.Metadata(c)
 		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
 		fmt.Println()
 		fmt.Println(defs)

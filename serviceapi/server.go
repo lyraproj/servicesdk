@@ -7,5 +7,5 @@ type Service interface {
 	Metadata
 	StateResolver
 
-	Identifier() eval.TypedName
+	Identifier(eval.Context) eval.TypedName
 }

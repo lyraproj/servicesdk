@@ -37,54 +37,53 @@ func (a *PluginClient) GRPCServer(*plugin.GRPCBroker, *grpc.Server) error {
 }
 
 func (a *PluginClient) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, clientConn *grpc.ClientConn) (interface{}, error) {
-	return &Client{ctx: eval.CurrentContext(), client: servicepb.NewDefinitionServiceClient(clientConn)}, nil
+	return &Client{client: servicepb.NewDefinitionServiceClient(clientConn)}, nil
 }
 
 type Client struct {
-	ctx    eval.Context
 	client servicepb.DefinitionServiceClient
 }
 
-func (c *Client) Identifier() eval.TypedName {
-	rr, err := c.client.Identity(c.ctx, &servicepb.EmptyRequest{})
+func (c *Client) Identifier(ctx eval.Context) eval.TypedName {
+	rr, err := c.client.Identity(ctx, &servicepb.EmptyRequest{})
 	if err != nil {
 		panic(err)
 	}
-	return FromDataPB(c.ctx, rr).(eval.TypedName)
+	return FromDataPB(ctx, rr).(eval.TypedName)
 }
 
-func (c *Client) Invoke(identifier, name string, arguments ...eval.Value) eval.Value {
+func (c *Client) Invoke(ctx eval.Context, identifier, name string, arguments ...eval.Value) eval.Value {
 	rq := servicepb.InvokeRequest{
 		Identifier: identifier,
 		Method:     name,
 		Arguments:  ToDataPB(types.WrapValues(arguments)),
 	}
-	rr, err := c.client.Invoke(c.ctx, &rq)
+	rr, err := c.client.Invoke(ctx, &rq)
 	if err != nil {
 		panic(err)
 	}
-	return FromDataPB(c.ctx, rr)
+	return FromDataPB(ctx, rr)
 }
 
-func (c *Client) Metadata() (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
-	rr, err := c.client.Metadata(c.ctx, &servicepb.EmptyRequest{})
+func (c *Client) Metadata(ctx eval.Context) (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
+	rr, err := c.client.Metadata(ctx, &servicepb.EmptyRequest{})
 	if err != nil {
 		panic(err)
 	}
-	typeSet = FromDataPB(c.ctx, rr.GetTypeset()).(eval.TypeSet)
-	ds := FromDataPB(c.ctx, rr.GetDefinitions()).(eval.List)
+	typeSet = FromDataPB(ctx, rr.GetTypeset()).(eval.TypeSet)
+	ds := FromDataPB(ctx, rr.GetDefinitions()).(eval.List)
 	definitions = make([]serviceapi.Definition, ds.Len())
 	ds.EachWithIndex(func(d eval.Value, i int) { definitions[i] = d.(serviceapi.Definition) })
 	return
 }
 
-func (c *Client) State(identifier string, input eval.OrderedMap) eval.PuppetObject {
+func (c *Client) State(ctx eval.Context, identifier string, input eval.OrderedMap) eval.PuppetObject {
 	rq := servicepb.StateRequest{Identifier: identifier, Input: ToDataPB(input)}
-	rr, err := c.client.State(c.ctx, &rq)
+	rr, err := c.client.State(ctx, &rq)
 	if err != nil {
 		panic(err)
 	}
-	return FromDataPB(c.ctx, rr).(eval.PuppetObject)
+	return FromDataPB(ctx, rr).(eval.PuppetObject)
 }
 
 // Load  ...
