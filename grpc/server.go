@@ -9,16 +9,17 @@ import (
 	"github.com/puppetlabs/go-evaluator/proto"
 	"github.com/puppetlabs/go-evaluator/serialization"
 	"github.com/puppetlabs/go-evaluator/threadlocal"
+	"github.com/puppetlabs/go-evaluator/types"
 	"github.com/puppetlabs/go-issues/issue"
 	"github.com/puppetlabs/go-servicesdk/serviceapi"
 	"github.com/puppetlabs/go-servicesdk/servicepb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"log"
 	"net/rpc"
 
 	// Ensure that pcore is initialized
 	_ "github.com/puppetlabs/go-evaluator/pcore"
-	"github.com/puppetlabs/go-evaluator/types"
 )
 
 type GRPCServer struct {
@@ -117,6 +118,10 @@ func Serve(c eval.Context, s serviceapi.Service) {
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
 		Logger:     hclog.Default(),
+
 	}
+	id := s.Identifier(c)
+	log.Printf("Starting to serve %s\n", id)
 	plugin.Serve(cfg)
+	log.Printf("Done serve %s\n", id)
 }

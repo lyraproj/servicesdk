@@ -92,7 +92,8 @@ func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 		logger = hclog.New(&hclog.LoggerOptions{
 			Level:      hclog.Debug,
 			Output:     os.Stdout,
-			JSONFormat: true,
+			JSONFormat: false,
+			IncludeLocation: false,
 		})
 	}
 	client := plugin.NewClient(&plugin.ClientConfig{
@@ -100,6 +101,7 @@ func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 		Plugins: map[string]plugin.Plugin{
 			"server": &PluginClient{},
 		},
+		Managed: true,
 		Cmd:              cmd,
 		Logger: logger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},

@@ -15,28 +15,24 @@ import (
 type identity struct {
 }
 
-func (*identity) Associate(internalID, externalID string) error {
-	return nil
+func (*identity) Associate(internalID, externalID string) {
+	return
 }
 
-func (*identity) GetExternal(internalID string) (externalID string, ok bool, err error) {
+func (*identity) GetExternal(internalID string) (externalID string) {
 	externalID = "externalID123"
-	ok = true
 	return
 }
 
-func (*identity) GetInternal(externalID string) (internalID string, ok bool, err error) {
+func (*identity) GetInternal(externalID string) (internalID string) {
 	externalID = "internalID456"
-	ok = true
 	return
 }
 
-func (*identity) RemoveExternal(externalID string) error {
-	return nil
+func (*identity) RemoveExternal(externalID string) {
 }
 
-func (*identity) RemoveInternal(internalID string) error {
-	return nil
+func (*identity) RemoveInternal(internalID string) {
 }
 
 func ExampleServerBuilder_RegisterAPI_identity() {
@@ -62,20 +58,25 @@ func ExampleServerBuilder_RegisterAPI_identity() {
 	//   types => {
 	//     Identity => {
 	//       functions => {
-	//         'associate' => Callable[String, String],
+	//         'associate' => Callable[
+	//           [String, String],
+	//           Any],
 	//         'get_external' => Callable[
 	//           [String],
-	//           Tuple
-	//           [String, Boolean]],
+	//           String],
 	//         'get_internal' => Callable[
 	//           [String],
-	//           Tuple
-	//           [String, Boolean]],
-	//         'remove_external' => Callable[String],
-	//         'remove_internal' => Callable[String]
+	//           String],
+	//         'remove_external' => Callable[
+	//           [String],
+	//           Any],
+	//         'remove_internal' => Callable[
+	//           [String],
+	//           Any]
 	//       }
 	//     }
 	//   }
 	// }]
 	// [Service::Definition('identifier' => TypedName('namespace' => 'definition', 'name' => 'Lyra::Identity'), 'serviceId' => TypedName('namespace' => 'service', 'name' => 'My::Identity::Service'), 'properties' => {'interface' => Lyra::Identity, 'style' => 'callable'})]
+	//
 }
