@@ -89,6 +89,23 @@ func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 	}
 }
 
+// RegisterAPIType registers a the type of a struct as an invokable type. The struct should be a zero
+// value. This method must be used to ensure that all type info is present for callable instances added to an
+// already created service
+func (ds *ServerBuilder) RegisterApiType(name string, callable interface{}) {
+	name = assertTypeName(name)
+	rv := reflect.ValueOf(callable)
+	rt := rv.Type()
+	pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
+	if !ok {
+		pt = ds.ctx.Reflector().ObjectTypeFromReflect(name, nil, rt)
+	}
+	if _, ok := ds.types[name]; !ok {
+		ds.registerType(name, pt)
+	}
+}
+
+
 // RegisterState registers the unresolved state of a resource.
 func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
 	t := state.Type()
@@ -113,7 +130,18 @@ func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stat
 func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) []eval.Type {
 	ts := make([]eval.Type, len(values))
 	for i, v := range values {
-		ts[i] = ds.registerReflectedType(namespace, reflect.TypeOf(v))
+		switch v.(type) {
+		case eval.Type:
+			t := v.(eval.Type)
+			ds.types[t.Name()] = t
+			ts[i] = t
+		case reflect.Type:
+			ts[i] = ds.registerReflectedType(namespace, v.(reflect.Type))
+		case reflect.Value:
+			ts[i] = ds.registerReflectedType(namespace, v.(reflect.Value).Type())
+		default:
+			ts[i] = ds.registerReflectedType(namespace, reflect.TypeOf(v))
+		}
 	}
 	return ts
 }

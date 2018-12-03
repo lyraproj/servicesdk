@@ -21,8 +21,8 @@ github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQ
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/puppetlabs/data-protobuf v0.0.0-20181112120528-77dff819c942 h1:WlRxyR+GPxLi/B20fQ3Sd6hIHSH9QbhtaS4WvDo+z8E=
 github.com/puppetlabs/data-protobuf v0.0.0-20181112120528-77dff819c942/go.mod h1:sNvzkzCGeUn+Umk++a+iurKO3ez/Q4xZJ8S91N0/dK8=
-github.com/puppetlabs/go-evaluator v0.0.0-20181127220327-813ec4b01b78 h1:EVVj4d9UCTS8re7uf0a4gEGyuFefvOM2zVGKQS/xUuo=
-github.com/puppetlabs/go-evaluator v0.0.0-20181127220327-813ec4b01b78/go.mod h1:b/yhn2i6Zn1Qxur9RkJCzMyYtwlUmPNZKeJbEB8Kl6U=
+github.com/puppetlabs/go-evaluator v0.0.0-20181203151420-55520c296685 h1:StNZIF7jooK3Gq+ShzvEvfsr/UCMT+zq3efx1T4LVLM=
+github.com/puppetlabs/go-evaluator v0.0.0-20181203151420-55520c296685/go.mod h1:b/yhn2i6Zn1Qxur9RkJCzMyYtwlUmPNZKeJbEB8Kl6U=
 github.com/puppetlabs/go-issues v0.0.0-20181112112915-c16bc8ecd50f h1:HKZK7Rk8LAmQqWagoWSBYvR8Oeu6mN7fTK1bMb24ZaE=
 github.com/puppetlabs/go-issues v0.0.0-20181112112915-c16bc8ecd50f/go.mod h1:UNpBgsvFV8ZBoNkXo2YOrkWHA4sXoBmrDGw572x257U=
 github.com/puppetlabs/go-parser v0.0.0-20181126141003-73360f01354f h1:i6eCFL9uUFXv4uhWHsRqONbm+9aYP0u0LsBzXBIs/y8=
@@ -32,8 +32,8 @@ github.com/puppetlabs/go-semver v0.0.0-20181112101422-34eb86658f1c/go.mod h1:mHM
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 golang.org/x/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/net v0.0.0-20180826012351-8a410e7b638d/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
-golang.org/x/net v0.0.0-20181114220301-adae6a3d119a h1:gOpx8G595UYyvj8UK4+OFyY4rx037g3fmfhe5SasG3U=
-golang.org/x/net v0.0.0-20181114220301-adae6a3d119a/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
+golang.org/x/net v0.0.0-20181201002055-351d144fa1fc h1:a3CU5tJYVj92DY2LaA1kUkrsqD5/3mLDhx2NcNqyW+0=
+golang.org/x/net v0.0.0-20181201002055-351d144fa1fc/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sys v0.0.0-20180830151530-49385e6e1522 h1:Ve1ORMCxvRmSXBwJK+t3Oy+V2vRW2OetUQBq4rJIkZE=
