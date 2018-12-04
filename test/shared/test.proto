@@ -1,0 +1,12 @@
+syntax = "proto3";
+package puppet.test;
+
+option go_package = "github.com/puppetlabs/go-servicesdk/test/shared";
+
+message HelloMsg {
+  string hello = 1;
+}
+
+service HelloService {
+  rpc Hello (HelloMsg) returns (HelloMsg) {};
+}
