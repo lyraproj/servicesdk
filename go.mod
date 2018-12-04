@@ -5,7 +5,7 @@ require (
 	github.com/hashicorp/go-hclog v0.0.0-20181001195459-61d530d6c27f
 	github.com/hashicorp/go-plugin v0.0.0-20181030172320-54b6ff97d818
 	github.com/puppetlabs/data-protobuf v0.0.0-20181112120528-77dff819c942
-	github.com/puppetlabs/go-evaluator v0.0.0-20181203151420-55520c296685
+	github.com/puppetlabs/go-evaluator v0.0.0-20181204123818-9af273840049
 	github.com/puppetlabs/go-issues v0.0.0-20181112112915-c16bc8ecd50f
 	github.com/puppetlabs/go-semver v0.0.0-20181112101422-34eb86658f1c
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
