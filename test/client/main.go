@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/hashicorp/go-plugin"
-	"github.com/puppetlabs/go-servicesdk/test/shared"
+	"github.com/lyraproj/servicesdk/test/shared"
 	"google.golang.org/grpc"
 	"os"
 	"os/exec"

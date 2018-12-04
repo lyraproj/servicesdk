@@ -1,6 +1,6 @@
 package serviceapi
 
-import "github.com/puppetlabs/go-evaluator/eval"
+import "github.com/lyraproj/puppet-evaluator/eval"
 
 type Invokable interface {
 	// Invoke will call a method with the given name on the object identified by the given

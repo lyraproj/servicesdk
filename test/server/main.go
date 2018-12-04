@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/hashicorp/go-plugin"
-	"github.com/puppetlabs/go-servicesdk/test/shared"
+	"github.com/lyraproj/servicesdk/test/shared"
 	"google.golang.org/grpc"
 	"os"
 )

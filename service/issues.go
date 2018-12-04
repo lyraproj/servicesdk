@@ -1,6 +1,6 @@
 package service
 
-import "github.com/puppetlabs/go-issues/issue"
+import "github.com/lyraproj/issue/issue"
 
 const (
 	WF_ALREADY_REGISTERED  = `WF_ALREADY_REGISTERED`

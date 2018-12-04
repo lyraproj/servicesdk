@@ -1,12 +1,12 @@
 package wf
 
 import (
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-evaluator/impl"
-	"github.com/puppetlabs/go-issues/issue"
-	"github.com/puppetlabs/go-servicesdk/condition"
-	"github.com/puppetlabs/go-servicesdk/service"
-	"github.com/puppetlabs/go-servicesdk/wfapi"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/puppet-evaluator/impl"
+	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/servicesdk/condition"
+	"github.com/lyraproj/servicesdk/service"
+	"github.com/lyraproj/servicesdk/wfapi"
 	"reflect"
 )
 

@@ -1,6 +1,6 @@
 package condition
 
-import "github.com/puppetlabs/go-issues/issue"
+import "github.com/lyraproj/issue/issue"
 
 const (
 	WF_CONDITION_SYNTAX_ERROR   = `WF_CONDITION_SYNTAX_ERROR`

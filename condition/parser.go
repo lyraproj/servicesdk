@@ -1,9 +1,9 @@
 package condition
 
 import (
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-issues/issue"
-	"github.com/puppetlabs/go-servicesdk/wfapi"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/servicesdk/wfapi"
 	"regexp"
 	"strings"
 	"text/scanner"

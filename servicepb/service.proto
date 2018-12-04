@@ -3,7 +3,7 @@ package puppet.service;
 
 import "datapb/data.proto";
 
-option go_package = "github.com/puppetlabs/go-servicesdk/servicepb";
+option go_package = "github.com/lyraproj/servicesdk/servicepb";
 
 message MetadataResponse {
   puppet.datapb.Data typeset = 1;

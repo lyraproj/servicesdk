@@ -18,7 +18,7 @@ package servicepb
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import puppet_datapb "github.com/puppetlabs/data-protobuf/datapb"
+import puppet_datapb "github.com/lyraproj/data-protobuf/datapb"
 
 import (
 	context "golang.org/x/net/context"

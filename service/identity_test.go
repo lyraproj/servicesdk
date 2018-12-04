@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-servicesdk/service"
-	"github.com/puppetlabs/go-servicesdk/serviceapi"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/servicesdk/service"
+	"github.com/lyraproj/servicesdk/serviceapi"
 
 	// Initialize pcore
-	_ "github.com/puppetlabs/go-evaluator/pcore"
+	_ "github.com/lyraproj/puppet-evaluator/pcore"
 )
 
 type identity struct {

@@ -1,8 +1,8 @@
 package wfapi
 
 import (
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-issues/issue"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/issue/issue"
 )
 
 type Operation int

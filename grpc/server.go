@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
-	"github.com/puppetlabs/data-protobuf/datapb"
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-evaluator/proto"
-	"github.com/puppetlabs/go-evaluator/serialization"
-	"github.com/puppetlabs/go-evaluator/threadlocal"
-	"github.com/puppetlabs/go-evaluator/types"
-	"github.com/puppetlabs/go-issues/issue"
-	"github.com/puppetlabs/go-servicesdk/serviceapi"
-	"github.com/puppetlabs/go-servicesdk/servicepb"
+	"github.com/lyraproj/data-protobuf/datapb"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/puppet-evaluator/proto"
+	"github.com/lyraproj/puppet-evaluator/serialization"
+	"github.com/lyraproj/puppet-evaluator/threadlocal"
+	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/servicesdk/serviceapi"
+	"github.com/lyraproj/servicesdk/servicepb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"log"
 	"net/rpc"
 
 	// Ensure that pcore is initialized
-	_ "github.com/puppetlabs/go-evaluator/pcore"
+	_ "github.com/lyraproj/puppet-evaluator/pcore"
 )
 
 type GRPCServer struct {

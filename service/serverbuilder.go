@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-evaluator/types"
-	"github.com/puppetlabs/go-issues/issue"
-	"github.com/puppetlabs/go-servicesdk/condition"
-	"github.com/puppetlabs/go-servicesdk/serviceapi"
-	"github.com/puppetlabs/go-servicesdk/wfapi"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/servicesdk/condition"
+	"github.com/lyraproj/servicesdk/serviceapi"
+	"github.com/lyraproj/servicesdk/wfapi"
 )
 
 type GoState struct {

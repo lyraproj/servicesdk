@@ -2,8 +2,8 @@ package condition
 
 import (
 	"bytes"
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-servicesdk/wfapi"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/servicesdk/wfapi"
 	"sort"
 )
 

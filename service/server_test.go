@@ -2,14 +2,14 @@ package service_test
 
 import (
 	"fmt"
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-servicesdk/service"
-	"github.com/puppetlabs/go-servicesdk/wfapi"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/servicesdk/service"
+	"github.com/lyraproj/servicesdk/wfapi"
 	"os"
 
 	// Initialize pcore
-	_ "github.com/puppetlabs/go-evaluator/pcore"
-	_ "github.com/puppetlabs/go-servicesdk/wf"
+	_ "github.com/lyraproj/puppet-evaluator/pcore"
+	_ "github.com/lyraproj/servicesdk/wf"
 )
 
 type testAPI struct{}

@@ -1,8 +1,8 @@
 package wfapi
 
 import (
-	"github.com/puppetlabs/go-evaluator/eval"
-	"github.com/puppetlabs/go-issues/issue"
+	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/issue/issue"
 )
 
 // An Activity of a Workflow. The workflow is an Activity in itself and can be used in

@@ -1,6 +1,6 @@
 package serviceapi
 
-import "github.com/puppetlabs/go-evaluator/eval"
+import "github.com/lyraproj/puppet-evaluator/eval"
 
 type StateResolver interface {
 	// State looks up a state that has been previously registered with the given name,

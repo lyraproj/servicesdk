@@ -2,10 +2,10 @@ package condition
 
 import (
 	"fmt"
-	"github.com/puppetlabs/go-evaluator/eval"
+	"github.com/lyraproj/puppet-evaluator/eval"
 
 	// Ensure pcore initialization
-	_ "github.com/puppetlabs/go-evaluator/pcore"
+	_ "github.com/lyraproj/puppet-evaluator/pcore"
 )
 
 func ExampleParse() {

@@ -1,6 +1,6 @@
 package wfapi
 
-import "github.com/puppetlabs/go-issues/issue"
+import "github.com/lyraproj/issue/issue"
 
 const (
 	WF_ILLEGAL_ITERATION_STYLE   = `WF_ILLEGAL_ITERATION_STYLE`
