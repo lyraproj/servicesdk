@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/servicesdk/serviceapi"
@@ -54,7 +55,11 @@ func (c *Client) Invoke(ctx eval.Context, identifier, name string, arguments ...
 	if err != nil {
 		panic(err)
 	}
-	return FromDataPB(ctx, rr)
+	result := FromDataPB(ctx, rr)
+	if eo, ok := result.(eval.ErrorObject); ok {
+		panic(eval.Error(WF_INVOCATION_ERROR, issue.H{`identifier`: identifier, `name`: name, `code`: eo.IssueCode(), `message`: eo.Message()}))
+	}
+	return result
 }
 
 func (c *Client) Metadata(ctx eval.Context) (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
@@ -82,9 +87,9 @@ func (c *Client) State(ctx eval.Context, identifier string, input eval.OrderedMa
 func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 	if logger == nil {
 		logger = hclog.New(&hclog.LoggerOptions{
-			Level:      hclog.Debug,
-			Output:     os.Stdout,
-			JSONFormat: false,
+			Level:           hclog.Debug,
+			Output:          os.Stdout,
+			JSONFormat:      false,
 			IncludeLocation: false,
 		})
 	}
@@ -93,9 +98,9 @@ func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 		Plugins: map[string]plugin.Plugin{
 			"server": &PluginClient{},
 		},
-		Managed: true,
+		Managed:          true,
 		Cmd:              cmd,
-		Logger: logger,
+		Logger:           logger,
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 	})
 
