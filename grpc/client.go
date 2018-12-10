@@ -11,7 +11,6 @@ import (
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/servicepb"
 	"google.golang.org/grpc"
-	"os"
 	"os/exec"
 )
 
@@ -86,12 +85,7 @@ func (c *Client) State(ctx eval.Context, identifier string, input eval.OrderedMa
 // Load  ...
 func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 	if logger == nil {
-		logger = hclog.New(&hclog.LoggerOptions{
-			Level:           hclog.Debug,
-			Output:          os.Stdout,
-			JSONFormat:      false,
-			IncludeLocation: false,
-		})
+		logger = hclog.Default()
 	}
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshake,
