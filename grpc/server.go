@@ -5,12 +5,12 @@ import (
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/lyraproj/data-protobuf/datapb"
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/proto"
 	"github.com/lyraproj/puppet-evaluator/serialization"
 	"github.com/lyraproj/puppet-evaluator/threadlocal"
 	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/servicepb"
 	"golang.org/x/net/context"
@@ -102,11 +102,15 @@ func (d *GRPCServer) State(_ context.Context, r *servicepb.StateRequest) (result
 }
 
 func ToDataPB(v eval.Value) *datapb.Data {
-	return proto.ToPBData(serialization.NewToDataConverter(eval.EMPTY_MAP).Convert(v))
+	pc := proto.NewProtoConsumer()
+	serialization.NewSerializer(eval.EMPTY_MAP).Convert(v, pc)
+	return pc.Value()
 }
 
 func FromDataPB(c eval.Context, d *datapb.Data) eval.Value {
-	return serialization.NewFromDataConverter(c, eval.EMPTY_MAP).Convert(proto.FromPBData(d))
+	ds := serialization.NewDeserializer(c, eval.EMPTY_MAP)
+	proto.ConsumePBData(d, ds)
+	return ds.Value()
 }
 
 // Serve the supplied Server as a go-plugin
@@ -118,7 +122,6 @@ func Serve(c eval.Context, s serviceapi.Service) {
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
 		Logger:     hclog.Default(),
-
 	}
 	id := s.Identifier(c)
 	log.Printf("Starting to serve %s\n", id)
