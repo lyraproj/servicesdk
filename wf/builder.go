@@ -1,9 +1,9 @@
 package wf
 
 import (
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/impl"
-	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/servicesdk/condition"
 	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/wfapi"
@@ -82,7 +82,7 @@ func (b *builder) GetInput() []eval.Parameter {
 }
 
 func (b *builder) QualifyName(childName string) string {
-		return b.GetName() + `::` + childName
+	return b.GetName() + `::` + childName
 }
 
 func (b *builder) GetName() string {
@@ -151,7 +151,7 @@ func statelessChild(b wfapi.ChildBuilder, bld func(b wfapi.StatelessBuilder)) {
 	b.AddChild(ab)
 }
 
-func (b *childBuilder) 	AddChild(child wfapi.Builder) {
+func (b *childBuilder) AddChild(child wfapi.Builder) {
 	b.children = append(b.children, child.Build())
 }
 
@@ -247,7 +247,7 @@ func (b *resourceBuilder) StateStruct(state interface{}) {
 	rt := rv.Type()
 	pt, ok := b.ctx.ImplementationRegistry().ReflectedToType(rt)
 	if !ok {
-		pt = b.ctx.Reflector().ObjectTypeFromReflect(b.GetName(), nil, rt)
+		pt = b.ctx.Reflector().TypeFromReflect(b.GetName(), nil, rt)
 	}
 	b.state = service.NewGoState(pt.(eval.ObjectType), rv)
 }
