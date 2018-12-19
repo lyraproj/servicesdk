@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/servicesdk/condition"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/wfapi"
@@ -80,7 +80,7 @@ func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 		rt := rv.Type()
 		pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
 		if !ok {
-			pt = ds.ctx.Reflector().ObjectTypeFromReflect(name, nil, rt)
+			pt = ds.ctx.Reflector().TypeFromReflect(name, nil, rt)
 		}
 		if _, ok := ds.types[name]; !ok {
 			ds.registerType(name, pt)
@@ -98,13 +98,12 @@ func (ds *ServerBuilder) RegisterApiType(name string, callable interface{}) {
 	rt := rv.Type()
 	pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
 	if !ok {
-		pt = ds.ctx.Reflector().ObjectTypeFromReflect(name, nil, rt)
+		pt = ds.ctx.Reflector().TypeFromReflect(name, nil, rt)
 	}
 	if _, ok := ds.types[name]; !ok {
 		ds.registerType(name, pt)
 	}
 }
-
 
 // RegisterState registers the unresolved state of a resource.
 func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
@@ -135,18 +134,21 @@ func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) 
 			t := v.(eval.Type)
 			ds.types[t.Name()] = t
 			ts[i] = t
+		case eval.TaggedType:
+			ts[i] = ds.registerReflectedType(namespace, v.(eval.TaggedType))
 		case reflect.Type:
-			ts[i] = ds.registerReflectedType(namespace, v.(reflect.Type))
+			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(v.(reflect.Type), nil))
 		case reflect.Value:
-			ts[i] = ds.registerReflectedType(namespace, v.(reflect.Value).Type())
+			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(v.(reflect.Value).Type(), nil))
 		default:
-			ts[i] = ds.registerReflectedType(namespace, reflect.TypeOf(v))
+			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(reflect.TypeOf(v), nil))
 		}
 	}
 	return ts
 }
 
-func (ds *ServerBuilder) registerReflectedType(namespace string, typ reflect.Type) eval.Type {
+func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.TaggedType) eval.Type {
+	typ := tg.Type()
 	if typ.Kind() == reflect.Ptr {
 		el := typ.Elem()
 		if el.Kind() != reflect.Interface {
@@ -157,7 +159,7 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, typ reflect.Typ
 	parent := types.ParentType(typ)
 	var pt eval.Type
 	if parent != nil {
-		pt = ds.registerReflectedType(namespace, parent)
+		pt = ds.registerReflectedType(namespace, eval.NewTaggedType(parent, nil))
 	}
 
 	name := namespace + `::` + typ.Name()
@@ -167,7 +169,7 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, typ reflect.Typ
 		return et
 	}
 
-	et = ds.ctx.Reflector().ObjectTypeFromReflect(name, pt, typ)
+	et = ds.ctx.Reflector().TypeFromTagged(name, pt, tg)
 	ds.types[name] = et
 	return et
 }
@@ -352,7 +354,6 @@ func addName(ks []string, tree map[string]interface{}, t eval.Type) {
 		tree[k0] = t
 	}
 }
-
 
 func (ds *ServerBuilder) Server() *Server {
 	ts := CreateTypeSet(ds.types)

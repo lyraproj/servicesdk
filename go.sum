@@ -23,6 +23,10 @@ github.com/lyraproj/puppet-evaluator v0.0.0-20181214104820-e2275f12fd38 h1:gfSDB
 github.com/lyraproj/puppet-evaluator v0.0.0-20181214104820-e2275f12fd38/go.mod h1:7eZVPBQVCNMUqe8y3Q3Dox6cCZnPXKJ5ragz0FmSi/A=
 github.com/lyraproj/puppet-evaluator v0.0.0-20181217142659-ae391a42a132 h1:Mm7kRRQQXky/ZeY0qH2k6gt/PPjIOW5idHKplXJVTq8=
 github.com/lyraproj/puppet-evaluator v0.0.0-20181217142659-ae391a42a132/go.mod h1:zzujLCRGe29CXjx2PYphNjYQAnasgzsz+np2ww6d3Mo=
+github.com/lyraproj/puppet-evaluator v0.0.0-20181217152942-a88a4196d4f1 h1:/aLjbf1H2Gv7QKvGQDT+WMTMO0s7PvbVTC0ioV8YjcA=
+github.com/lyraproj/puppet-evaluator v0.0.0-20181217152942-a88a4196d4f1/go.mod h1:zzujLCRGe29CXjx2PYphNjYQAnasgzsz+np2ww6d3Mo=
+github.com/lyraproj/puppet-evaluator v0.0.0-20181219140551-7a196a921fba h1:ukyLkjSEz5uVTXiav8g97U2OzLFi8bH67tMwCFeACB8=
+github.com/lyraproj/puppet-evaluator v0.0.0-20181219140551-7a196a921fba/go.mod h1:zzujLCRGe29CXjx2PYphNjYQAnasgzsz+np2ww6d3Mo=
 github.com/lyraproj/puppet-parser v0.0.0-20181212205830-31c3104fe78d h1:iDn6XlJAiA+BuwG6L8xsCapPpc7jz24SGj9z7NQA1sg=
 github.com/lyraproj/puppet-parser v0.0.0-20181212205830-31c3104fe78d/go.mod h1:8va5g/XEw+jP9jnwEXPmanUy/hD9+6iggnaioihPLP0=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2 h1:vb4PbiMtIXdhsOUinkkcqZiASDIZzXRhSG4yvNfE0tg=
