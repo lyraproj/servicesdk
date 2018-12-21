@@ -12,6 +12,10 @@ const KindContainer = `container`
 const KindConsumer = `consumer`
 const KindProvider = `provider`
 
+const CardinalityOne = `one`
+const CardinalityMany = `many`
+const CardinalityZeroOrOne = `zero_or_one`
+
 type Relationship struct {
 	Type        eval.Type
 	Kind        string   `puppet:"type => Enum[contained, container, consumer, provider]"`
