@@ -114,6 +114,12 @@ func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
 	ds.states[name] = state
 }
 
+func (ds *ServerBuilder) BuildResource(goType interface{}, bld func(f ResourceTypeBuilder)) eval.AnnotatedType {
+	rb := &rtBuilder{ctx: ds.ctx}
+	bld(rb)
+	return rb.Build(goType)
+}
+
 // RegisterHandler registers a callable struct as an invokable capable of handling a state described using
 // eval.Type. The callable instance given as the argument becomes the actual receiver the calls.
 func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stateType eval.Type) {
@@ -134,8 +140,8 @@ func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) 
 			t := v.(eval.Type)
 			ds.types[t.Name()] = t
 			ts[i] = t
-		case eval.TaggedType:
-			ts[i] = ds.registerReflectedType(namespace, v.(eval.TaggedType))
+		case eval.AnnotatedType:
+			ts[i] = ds.registerReflectedType(namespace, v.(eval.AnnotatedType))
 		case reflect.Type:
 			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(v.(reflect.Type), nil))
 		case reflect.Value:
@@ -147,7 +153,7 @@ func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) 
 	return ts
 }
 
-func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.TaggedType) eval.Type {
+func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.AnnotatedType) eval.Type {
 	typ := tg.Type()
 	if typ.Kind() == reflect.Ptr {
 		el := typ.Elem()

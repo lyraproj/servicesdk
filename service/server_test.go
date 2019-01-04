@@ -3,6 +3,7 @@ package service_test
 import (
 	"fmt"
 	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/servicesdk/annotation"
 	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/wfapi"
 	"os"
@@ -145,6 +146,95 @@ func ExampleServer_Metadata_definitions() {
 	//     'style' => 'workflow'
 	//   }
 	// )
+	//
+}
+
+type OwnerRes struct {
+	Id    *string
+	Phone string
+}
+
+type ContainedRes struct {
+	Id      *string
+	OwnerId string
+	Stuff   string
+}
+
+func ExampleServer_TypeSet_annotated() {
+	eval.Puppet.Do(func(c eval.Context) {
+		sb := service.NewServerBuilder(c, `My::Service`)
+
+		sb.RegisterTypes("My",
+			sb.BuildResource(&OwnerRes{}, func(rtb service.ResourceTypeBuilder) {
+				rtb.ProvidedAttributes(`id`)
+				rtb.AddRelationship(`mine`, `My::ContainedRes`, annotation.KindContained, annotation.CardinalityMany, ``, []string{`id`, `owner_id`})
+			}),
+			sb.BuildResource(&ContainedRes{}, func(rtb service.ResourceTypeBuilder) {
+				rtb.ProvidedAttributes(`id`)
+				rtb.AddRelationship(`owner`, `My::OwnerRes`, annotation.KindContainer, annotation.CardinalityOne, ``, []string{`owner_id`, `id`})
+			}),
+		)
+		s := sb.Server()
+		ts, _ := s.Metadata(c)
+		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		fmt.Println()
+	})
+
+	// Output:
+	// TypeSet[{
+	//   pcore_uri => 'http://puppet.com/2016.1/pcore',
+	//   pcore_version => '1.0.0',
+	//   name_authority => 'http://puppet.com/2016.1/runtime',
+	//   name => 'My',
+	//   version => '0.1.0',
+	//   types => {
+	//     ContainedRes => {
+	//       annotations => {
+	//         Lyra::Resource => {
+	//           'provided_attributes' => ['id'],
+	//           'relationships' => {
+	//             'owner' => {
+	//               'type' => OwnerRes,
+	//               'kind' => 'container',
+	//               'cardinality' => 'one',
+	//               'keys' => ['owner_id', 'id']
+	//             }
+	//           }
+	//         }
+	//       },
+	//       attributes => {
+	//         'id' => {
+	//           'type' => Optional[String],
+	//           'value' => undef
+	//         },
+	//         'owner_id' => String,
+	//         'stuff' => String
+	//       }
+	//     },
+	//     OwnerRes => {
+	//       annotations => {
+	//         Lyra::Resource => {
+	//           'provided_attributes' => ['id'],
+	//           'relationships' => {
+	//             'mine' => {
+	//               'type' => ContainedRes,
+	//               'kind' => 'contained',
+	//               'cardinality' => 'many',
+	//               'keys' => ['id', 'owner_id']
+	//             }
+	//           }
+	//         }
+	//       },
+	//       attributes => {
+	//         'id' => {
+	//           'type' => Optional[String],
+	//           'value' => undef
+	//         },
+	//         'phone' => String
+	//       }
+	//     }
+	//   }
+	// }]
 	//
 }
 
