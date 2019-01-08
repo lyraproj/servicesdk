@@ -34,7 +34,7 @@ func (r *Relationship) Validate(c eval.Context, typ eval.ObjectType, name string
 		panic(eval.Error(RA_RELATIONSHIP_TYPE_IS_NOT_OBJECT, issue.H{`type`: r.Type}))
 	}
 	var rs Resource
-	ra, ok := at.Annotations().Get(ResourceType)
+	ra, ok := at.Annotations(c).Get(ResourceType)
 	if ok {
 		rs, ok = ra.(Resource)
 	}
