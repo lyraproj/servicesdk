@@ -1,8 +1,11 @@
 package service_test
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/puppet-evaluator/serialization"
+	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/servicesdk/annotation"
 	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/wfapi"
@@ -175,8 +178,17 @@ func ExampleServer_TypeSet_annotated() {
 			}),
 		)
 		s := sb.Server()
-		ts, _ := s.Metadata(c)
-		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		ts, md := s.Metadata(c)
+		bld := bytes.NewBufferString(``)
+		coll := serialization.NewJsonStreamer(bld)
+
+		sr := serialization.NewSerializer(eval.Puppet.RootContext(), eval.EMPTY_MAP)
+		sr.Convert(types.WrapValues([]eval.Value{ts, eval.Wrap(c, md)}), coll)
+
+		dr := serialization.NewDeserializer(c, eval.EMPTY_MAP)
+		serialization.JsonToData(`/tmp/tst`, bld, dr)
+		dt := dr.Value().(*types.ArrayValue)
+		dt.At(0).ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
 		fmt.Println()
 	})
 

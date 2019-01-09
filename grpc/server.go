@@ -103,7 +103,7 @@ func (d *GRPCServer) State(_ context.Context, r *servicepb.StateRequest) (result
 
 func ToDataPB(v eval.Value) *datapb.Data {
 	pc := proto.NewProtoConsumer()
-	serialization.NewSerializer(eval.EMPTY_MAP).Convert(v, pc)
+	serialization.NewSerializer(eval.Puppet.RootContext(), eval.EMPTY_MAP).Convert(v, pc)
 	return pc.Value()
 }
 
