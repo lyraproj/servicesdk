@@ -9,14 +9,17 @@ import (
 
 type ResourceTypeBuilder interface {
 	AddRelationship(name, to, kind, cardinality, reverse_name string, keys []string)
+	ImmutableAttributes(names ...string)
 	ProvidedAttributes(names ...string)
+	Tags(tags map[string]string)
 	Build(goType interface{}) eval.AnnotatedType
 }
 
 type rtBuilder struct {
 	ctx   eval.Context
 	rels  []*types.HashEntry
-	attrs []string
+	immutableAttrs []string
+	providedAttrs []string
 	tags  map[string]string
 }
 
@@ -36,11 +39,19 @@ func (rb *rtBuilder) AddRelationship(name, to, kind, cardinality, reverse_name s
 	rb.rels = append(rb.rels, types.WrapHashEntry2(name, types.WrapHash(es)))
 }
 
-func (rb *rtBuilder) ProvidedAttributes(names ...string) {
-	if rb.attrs == nil {
-		rb.attrs = names
+func (rb *rtBuilder) ImmutableAttributes(names ...string) {
+	if rb.immutableAttrs == nil {
+		rb.immutableAttrs = names
 	} else {
-		rb.attrs = append(rb.attrs, names...)
+		rb.immutableAttrs = append(rb.immutableAttrs, names...)
+	}
+}
+
+func (rb *rtBuilder) ProvidedAttributes(names ...string) {
+	if rb.providedAttrs == nil {
+		rb.providedAttrs = names
+	} else {
+		rb.providedAttrs = append(rb.providedAttrs, names...)
 	}
 }
 
@@ -66,10 +77,13 @@ func (rb *rtBuilder) Build(goType interface{}) eval.AnnotatedType {
 	}
 
 	annotations := eval.EMPTY_MAP
-	if rb.attrs != nil || rb.rels != nil {
-		as := make([]*types.HashEntry, 0, 2)
-		if rb.attrs != nil {
-			as = append(as, types.WrapHashEntry2(`provided_attributes`, types.WrapStrings(rb.attrs)))
+	if rb.immutableAttrs != nil || rb.providedAttrs != nil || rb.rels != nil {
+		as := make([]*types.HashEntry, 0, 3)
+		if rb.immutableAttrs != nil {
+			as = append(as, types.WrapHashEntry2(`immutable_attributes`, types.WrapStrings(rb.immutableAttrs)))
+		}
+		if rb.providedAttrs != nil {
+			as = append(as, types.WrapHashEntry2(`provided_attributes`, types.WrapStrings(rb.providedAttrs)))
 		}
 		if rb.rels != nil {
 			as = append(as, types.WrapHashEntry2(`relationships`, types.WrapHash(rb.rels)))

@@ -8,10 +8,8 @@ import (
 	"io"
 )
 
-var Definition_Type eval.Type
-
 func init() {
-	Definition_Type = eval.NewObjectType(`Service::Definition`, `{
+	serviceapi.Definition_Type = eval.NewObjectType(`Service::Definition`, `{
     attributes => {
       identifier => TypedName,
       serviceId => TypedName,
@@ -99,5 +97,5 @@ func (d *definition) ToString(bld io.Writer, format eval.FormatContext, g eval.R
 }
 
 func (d *definition) PType() eval.Type {
-	return Definition_Type
+	return serviceapi.Definition_Type
 }

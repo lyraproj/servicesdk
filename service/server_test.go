@@ -170,6 +170,8 @@ func ExampleServer_TypeSet_annotated() {
 		sb.RegisterTypes("My",
 			sb.BuildResource(&OwnerRes{}, func(rtb service.ResourceTypeBuilder) {
 				rtb.ProvidedAttributes(`id`)
+				rtb.ImmutableAttributes(`telephone_number`)
+				rtb.Tags(map[string]string{`Phone`: `name=>telephone_number`})
 				rtb.AddRelationship(`mine`, `My::ContainedRes`, annotation.KindContained, annotation.CardinalityMany, ``, []string{`id`, `owner_id`})
 			}),
 			sb.BuildResource(&ContainedRes{}, func(rtb service.ResourceTypeBuilder) {
@@ -226,6 +228,7 @@ func ExampleServer_TypeSet_annotated() {
 	//     OwnerRes => {
 	//       annotations => {
 	//         Lyra::Resource => {
+	//           'immutable_attributes' => ['telephone_number'],
 	//           'provided_attributes' => ['id'],
 	//           'relationships' => {
 	//             'mine' => {
@@ -242,7 +245,7 @@ func ExampleServer_TypeSet_annotated() {
 	//           'type' => Optional[String],
 	//           'value' => undef
 	//         },
-	//         'phone' => String
+	//         'telephone_number' => String
 	//       }
 	//     }
 	//   }
