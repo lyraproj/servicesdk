@@ -89,6 +89,88 @@ func ExampleServer_Metadata_typeSet() {
 	// }]
 }
 
+type MyOuterRes struct {
+	Who  *MyRes
+	What string
+}
+
+func ExampleServer_Nested_type() {
+	eval.Puppet.Do(func(c eval.Context) {
+		sb := service.NewServerBuilder(c, `My::Service`)
+
+		sb.RegisterTypes("My", &MyOuterRes{})
+
+		s := sb.Server()
+		ts, _ := s.Metadata(c)
+		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		fmt.Println()
+	})
+
+	// Output:
+	// TypeSet[{
+	//   pcore_uri => 'http://puppet.com/2016.1/pcore',
+	//   pcore_version => '1.0.0',
+	//   name_authority => 'http://puppet.com/2016.1/runtime',
+	//   name => 'My',
+	//   version => '0.1.0',
+	//   types => {
+	//     MyOuterRes => {
+	//       attributes => {
+	//         'who' => MyRes,
+	//         'what' => String
+	//       }
+	//     },
+	//     MyRes => {
+	//       attributes => {
+	//         'name' => String,
+	//         'phone' => String
+	//       }
+	//     }
+	//   }
+	// }]
+}
+
+type Person struct {
+	Who      *MyRes
+	Children []*Person
+}
+
+func ExampleServer_Recursive_type() {
+	eval.Puppet.Do(func(c eval.Context) {
+		sb := service.NewServerBuilder(c, `My::Service`)
+
+		sb.RegisterTypes("My", &Person{})
+
+		s := sb.Server()
+		ts, _ := s.Metadata(c)
+		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		fmt.Println()
+	})
+
+	// Output:
+	// TypeSet[{
+	//   pcore_uri => 'http://puppet.com/2016.1/pcore',
+	//   pcore_version => '1.0.0',
+	//   name_authority => 'http://puppet.com/2016.1/runtime',
+	//   name => 'My',
+	//   version => '0.1.0',
+	//   types => {
+	//     MyRes => {
+	//       attributes => {
+	//         'name' => String,
+	//         'phone' => String
+	//       }
+	//     },
+	//     Person => {
+	//       attributes => {
+	//         'who' => MyRes,
+	//         'children' => Array[Person]
+	//       }
+	//     }
+	//   }
+	// }]
+}
+
 func ExampleServer_Metadata_definitions() {
 	eval.Puppet.Do(func(c eval.Context) {
 		sb := service.NewServerBuilder(c, `My::Service`)
