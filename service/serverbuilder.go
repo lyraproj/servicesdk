@@ -175,7 +175,32 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.Annotat
 		return et
 	}
 
-	et = ds.ctx.Reflector().TypeFromTagged(name, pt, tg)
+	et = ds.ctx.Reflector().TypeFromTagged(name, pt, tg, func() {
+		// Register nested types unless already known to the implementation registry
+		nf := typ.NumField()
+		ir := ds.ctx.ImplementationRegistry()
+		for i := 0; i < nf; i++ {
+			f := typ.Field(i)
+			if f.PkgPath != `` {
+				// Unexported
+				continue
+			}
+
+			ft := f.Type
+			switch ft.Kind() {
+			case reflect.Slice, reflect.Interface, reflect.Ptr, reflect.Array:
+				ft = ft.Elem()
+			}
+
+			if ft == parent || ft.Kind() != reflect.Struct {
+				continue
+			}
+
+			if _, ok := ir.ReflectedToType(ft); !ok {
+				ds.registerReflectedType(namespace, eval.NewAnnotatedType(ft, nil, nil))
+			}
+		}
+	})
 	ds.types[name] = et
 	return et
 }
