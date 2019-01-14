@@ -1,9 +1,11 @@
 package annotation
 
 import (
+	"github.com/hashicorp/go-hclog"
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/puppet-evaluator/utils"
 	"io"
 	"reflect"
 	"sort"
@@ -14,8 +16,14 @@ var ResourceType eval.ObjectType
 func init() {
 	ResourceType = eval.NewObjectType(`Lyra::Resource`, `Annotation{
     attributes => {
+      # immutable_attributes lists the names of the attributes that cannot be
+      # changed. If a difference is detected between the desired state and the
+      # actual state that involves immutable attributes, then the resource must
+      # be deleted and recreated in order to reach the desired state.
+      immutable_attributes => Optional[Array[Pcore::MemberName]],
+
       # provided_attributes lists the names of the attributes that originates
-      # from the cloud provider and shouldn't be used in comparison between
+      # from the resource provider and shouldn't be used in comparison between
       # desired state an actual state.
       provided_attributes => Optional[Array[Pcore::MemberName]],
 
@@ -28,22 +36,36 @@ func init() {
 		func(ctx eval.Context, args []eval.Value) eval.Value {
 			switch len(args) {
 			case 0:
-				return NewResource(ctx, nil, nil)
+				return NewResource(ctx, nil, nil, nil)
 			case 1:
-				return NewResource(ctx, args[0], nil)
+				return NewResource(ctx, args[0], nil, nil)
+			case 2:
+				return NewResource(ctx, args[0], args[1], nil)
 			default:
-				return NewResource(ctx, args[0], args[1])
+				return NewResource(ctx, args[0], args[1], args[3])
 			}
 		},
 
 		func(ctx eval.Context, args []eval.Value) eval.Value {
 			h := args[0].(*types.HashValue)
-			return NewResource(ctx, h.Get5(`provided_attributes`, eval.UNDEF), h.Get5(`relationships`, eval.UNDEF))
+			return NewResource(ctx, h.Get5(`immutable_attributes`, eval.UNDEF), h.Get5(`provided_attributes`, eval.UNDEF), h.Get5(`relationships`, eval.UNDEF))
 		})
 }
 
 type Resource interface {
 	eval.PuppetObject
+
+	// Changed returns two booleans.
+	//
+	// The first boolean is true when the value of an attribute differs between the desired and actual
+	// state. Attributes listed in the provided_attributes array, for which the desired value is the
+	// default, are exempt from the comparison.
+	//
+	// The second boolean is true when the first is true and the attribute in question is listed in the
+	// immutable_attributes array.
+	Changed(x, y eval.PuppetObject) (bool, bool)
+
+	ImmutableAttributes() []string
 
 	ProvidedAttributes() []string
 
@@ -51,15 +73,26 @@ type Resource interface {
 }
 
 type resource struct {
-	providedAttributes []string
-	relationships      map[string]*Relationship
+	immutableAttributes []string
+	providedAttributes  []string
+	relationships       map[string]*Relationship
 }
 
-func NewResource(ctx eval.Context, provided_attributes eval.Value, relationships eval.Value) Resource {
+func NewResource(ctx eval.Context, immutableAttributes, providedAttributes eval.Value, relationships eval.Value) Resource {
 	r := &resource{}
-	if pa, ok := provided_attributes.(*types.ArrayValue); ok {
-		r.providedAttributes = eval.StringElements(pa)
+
+	stringsOrNil := func(v eval.Value) []string {
+		if a, ok := v.(*types.ArrayValue); ok {
+			sa := eval.StringElements(a)
+			if len(sa) > 0 {
+				return sa
+			}
+		}
+		return nil
 	}
+
+	r.immutableAttributes = stringsOrNil(immutableAttributes)
+	r.providedAttributes = stringsOrNil(providedAttributes)
 	if rs, ok := relationships.(eval.OrderedMap); ok {
 		rels := make(map[string]*Relationship, rs.Len())
 		rs.EachPair(func(k, v eval.Value) {
@@ -69,6 +102,17 @@ func NewResource(ctx eval.Context, provided_attributes eval.Value, relationships
 		r.relationships = rels
 	}
 	return r
+}
+
+func (r *resource) ImmutableAttributes() []string {
+	return r.immutableAttributes
+}
+
+func (r *resource) ImmutableAttributesList() eval.Value {
+	if r.immutableAttributes == nil {
+		return eval.UNDEF
+	}
+	return types.WrapStrings(r.immutableAttributes)
 }
 
 func (r *resource) ProvidedAttributes() []string {
@@ -116,19 +160,49 @@ func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
 			}
 		}
 	}
-	if r.providedAttributes != nil {
-		for _, p := range r.providedAttributes {
-			if m, ok := ot.Member(p); ok {
-				if a, ok := m.(eval.Attribute); ok {
-					if a.HasValue() {
-						continue
-					}
-					panic(eval.Error(RA_PROVIDED_ATTRIBUTE_IS_REQUIRED, issue.H{`attr`: a}))
-				}
-			}
-			panic(eval.Error(RA_PROVIDED_ATTRIBUTE_NOT_FOUND, issue.H{`type`: ot, `name`: p}))
+	if r.immutableAttributes != nil {
+		for _, p := range r.immutableAttributes {
+			assertAttribute(ot, p)
 		}
 	}
+	if r.providedAttributes != nil {
+		for _, p := range r.providedAttributes {
+			a := assertAttribute(ot, p)
+			if a.HasValue() {
+				continue
+			}
+			panic(eval.Error(RA_PROVIDED_ATTRIBUTE_IS_REQUIRED, issue.H{`attr`: a}))
+		}
+	}
+}
+
+// Changed returns two booleans.
+//
+// The first boolean is true when the value of an attribute differs between the desired and actual
+// state. Attributes listed in the provided_attributes array, for which the desired value is the
+// default, are exempt from the comparison.
+//
+// The second boolean is true when the first is true and the attribute in question is listed in the
+// immutable_attributes array.
+func (r *resource) Changed(desired, actual eval.PuppetObject) (bool, bool) {
+	typ := r.PType().(eval.ObjectType)
+	for _, a := range typ.AttributesInfo().Attributes() {
+		dv := a.Get(desired)
+		if r.isProvided(a.Name()) && a.Default(dv) {
+			continue
+		}
+		av := a.Get(actual)
+		if !dv.Equals(av, nil) {
+			log := hclog.Default()
+			if r.isImmutable(a.Name()) {
+				log.Debug("immutable attribute mismatch", "attribute", a.Label(), "desired", dv, "actual", av)
+				return true, true
+			}
+			log.Debug("mutable attribute mismatch", "attribute", a.Label(), "desired", dv, "actual", av)
+			return true, false
+		}
+	}
+	return false, false
 }
 
 func (r *resource) String() string {
@@ -152,6 +226,8 @@ func (r *resource) PType() eval.Type {
 
 func (r *resource) Get(key string) (value eval.Value, ok bool) {
 	switch key {
+	case `immutable_attributes`:
+		return r.ImmutableAttributesList(), true
 	case `provided_attributes`:
 		return r.ProvidedAttributesList(), true
 	case `relationships`:
@@ -162,6 +238,9 @@ func (r *resource) Get(key string) (value eval.Value, ok bool) {
 
 func (r *resource) InitHash() eval.OrderedMap {
 	es := make([]*types.HashEntry, 3)
+	if r.immutableAttributes != nil {
+		es = append(es, types.WrapHashEntry2(`immutable_attributes`, r.ImmutableAttributesList()))
+	}
 	if r.providedAttributes != nil {
 		es = append(es, types.WrapHashEntry2(`provided_attributes`, r.ProvidedAttributesList()))
 	}
@@ -169,4 +248,21 @@ func (r *resource) InitHash() eval.OrderedMap {
 		es = append(es, types.WrapHashEntry2(`relationships`, r.RelationshipsMap()))
 	}
 	return types.WrapHash(es)
+}
+
+func assertAttribute(ot eval.ObjectType, n string) (a eval.Attribute) {
+	if m, ok := ot.Member(n); ok {
+		if a, ok = m.(eval.Attribute); ok {
+			return
+		}
+	}
+	panic(eval.Error(RA_ATTRIBUTE_NOT_FOUND, issue.H{`type`: ot, `name`: n}))
+}
+
+func (r *resource) isProvided(name string) bool {
+	return r.providedAttributes != nil && utils.ContainsString(r.providedAttributes, name)
+}
+
+func (r *resource) isImmutable(name string) bool {
+	return r.immutableAttributes != nil && utils.ContainsString(r.immutableAttributes, name)
 }

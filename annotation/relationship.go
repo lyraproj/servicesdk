@@ -33,6 +33,17 @@ func (r *Relationship) Validate(c eval.Context, typ eval.ObjectType, name string
 	if !ok {
 		panic(eval.Error(RA_RELATIONSHIP_TYPE_IS_NOT_OBJECT, issue.H{`type`: r.Type}))
 	}
+
+	nk := len(r.Keys)
+	if nk%2 != 0 {
+		panic(eval.Error(RA_RELATIONSHIP_KEYS_UNEVEN_NUMBER, issue.H{`type`: r.Type}))
+	}
+
+	for i := 0; i < nk; i += 2 {
+		assertAttribute(typ, r.Keys[i])
+		assertAttribute(at, r.Keys[i+1])
+	}
+
 	var rs Resource
 	ra, ok := at.Annotations(c).Get(ResourceType)
 	if ok {
@@ -76,8 +87,33 @@ func (r *Relationship) IsCounterpartOf(name string, typ eval.ObjectType, o *Rela
 	default:
 		match = false
 	}
+
+	if match {
+		switch r.Cardinality {
+		case CardinalityMany:
+			match = o.Cardinality != CardinalityMany
+		case CardinalityOne:
+			match = o.Cardinality != CardinalityOne
+		}
+	}
+
 	if match && r.ReverseName != nil {
 		match = name == *r.ReverseName
+	}
+
+	if match {
+		nk := len(r.Keys)
+		match = nk == len(o.Keys)
+		if match {
+			// Must match in reverse
+			nk--
+			for i, k := range r.Keys {
+				if k != o.Keys[nk-i] {
+					match = false
+					break
+				}
+			}
+		}
 	}
 	if match {
 		match = r.Type.Equals(typ, nil)

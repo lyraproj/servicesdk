@@ -1,9 +1,11 @@
 package serviceapi
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/puppet-evaluator/eval"
 )
+
+var Definition_Type eval.Type
 
 type Definition interface {
 	eval.Value
