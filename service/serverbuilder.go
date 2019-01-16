@@ -107,10 +107,6 @@ func (ds *ServerBuilder) RegisterApiType(name string, callable interface{}) {
 
 // RegisterState registers the unresolved state of a resource.
 func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
-	t := state.Type()
-	if _, ok := ds.types[t.Name()]; !ok {
-		ds.RegisterType(t)
-	}
 	ds.states[name] = state
 }
 
@@ -387,8 +383,11 @@ func addName(ks []string, tree map[string]interface{}, t eval.Type) {
 }
 
 func (ds *ServerBuilder) Server() *Server {
-	ts := CreateTypeSet(ds.types)
-	ds.ctx.AddTypes(ts)
+	var ts eval.TypeSet
+	if len(ds.types) > 0 {
+		ts = CreateTypeSet(ds.types)
+		ds.ctx.AddTypes(ts)
+	}
 
 	defs := make([]eval.Value, 0, len(ds.callables)+len(ds.activities))
 
