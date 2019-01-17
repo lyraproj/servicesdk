@@ -185,7 +185,7 @@ func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
 // The second boolean is true when the first is true and the attribute in question is listed in the
 // immutable_attributes array.
 func (r *resource) Changed(desired, actual eval.PuppetObject) (bool, bool) {
-	typ := r.PType().(eval.ObjectType)
+	typ := desired.PType().(eval.ObjectType)
 	for _, a := range typ.AttributesInfo().Attributes() {
 		dv := a.Get(desired)
 		if r.isProvided(a.Name()) && a.Default(dv) {
