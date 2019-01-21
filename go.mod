@@ -6,8 +6,8 @@ require (
 	github.com/hashicorp/go-plugin v0.0.0-20181212150838-f444068e8f5a
 	github.com/lyraproj/data-protobuf v0.0.0-20181217135414-3d508204b820
 	github.com/lyraproj/issue v0.0.0-20181208172701-8d203563a8dc
-	github.com/lyraproj/puppet-evaluator v0.0.0-20190119120541-966996aacfc1
+	github.com/lyraproj/puppet-evaluator v0.0.0-20190121224504-9cbd778da25e
 	github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2
-	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
+	golang.org/x/net v0.0.0-20190119204137-ed066c81e75e
 	google.golang.org/grpc v1.18.0
 )
