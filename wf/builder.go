@@ -229,15 +229,20 @@ func (b *iteratorBuilder) validate() {
 type resourceBuilder struct {
 	builder
 	state wfapi.State
+	extId string
 }
 
 func (b *resourceBuilder) Build() wfapi.Activity {
 	b.validate()
-	return NewResource(b.GetName(), b.when, b.input, b.output, b.state)
+	return NewResource(b.GetName(), b.when, b.input, b.output, b.extId, b.state)
 }
 
 func (b *resourceBuilder) State(state wfapi.State) {
 	b.state = state
+}
+
+func (b *resourceBuilder) ExternalId(extId string) {
+	b.extId = extId
 }
 
 // RegisterState registers a struct as a state. The state type is inferred from the

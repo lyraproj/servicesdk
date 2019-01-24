@@ -12,5 +12,7 @@ type StateConverter func(ctx eval.Context, state State, input eval.OrderedMap) e
 type Resource interface {
 	Activity
 
+	ExternalId() string
+
 	State() State
 }
