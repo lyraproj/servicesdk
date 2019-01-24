@@ -25,7 +25,7 @@ type Relationship struct {
 }
 
 func init() {
-	RelationshipType = eval.NewGoType(`Lyra::Relationship`, &Relationship{})
+	RelationshipType = eval.NewGoType(`Lyra::Relationship`, Relationship{})
 }
 
 func (r *Relationship) Validate(c eval.Context, typ eval.ObjectType, name string) {
