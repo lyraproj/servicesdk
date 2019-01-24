@@ -6,10 +6,11 @@ import (
 	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"io"
+	"reflect"
 )
 
 func init() {
-	serviceapi.Definition_Type = eval.NewObjectType(`Service::Definition`, `{
+	serviceapi.Definition_Type = eval.NewGoObjectType(`Service::Definition`, reflect.TypeOf((*serviceapi.Definition)(nil)).Elem(), `{
     attributes => {
       identifier => TypedName,
       serviceId => TypedName,

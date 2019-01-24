@@ -116,7 +116,10 @@ func ExampleServer_Nested_type() {
 	//   types => {
 	//     MyOuterRes => {
 	//       attributes => {
-	//         'who' => MyRes,
+	//         'who' => {
+	//           'type' => Optional[MyRes],
+	//           'value' => undef
+	//         },
 	//         'what' => String
 	//       }
 	//     },
@@ -163,8 +166,11 @@ func ExampleServer_Recursive_type() {
 	//     },
 	//     Person => {
 	//       attributes => {
-	//         'who' => MyRes,
-	//         'children' => Array[Person]
+	//         'who' => {
+	//           'type' => Optional[MyRes],
+	//           'value' => undef
+	//         },
+	//         'children' => Array[Optional[Person]]
 	//       }
 	//     }
 	//   }

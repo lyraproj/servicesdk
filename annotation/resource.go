@@ -14,7 +14,7 @@ import (
 var ResourceType eval.ObjectType
 
 func init() {
-	ResourceType = eval.NewObjectType(`Lyra::Resource`, `Annotation{
+	ResourceType = eval.NewGoObjectType(`Lyra::Resource`, reflect.TypeOf((*Resource)(nil)).Elem(), `Annotation{
     attributes => {
       # immutable_attributes lists the names of the attributes that cannot be
       # changed. If a difference is detected between the desired state and the
