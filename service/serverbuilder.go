@@ -252,10 +252,15 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		style = `workflow`
 		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(activity.(wfapi.Workflow).Activities())))
 	case wfapi.Resource:
+		rs := activity.(wfapi.Resource)
 		style = `resource`
-		state := activity.(wfapi.Resource).State()
+		state := rs.State()
+		extId := rs.ExternalId()
 		ds.RegisterState(name, state)
 		props = append(props, types.WrapHashEntry2(`resource_type`, state.Type()))
+		if extId != `` {
+			props = append(props, types.WrapHashEntry2(`external_id`, types.WrapString(extId)))
+		}
 	case wfapi.Action:
 		style = `action`
 		ds.RegisterAPI(name, activity.(wfapi.Action).Interface())

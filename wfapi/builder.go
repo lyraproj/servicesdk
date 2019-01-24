@@ -51,6 +51,7 @@ type IteratorBuilder interface {
 
 type ResourceBuilder interface {
 	Builder
+	ExternalId(extId string)
 	State(state State)
 	StateStruct(state interface{})
 }
