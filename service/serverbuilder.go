@@ -171,8 +171,6 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.Annotat
 		return et
 	}
 
-	ir := ds.ctx.ImplementationRegistry()
-
 	var registerFieldType func(ft reflect.Type)
 	registerFieldType = func(ft reflect.Type) {
 		switch ft.Kind() {
@@ -182,11 +180,10 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.Annotat
 			if ft == parent {
 				break
 			}
-			if _, ok := ir.ReflectedToType(ft); ok {
-				// Already registered
-				break
+			// Register type unless it's already registered
+			if _, err := eval.WrapReflectedType(ds.ctx, ft); err != nil {
+				ds.registerReflectedType(namespace, eval.NewAnnotatedType(ft, nil, nil))
 			}
-			ds.registerReflectedType(namespace, eval.NewAnnotatedType(ft, nil, nil))
 		}
 	}
 

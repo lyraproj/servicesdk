@@ -10,6 +10,7 @@ import (
 	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/wfapi"
 	"os"
+	"time"
 
 	// Initialize pcore
 	_ "github.com/lyraproj/puppet-evaluator/pcore"
@@ -136,6 +137,7 @@ func ExampleServer_Nested_type() {
 type Person struct {
 	Who      *MyRes
 	Children []*Person
+	Born     time.Time
 }
 
 func ExampleServer_Recursive_type() {
@@ -170,7 +172,8 @@ func ExampleServer_Recursive_type() {
 	//           'type' => Optional[MyRes],
 	//           'value' => undef
 	//         },
-	//         'children' => Array[Optional[Person]]
+	//         'children' => Array[Optional[Person]],
+	//         'born' => Timestamp
 	//       }
 	//     }
 	//   }
