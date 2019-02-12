@@ -16,16 +16,16 @@ type ResourceTypeBuilder interface {
 }
 
 type rtBuilder struct {
-	ctx   eval.Context
-	rels  []*types.HashEntry
+	ctx            eval.Context
+	rels           []*types.HashEntry
 	immutableAttrs []string
-	providedAttrs []string
-	tags  map[string]string
+	providedAttrs  []string
+	tags           map[string]string
 }
 
-func (rb *rtBuilder) AddRelationship(name, to, kind, cardinality, reverse_name string, keys []string) {
+func (rb *rtBuilder) AddRelationship(name, to, kind, cardinality, reverseName string, keys []string) {
 	ln := 4
-	if reverse_name != `` {
+	if reverseName != `` {
 		ln++
 	}
 	es := make([]*types.HashEntry, ln)
@@ -33,8 +33,8 @@ func (rb *rtBuilder) AddRelationship(name, to, kind, cardinality, reverse_name s
 	es[1] = types.WrapHashEntry2(`kind`, types.WrapString(kind))
 	es[2] = types.WrapHashEntry2(`cardinality`, types.WrapString(cardinality))
 	es[3] = types.WrapHashEntry2(`keys`, types.WrapStrings(keys))
-	if reverse_name != `` {
-		es[4] = types.WrapHashEntry2(`reverse_name`, types.WrapString(reverse_name))
+	if reverseName != `` {
+		es[4] = types.WrapHashEntry2(`reverseName`, types.WrapString(reverseName))
 	}
 	rb.rels = append(rb.rels, types.WrapHashEntry2(name, types.WrapHash(es)))
 }
@@ -80,10 +80,10 @@ func (rb *rtBuilder) Build(goType interface{}) eval.AnnotatedType {
 	if rb.immutableAttrs != nil || rb.providedAttrs != nil || rb.rels != nil {
 		as := make([]*types.HashEntry, 0, 3)
 		if rb.immutableAttrs != nil {
-			as = append(as, types.WrapHashEntry2(`immutable_attributes`, types.WrapStrings(rb.immutableAttrs)))
+			as = append(as, types.WrapHashEntry2(`immutableAttributes`, types.WrapStrings(rb.immutableAttrs)))
 		}
 		if rb.providedAttrs != nil {
-			as = append(as, types.WrapHashEntry2(`provided_attributes`, types.WrapStrings(rb.providedAttrs)))
+			as = append(as, types.WrapHashEntry2(`providedAttributes`, types.WrapStrings(rb.providedAttrs)))
 		}
 		if rb.rels != nil {
 			as = append(as, types.WrapHashEntry2(`relationships`, types.WrapHash(rb.rels)))

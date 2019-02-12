@@ -3,7 +3,6 @@ package typegen
 import (
 	"bytes"
 	"fmt"
-	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/puppet-evaluator/utils"
@@ -106,7 +105,7 @@ func (g *tsGenerator) ToTsType(ns []string, pType eval.Type) string {
 type tsAttribute struct {
 	name  string
 	typ   string
-	value string
+	value *string
 }
 
 func (g *tsGenerator) toTsAttrs(t eval.ObjectType, ns []string, attrs []eval.Attribute) (allAttrs, thisAttrs, superAttrs []*tsAttribute) {
@@ -114,7 +113,7 @@ func (g *tsGenerator) toTsAttrs(t eval.ObjectType, ns []string, attrs []eval.Att
 	superAttrs = make([]*tsAttribute, 0)
 	thisAttrs = make([]*tsAttribute, 0)
 	for i, attr := range attrs {
-		tsAttr := &tsAttribute{name: issue.CamelToSnakeCase(attr.Name()), typ: g.ToTsType(ns, attr.Type())}
+		tsAttr := &tsAttribute{name: attr.Name(), typ: g.ToTsType(ns, attr.Type())}
 		if attr.HasValue() {
 			tsAttr.value = toTsValue(attr.Value())
 		}
@@ -174,7 +173,7 @@ func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent in
 
 func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld *bytes.Buffer) {
 	newLine(indent, bld)
-	bld.WriteString(`__pvalue() : {[s: string]: any} {`)
+	bld.WriteString(`__pvalue() : {[s: string]: Value} {`)
 	indent += 2
 	newLine(indent, bld)
 	if len(thisAttrs) == 0 {
@@ -185,18 +184,18 @@ func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld
 		}
 	} else {
 		if hasSuper {
-			bld.WriteString(`let ih = super.__pvalue();`)
+			bld.WriteString(`const ih = super.__pvalue();`)
 		} else {
-			bld.WriteString(`let ih: {[s: string]: any} = {};`)
+			bld.WriteString(`const ih: {[s: string]: Value} = {};`)
 		}
 		for _, attr := range thisAttrs {
 			newLine(indent, bld)
-			if attr.value != `` {
+			if attr.value != nil {
 				bld.WriteString(`if(this.`)
 				bld.WriteString(attr.name)
 				bld.WriteString(` !== `)
-				bld.WriteString(attr.value)
-				bld.WriteString(`)`)
+				bld.WriteString(*attr.value)
+				bld.WriteString(`) {`)
 				indent += 2
 				newLine(indent, bld)
 			}
@@ -205,8 +204,10 @@ func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld
 			bld.WriteString(`'] = this.`)
 			bld.WriteString(attr.name)
 			bld.WriteString(`;`)
-			if attr.value != `` {
+			if attr.value != nil {
 				indent -= 2
+				newLine(indent, bld)
+				bld.WriteString(`}`)
 			}
 		}
 		newLine(indent, bld)
@@ -237,9 +238,9 @@ func appendParameters(params []*tsAttribute, indent int, bld *bytes.Buffer) {
 	for _, attr := range params {
 		newLine(indent, bld)
 		bld.WriteString(attr.name)
-		if attr.value != `` {
+		if attr.value != nil {
 			bld.WriteString(` = `)
-			bld.WriteString(attr.value)
+			bld.WriteString(*attr.value)
 		}
 		bld.WriteString(`,`)
 	}
@@ -252,7 +253,7 @@ func appendParameters(params []*tsAttribute, indent int, bld *bytes.Buffer) {
 	for _, attr := range params {
 		newLine(indent, bld)
 		bld.WriteString(attr.name)
-		if attr.value != `` {
+		if attr.value != nil {
 			bld.WriteByte('?')
 		}
 		bld.WriteString(`: `)
@@ -266,10 +267,11 @@ func appendParameters(params []*tsAttribute, indent int, bld *bytes.Buffer) {
 	bld.WriteString(`}`)
 }
 
-func toTsValue(value eval.Value) string {
+func toTsValue(value eval.Value) *string {
 	bld := bytes.NewBufferString(``)
 	appendTsValue(value, bld)
-	return bld.String()
+	s := bld.String()
+	return &s
 }
 
 func appendTsValue(value eval.Value, bld *bytes.Buffer) {
@@ -316,9 +318,8 @@ func appendTsType(ns []string, pType eval.Type, bld *bytes.Buffer) {
 		appendTsType(ns, pType.(*types.OptionalType).ContainedType(), bld)
 		bld.WriteString(` | null`)
 	case *types.ArrayType:
-		bld.WriteString(`Array<`)
 		appendTsType(ns, pType.(*types.ArrayType).ElementType(), bld)
-		bld.WriteString(`>`)
+		bld.WriteString(`[]`)
 	case *types.VariantType:
 		for i, v := range pType.(*types.VariantType).Types() {
 			if i > 0 {

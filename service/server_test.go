@@ -233,7 +233,7 @@ func ExampleServer_Metadata_definitions() {
 	//               'name' => 'b',
 	//               'type' => String
 	//             )],
-	//           'resource_type' => My::MyRes,
+	//           'resourceType' => My::MyRes,
 	//           'style' => 'resource'
 	//         }
 	//       )],
@@ -261,13 +261,13 @@ func ExampleServer_TypeSet_annotated() {
 		sb.RegisterTypes("My",
 			sb.BuildResource(&OwnerRes{}, func(rtb service.ResourceTypeBuilder) {
 				rtb.ProvidedAttributes(`id`)
-				rtb.ImmutableAttributes(`telephone_number`)
-				rtb.Tags(map[string]string{`Phone`: `name=>telephone_number`})
-				rtb.AddRelationship(`mine`, `My::ContainedRes`, annotation.KindContained, annotation.CardinalityMany, ``, []string{`id`, `owner_id`})
+				rtb.ImmutableAttributes(`telephoneNumber`)
+				rtb.Tags(map[string]string{`Phone`: `name=>telephoneNumber`})
+				rtb.AddRelationship(`mine`, `My::ContainedRes`, annotation.KindContained, annotation.CardinalityMany, ``, []string{`id`, `ownerId`})
 			}),
 			sb.BuildResource(&ContainedRes{}, func(rtb service.ResourceTypeBuilder) {
 				rtb.ProvidedAttributes(`id`)
-				rtb.AddRelationship(`owner`, `My::OwnerRes`, annotation.KindContainer, annotation.CardinalityOne, ``, []string{`owner_id`, `id`})
+				rtb.AddRelationship(`owner`, `My::OwnerRes`, annotation.KindContainer, annotation.CardinalityOne, ``, []string{`ownerId`, `id`})
 			}),
 		)
 		s := sb.Server()
@@ -296,13 +296,13 @@ func ExampleServer_TypeSet_annotated() {
 	//     ContainedRes => {
 	//       annotations => {
 	//         Lyra::Resource => {
-	//           'provided_attributes' => ['id'],
+	//           'providedAttributes' => ['id'],
 	//           'relationships' => {
 	//             'owner' => {
 	//               'type' => OwnerRes,
 	//               'kind' => 'container',
 	//               'cardinality' => 'one',
-	//               'keys' => ['owner_id', 'id']
+	//               'keys' => ['ownerId', 'id']
 	//             }
 	//           }
 	//         }
@@ -312,21 +312,21 @@ func ExampleServer_TypeSet_annotated() {
 	//           'type' => Optional[String],
 	//           'value' => undef
 	//         },
-	//         'owner_id' => String,
+	//         'ownerId' => String,
 	//         'stuff' => String
 	//       }
 	//     },
 	//     OwnerRes => {
 	//       annotations => {
 	//         Lyra::Resource => {
-	//           'immutable_attributes' => ['telephone_number'],
-	//           'provided_attributes' => ['id'],
+	//           'immutableAttributes' => ['telephoneNumber'],
+	//           'providedAttributes' => ['id'],
 	//           'relationships' => {
 	//             'mine' => {
 	//               'type' => ContainedRes,
 	//               'kind' => 'contained',
 	//               'cardinality' => 'many',
-	//               'keys' => ['id', 'owner_id']
+	//               'keys' => ['id', 'ownerId']
 	//             }
 	//           }
 	//         }
@@ -336,7 +336,7 @@ func ExampleServer_TypeSet_annotated() {
 	//           'type' => Optional[String],
 	//           'value' => undef
 	//         },
-	//         'telephone_number' => String
+	//         'telephoneNumber' => String
 	//       }
 	//     }
 	//   }
@@ -415,10 +415,10 @@ func ExampleServer_Metadata_api() {
 	//   types => {
 	//     Identity => {
 	//       functions => {
-	//         'get_external' => Callable[
+	//         'getExternal' => Callable[
 	//           [String],
 	//           String],
-	//         'get_internal' => Callable[
+	//         'getInternal' => Callable[
 	//           [String],
 	//           String]
 	//       }

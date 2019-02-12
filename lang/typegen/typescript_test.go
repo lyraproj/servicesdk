@@ -48,8 +48,8 @@ func TestGetAllNestedTypes(t *testing.T) {
 
 func ExampleGenerator_GenerateTypes() {
 	type Address struct {
-		Street string
-		Zip    string `puppet:"name=>zip_code"`
+		Street  string
+		ZipCode string
 	}
 	type Person struct {
 		Name    string
@@ -82,23 +82,23 @@ func ExampleGenerator_GenerateTypes() {
 	//
 	//     export class Address implements PcoreValue {
 	//       readonly street: string;
-	//       readonly zip_code: string;
+	//       readonly zipCode: string;
 	//
 	//       constructor({
 	//           street,
-	//           zip_code
+	//           zipCode
 	//         }: {
 	//           street: string,
-	//           zip_code: string
+	//           zipCode: string
 	//         }) {
 	//         this.street = street;
-	//         this.zip_code = zip_code;
+	//         this.zipCode = zipCode;
 	//       }
 	//
-	//       __pvalue() : {[s: string]: any} {
-	//         let ih: {[s: string]: any} = {};
+	//       __pvalue() : {[s: string]: Value} {
+	//         const ih: {[s: string]: Value} = {};
 	//         ih['street'] = this.street;
-	//         ih['zip_code'] = this.zip_code;
+	//         ih['zipCode'] = this.zipCode;
 	//         return ih;
 	//       }
 	//
@@ -126,12 +126,13 @@ func ExampleGenerator_GenerateTypes() {
 	//         this.address = address;
 	//       }
 	//
-	//       __pvalue() : {[s: string]: any} {
-	//         let ih: {[s: string]: any} = {};
+	//       __pvalue() : {[s: string]: Value} {
+	//         const ih: {[s: string]: Value} = {};
 	//         ih['name'] = this.name;
 	//         ih['gender'] = this.gender;
-	//         if(this.address !== null)
+	//         if(this.address !== null) {
 	//           ih['address'] = this.address;
+	//         }
 	//         return ih;
 	//       }
 	//
@@ -162,11 +163,12 @@ func ExampleGenerator_GenerateTypes() {
 	//         this.age = age;
 	//       }
 	//
-	//       __pvalue() : {[s: string]: any} {
-	//         let ih = super.__pvalue();
+	//       __pvalue() : {[s: string]: Value} {
+	//         const ih = super.__pvalue();
 	//         ih['enabled'] = this.enabled;
-	//         if(this.age !== null)
+	//         if(this.age !== null) {
 	//           ih['age'] = this.age;
+	//         }
 	//         return ih;
 	//       }
 	//

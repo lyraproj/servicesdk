@@ -340,8 +340,8 @@ type Aws = TypeSet[{
             InternetGateway => {
               annotations => {
                 Lyra::Resource => {
-                  'immutable_attributes' => ['tags'],
-                  'provided_attributes' => ['internet_gateway_id']
+                  'immutableAttributes' => ['tags'],
+                  'providedAttributes' => ['internet_gateway_id']
                 }
               },
               attributes => {
@@ -1934,8 +1934,8 @@ type Aws = TypeSet[{
             RouteTable => {
               annotations => {
                 Lyra::Resource => {
-                  'immutable_attributes' => ['tags'],
-                  'provided_attributes' => ['route_table_id', 'routes']
+                  'immutableAttributes' => ['tags'],
+                  'providedAttributes' => ['route_table_id', 'routes']
                 }
               },
               attributes => {
@@ -2041,8 +2041,8 @@ type Aws = TypeSet[{
             Subnet => {
               annotations => {
                 Lyra::Resource => {
-                  'immutable_attributes' => ['tags'],
-                  'provided_attributes' => ['subnet_id', 'availability_zone', 'available_ip_address_count']
+                  'immutableAttributes' => ['tags'],
+                  'providedAttributes' => ['subnet_id', 'availability_zone', 'available_ip_address_count']
                 }
               },
               attributes => {

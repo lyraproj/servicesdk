@@ -1,8 +1,8 @@
 package wfapi
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/puppet-evaluator/eval"
 )
 
 type IterationStyle int
@@ -31,7 +31,7 @@ func NewIterationStyle(style string) IterationStyle {
 	switch style {
 	case `each`:
 		return IterationStyleEach
-	case `eachPair`, `each_pair`:
+	case `eachPair`:
 		return IterationStyleEachPair
 	case `range`:
 		return IterationStyleRange

@@ -16,16 +16,16 @@ var ResourceType eval.ObjectType
 func init() {
 	ResourceType = eval.NewGoObjectType(`Lyra::Resource`, reflect.TypeOf((*Resource)(nil)).Elem(), `Annotation{
     attributes => {
-      # immutable_attributes lists the names of the attributes that cannot be
+      # immutableAttributes lists the names of the attributes that cannot be
       # changed. If a difference is detected between the desired state and the
       # actual state that involves immutable attributes, then the resource must
       # be deleted and recreated in order to reach the desired state.
-      immutable_attributes => Optional[Array[Pcore::MemberName]],
+      immutableAttributes => Optional[Array[Pcore::MemberName]],
 
-      # provided_attributes lists the names of the attributes that originates
+      # providedAttributes lists the names of the attributes that originates
       # from the resource provider and shouldn't be used in comparison between
       # desired state an actual state.
-      provided_attributes => Optional[Array[Pcore::MemberName]],
+      providedAttributes => Optional[Array[Pcore::MemberName]],
 
       # relationships describe how the annotated resource type relates to
       # other resource types.
@@ -48,7 +48,7 @@ func init() {
 
 		func(ctx eval.Context, args []eval.Value) eval.Value {
 			h := args[0].(*types.HashValue)
-			return NewResource(ctx, h.Get5(`immutable_attributes`, eval.UNDEF), h.Get5(`provided_attributes`, eval.UNDEF), h.Get5(`relationships`, eval.UNDEF))
+			return NewResource(ctx, h.Get5(`immutableAttributes`, eval.UNDEF), h.Get5(`providedAttributes`, eval.UNDEF), h.Get5(`relationships`, eval.UNDEF))
 		})
 }
 
@@ -58,11 +58,11 @@ type Resource interface {
 	// Changed returns two booleans.
 	//
 	// The first boolean is true when the value of an attribute differs between the desired and actual
-	// state. Attributes listed in the provided_attributes array, for which the desired value is the
+	// state. Attributes listed in the providedAttributes array, for which the desired value is the
 	// default, are exempt from the comparison.
 	//
 	// The second boolean is true when the first is true and the attribute in question is listed in the
-	// immutable_attributes array.
+	// immutableAttributes array.
 	Changed(x, y eval.PuppetObject) (bool, bool)
 
 	ImmutableAttributes() []string
@@ -179,11 +179,11 @@ func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
 // Changed returns two booleans.
 //
 // The first boolean is true when the value of an attribute differs between the desired and actual
-// state. Attributes listed in the provided_attributes array, for which the desired value is the
+// state. Attributes listed in the providedAttributes array, for which the desired value is the
 // default, are exempt from the comparison.
 //
 // The second boolean is true when the first is true and the attribute in question is listed in the
-// immutable_attributes array.
+// immutableAttributes array.
 func (r *resource) Changed(desired, actual eval.PuppetObject) (bool, bool) {
 	typ := desired.PType().(eval.ObjectType)
 	for _, a := range typ.AttributesInfo().Attributes() {
@@ -226,9 +226,9 @@ func (r *resource) PType() eval.Type {
 
 func (r *resource) Get(key string) (value eval.Value, ok bool) {
 	switch key {
-	case `immutable_attributes`:
+	case `immutableAttributes`:
 		return r.ImmutableAttributesList(), true
-	case `provided_attributes`:
+	case `providedAttributes`:
 		return r.ProvidedAttributesList(), true
 	case `relationships`:
 		return r.RelationshipsMap(), true
@@ -239,10 +239,10 @@ func (r *resource) Get(key string) (value eval.Value, ok bool) {
 func (r *resource) InitHash() eval.OrderedMap {
 	es := make([]*types.HashEntry, 3)
 	if r.immutableAttributes != nil {
-		es = append(es, types.WrapHashEntry2(`immutable_attributes`, r.ImmutableAttributesList()))
+		es = append(es, types.WrapHashEntry2(`immutableAttributes`, r.ImmutableAttributesList()))
 	}
 	if r.providedAttributes != nil {
-		es = append(es, types.WrapHashEntry2(`provided_attributes`, r.ProvidedAttributesList()))
+		es = append(es, types.WrapHashEntry2(`providedAttributes`, r.ProvidedAttributesList()))
 	}
 	if r.relationships != nil {
 		es = append(es, types.WrapHashEntry2(`relationships`, r.RelationshipsMap()))

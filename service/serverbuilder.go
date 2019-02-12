@@ -254,9 +254,9 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		state := rs.State()
 		extId := rs.ExternalId()
 		ds.RegisterState(name, state)
-		props = append(props, types.WrapHashEntry2(`resource_type`, state.Type()))
+		props = append(props, types.WrapHashEntry2(`resourceType`, state.Type()))
 		if extId != `` {
-			props = append(props, types.WrapHashEntry2(`external_id`, types.WrapString(extId)))
+			props = append(props, types.WrapHashEntry2(`externalId`, types.WrapString(extId)))
 		}
 	case wfapi.Action:
 		style = `action`
@@ -269,7 +269,7 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 	case wfapi.Iterator:
 		style = `iterator`
 		iter := activity.(wfapi.Iterator)
-		props = append(props, types.WrapHashEntry2(`iteration_style`, types.WrapString(iter.IterationStyle().String())))
+		props = append(props, types.WrapHashEntry2(`iterationStyle`, types.WrapString(iter.IterationStyle().String())))
 		props = append(props, types.WrapHashEntry2(`over`, paramsAsList(iter.Over())))
 		props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(iter.Variables())))
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(iter.Producer())))
@@ -404,7 +404,7 @@ func (ds *ServerBuilder) Server() *Server {
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[k]))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
-			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
+			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
 		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
@@ -415,7 +415,7 @@ func (ds *ServerBuilder) Server() *Server {
 		props = append(props, types.WrapHashEntry2(`interface`, po.PType()))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
-			props = append(props, types.WrapHashEntry2(`handler_for`, stateType))
+			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
 		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}

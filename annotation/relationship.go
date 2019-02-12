@@ -14,12 +14,12 @@ const KindProvider = `provider`
 
 const CardinalityOne = `one`
 const CardinalityMany = `many`
-const CardinalityZeroOrOne = `zero_or_one`
+const CardinalityZeroOrOne = `zeroOrOne`
 
 type Relationship struct {
 	Type        eval.Type
 	Kind        string   `puppet:"type => Enum[contained, container, consumer, provider]"`
-	Cardinality string   `puppet:"type => Enum[one, many, zero_or_one]"`
+	Cardinality string   `puppet:"type => Enum[one, many, zeroOrOne]"`
 	Keys        []string `puppet:"type => Array[Pcore::MemberName]"`
 	ReverseName *string  `puppet:"type => Pcore::MemberName, value => undef"`
 }

@@ -61,16 +61,16 @@ func ExampleServerBuilder_RegisterAPI_identity() {
 	//         'associate' => Callable[
 	//           [String, String],
 	//           Any],
-	//         'get_external' => Callable[
+	//         'getExternal' => Callable[
 	//           [String],
 	//           String],
-	//         'get_internal' => Callable[
+	//         'getInternal' => Callable[
 	//           [String],
 	//           String],
-	//         'remove_external' => Callable[
+	//         'removeExternal' => Callable[
 	//           [String],
 	//           Any],
-	//         'remove_internal' => Callable[
+	//         'removeInternal' => Callable[
 	//           [String],
 	//           Any]
 	//       }
