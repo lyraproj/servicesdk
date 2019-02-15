@@ -260,11 +260,11 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		}
 	case wfapi.Action:
 		style = `action`
-		ds.RegisterAPI(name, activity.(wfapi.Action).Interface())
+		ds.RegisterAPI(strings.Title(name), activity.(wfapi.Action).Interface())
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
 	case wfapi.Stateless:
 		style = `stateless`
-		ds.RegisterAPI(name, activity.(wfapi.Stateless).Function())
+		ds.RegisterAPI(strings.Title(name), activity.(wfapi.Stateless).Function())
 		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
 	case wfapi.Iterator:
 		style = `iterator`
