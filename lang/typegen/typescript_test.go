@@ -85,94 +85,94 @@ func ExampleGenerator_GenerateTypes() {
 	//       readonly zipCode: string;
 	//
 	//       constructor({
-	//           street,
-	//           zipCode
-	//         }: {
-	//           street: string,
-	//           zipCode: string
-	//         }) {
+	//         street,
+	//         zipCode
+	//       }: {
+	//         street: string,
+	//         zipCode: string
+	//       }) {
 	//         this.street = street;
 	//         this.zipCode = zipCode;
 	//       }
 	//
-	//       __pvalue() : {[s: string]: Value} {
+	//       __pvalue(): {[s: string]: Value} {
 	//         const ih: {[s: string]: Value} = {};
 	//         ih['street'] = this.street;
 	//         ih['zipCode'] = this.zipCode;
 	//         return ih;
 	//       }
 	//
-	//       __ptype() : string {
+	//       __ptype(): string {
 	//         return 'My::Own::Address';
 	//       }
 	//     }
 	//
 	//     export class Person implements PcoreValue {
 	//       readonly name: string;
-	//       readonly gender: 'male' | 'female' | 'other';
-	//       readonly address: Address | null;
+	//       readonly gender: 'male'|'female'|'other';
+	//       readonly address: Address|null;
 	//
 	//       constructor({
-	//           name,
-	//           gender,
-	//           address = null
-	//         }: {
-	//           name: string,
-	//           gender: 'male' | 'female' | 'other',
-	//           address?: Address | null
-	//         }) {
+	//         name,
+	//         gender,
+	//         address = null
+	//       }: {
+	//         name: string,
+	//         gender: 'male'|'female'|'other',
+	//         address?: Address|null
+	//       }) {
 	//         this.name = name;
 	//         this.gender = gender;
 	//         this.address = address;
 	//       }
 	//
-	//       __pvalue() : {[s: string]: Value} {
+	//       __pvalue(): {[s: string]: Value} {
 	//         const ih: {[s: string]: Value} = {};
 	//         ih['name'] = this.name;
 	//         ih['gender'] = this.gender;
-	//         if(this.address !== null) {
+	//         if (this.address !== null) {
 	//           ih['address'] = this.address;
 	//         }
 	//         return ih;
 	//       }
 	//
-	//       __ptype() : string {
+	//       __ptype(): string {
 	//         return 'My::Own::Person';
 	//       }
 	//     }
 	//
 	//     export class ExtendedPerson extends Person {
 	//       readonly enabled: boolean;
-	//       readonly age: number | null;
+	//       readonly age: number|null;
 	//
 	//       constructor({
-	//           name,
-	//           gender,
-	//           enabled,
-	//           address = null,
-	//           age = null
-	//         }: {
-	//           name: string,
-	//           gender: 'male' | 'female' | 'other',
-	//           enabled: boolean,
-	//           address?: Address | null,
-	//           age?: number | null
-	//         }) {
+	//         name,
+	//         gender,
+	//         enabled,
+	//         address = null,
+	//         age = null
+	//       }: {
+	//         name: string,
+	//         gender: 'male'|'female'|'other',
+	//         enabled: boolean,
+	//         address?: Address|null,
+	//         age?: number|null
+	//       }) {
 	//         super({name: name, gender: gender, address: address});
 	//         this.enabled = enabled;
 	//         this.age = age;
 	//       }
 	//
-	//       __pvalue() : {[s: string]: Value} {
+	//       __pvalue(): {[s: string]: Value} {
 	//         const ih = super.__pvalue();
 	//         ih['enabled'] = this.enabled;
-	//         if(this.age !== null) {
+	//         if (this.age !== null) {
 	//           ih['age'] = this.age;
 	//         }
 	//         return ih;
 	//       }
 	//
-	//       __ptype() : string {
+	//       __ptype(): string {
 	//         return 'My::Own::ExtendedPerson';
 	//       }
 	//     }

@@ -75,7 +75,9 @@ func (g *tsGenerator) GenerateType(t eval.Type, ns []string, indent int, bld *by
 		ai := pt.AttributesInfo()
 		allAttrs, thisAttrs, superAttrs := g.toTsAttrs(pt, ns, ai.Attributes())
 		appendFields(thisAttrs, indent, bld)
-		bld.WriteByte('\n')
+		if len(thisAttrs) > 0 {
+			bld.WriteByte('\n')
+		}
 		if len(allAttrs) > 0 {
 			appendConstructor(allAttrs, thisAttrs, superAttrs, indent, bld)
 			bld.WriteByte('\n')
@@ -173,7 +175,7 @@ func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent in
 
 func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld *bytes.Buffer) {
 	newLine(indent, bld)
-	bld.WriteString(`__pvalue() : {[s: string]: Value} {`)
+	bld.WriteString(`__pvalue(): {[s: string]: Value} {`)
 	indent += 2
 	newLine(indent, bld)
 	if len(thisAttrs) == 0 {
@@ -191,7 +193,7 @@ func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld
 		for _, attr := range thisAttrs {
 			newLine(indent, bld)
 			if attr.value != nil {
-				bld.WriteString(`if(this.`)
+				bld.WriteString(`if (this.`)
 				bld.WriteString(attr.name)
 				bld.WriteString(` !== `)
 				bld.WriteString(*attr.value)
@@ -220,7 +222,7 @@ func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld
 
 func appendPTypeGetter(name string, indent int, bld *bytes.Buffer) {
 	newLine(indent, bld)
-	bld.WriteString(`__ptype() : string {`)
+	bld.WriteString(`__ptype(): string {`)
 	indent += 2
 	newLine(indent, bld)
 	bld.WriteString(`return '`)
@@ -234,7 +236,6 @@ func appendPTypeGetter(name string, indent int, bld *bytes.Buffer) {
 func appendParameters(params []*tsAttribute, indent int, bld *bytes.Buffer) {
 	indent += 2
 	bld.WriteString(`{`)
-	indent += 2
 	for _, attr := range params {
 		newLine(indent, bld)
 		bld.WriteString(attr.name)
@@ -316,14 +317,14 @@ func appendTsType(ns []string, pType eval.Type, bld *bytes.Buffer) {
 		bld.WriteString(`string`)
 	case *types.OptionalType:
 		appendTsType(ns, pType.(*types.OptionalType).ContainedType(), bld)
-		bld.WriteString(` | null`)
+		bld.WriteString(`|null`)
 	case *types.ArrayType:
 		appendTsType(ns, pType.(*types.ArrayType).ElementType(), bld)
 		bld.WriteString(`[]`)
 	case *types.VariantType:
 		for i, v := range pType.(*types.VariantType).Types() {
 			if i > 0 {
-				bld.WriteString(` | `)
+				bld.WriteString(`|`)
 			}
 			appendTsType(ns, v, bld)
 		}
@@ -337,7 +338,7 @@ func appendTsType(ns []string, pType eval.Type, bld *bytes.Buffer) {
 	case *types.EnumType:
 		for i, s := range pType.(*types.EnumType).Parameters() {
 			if i > 0 {
-				bld.WriteString(` | `)
+				bld.WriteString(`|`)
 			}
 			appendTsValue(s, bld)
 		}
