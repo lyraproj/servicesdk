@@ -7,6 +7,7 @@ const (
 	WF_API_TYPE_NOT_REGISTERED = `WF_API_TYPE_NOT_REGISTERED`
 	WF_ILLEGAL_TYPE_NAME       = `WF_ILLEGAL_TYPE_NAME`
 	WF_NO_COMMON_NAMESPACE     = `WF_NO_COMMON_NAMESPACE`
+	WF_NO_SUCH_API             = `WF_NO_SUCH_API`
 	WF_NO_SUCH_METHOD          = `WF_NO_SUCH_METHOD`
 	WF_NO_SUCH_STATE           = `WF_NO_SUCH_STATE`
 	WF_NOT_FUNC                = `WF_NOT_FUNC`
@@ -20,6 +21,7 @@ func init() {
 	issue.Hard(WF_API_TYPE_NOT_REGISTERED, `the Go type %{type} has not been registered as an API type`)
 	issue.Hard(WF_ILLEGAL_TYPE_NAME, `name must be segments starting with an uppercase letter joined with'::'. Got: '%{name}'`)
 	issue.Hard(WF_NO_COMMON_NAMESPACE, `registered types share no common namespace`)
+	issue.Hard(WF_NO_SUCH_API, `the '%{api}' API does not exist`)
 	issue.Hard(WF_NO_SUCH_METHOD, `the '%{api}' API does not have a method named %{method}`)
 	issue.Hard(WF_NO_SUCH_STATE, `state '%{name}' not found`)
 	issue.Hard(WF_NO_STATE_CONVERTER, `no state converter has been registered`)

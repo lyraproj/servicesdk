@@ -43,7 +43,7 @@ type ServerBuilder struct {
 	activities      map[string]serviceapi.Definition
 	callables       map[string]reflect.Value
 	states          map[string]wfapi.State
-	callableObjects []eval.PuppetObject
+	callableObjects map[string]eval.PuppetObject
 }
 
 func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
@@ -51,7 +51,7 @@ func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
 		ctx:             ctx,
 		serviceId:       eval.NewTypedName(eval.NsService, assertTypeName(serviceName)),
 		callables:       make(map[string]reflect.Value),
-		callableObjects: make([]eval.PuppetObject, 0),
+		callableObjects: make(map[string]eval.PuppetObject),
 		handlerFor:      make(map[string]eval.Type),
 		activities:      make(map[string]serviceapi.Definition),
 		types:           make(map[string]eval.Type),
@@ -74,7 +74,7 @@ func (ds *ServerBuilder) RegisterStateConverter(sf wfapi.StateConverter) {
 func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 	name = assertTypeName(name)
 	if po, ok := callable.(eval.PuppetObject); ok {
-		ds.callableObjects = append(ds.callableObjects, po)
+		ds.callableObjects[name] = po
 	} else {
 		rv := reflect.ValueOf(callable)
 		rt := rv.Type()
@@ -260,12 +260,28 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		}
 	case wfapi.Action:
 		style = `action`
-		ds.RegisterAPI(strings.Title(name), activity.(wfapi.Action).Interface())
-		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
+		tn := strings.Title(name)
+		api := activity.(wfapi.Action).Interface()
+		ds.RegisterAPI(tn, api)
+		var ifd eval.Type
+		if po, ok := api.(eval.PuppetObject); ok {
+			ifd = po.PType()
+		} else {
+			ifd = ds.types[tn]
+		}
+		props = append(props, types.WrapHashEntry2(`interface`, ifd))
 	case wfapi.Stateless:
 		style = `stateless`
-		ds.RegisterAPI(strings.Title(name), activity.(wfapi.Stateless).Function())
-		props = append(props, types.WrapHashEntry2(`interface`, ds.types[name]))
+		tn := strings.Title(name)
+		api := activity.(wfapi.Stateless).Function()
+		ds.RegisterAPI(tn, api)
+		var ifd eval.Type
+		if po, ok := api.(eval.PuppetObject); ok {
+			ifd = po.PType()
+		} else {
+			ifd = ds.types[tn]
+		}
+		props = append(props, types.WrapHashEntry2(`interface`, ifd))
 	case wfapi.Iterator:
 		style = `iterator`
 		iter := activity.(wfapi.Iterator)
@@ -409,8 +425,7 @@ func (ds *ServerBuilder) Server() *Server {
 		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
-	for _, po := range ds.callableObjects {
-		k := po.PType().Name()
+	for k, po := range ds.callableObjects {
 		props := make([]*types.HashEntry, 0, 2)
 		props = append(props, types.WrapHashEntry2(`interface`, po.PType()))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
@@ -433,8 +448,8 @@ func (ds *ServerBuilder) Server() *Server {
 		callables[k] = eval.WrapReflected(ds.ctx, v)
 	}
 
-	for _, po := range ds.callableObjects {
-		callables[po.PType().Name()] = po
+	for k, po := range ds.callableObjects {
+		callables[k] = po
 	}
 
 	return &Server{context: ds.ctx, id: ds.serviceId, typeSet: ts, metadata: types.WrapValues(defs), stateConv: ds.stateConv, callables: callables, states: ds.states}

@@ -1,13 +1,14 @@
 package service
 
 import (
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/semver/semver"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/wfapi"
 	"reflect"
+	"strings"
 	"sync"
 )
 
@@ -56,7 +57,6 @@ func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition
 	return def
 }
 
-
 func (s *Server) State(c eval.Context, name string, input eval.OrderedMap) eval.PuppetObject {
 	if s.stateConv != nil {
 		s.lock.RLock()
@@ -76,6 +76,7 @@ func (s *Server) Identifier(eval.Context) eval.TypedName {
 
 func (s *Server) Invoke(c eval.Context, api, name string, arguments ...eval.Value) (result eval.Value) {
 	s.lock.RLock()
+	api = strings.Title(api)
 	iv, ok := s.callables[api]
 	s.lock.RUnlock()
 	if ok {
@@ -92,8 +93,9 @@ func (s *Server) Invoke(c eval.Context, api, name string, arguments ...eval.Valu
 			result = m.Call(c, iv, nil, arguments)
 			return
 		}
+		panic(eval.Error(WF_NO_SUCH_METHOD, issue.H{`api`: api, `method`: name}))
 	}
-	panic(eval.Error(WF_NO_SUCH_METHOD, issue.H{`api`: api, `method`: name}))
+	panic(eval.Error(WF_NO_SUCH_API, issue.H{`api`: api}))
 }
 
 func (s *Server) Metadata(eval.Context) (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
