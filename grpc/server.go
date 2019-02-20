@@ -102,12 +102,18 @@ func (d *GRPCServer) State(_ context.Context, r *servicepb.StateRequest) (result
 }
 
 func ToDataPB(v eval.Value) *datapb.Data {
+	if v == nil {
+		return nil
+	}
 	pc := proto.NewProtoConsumer()
 	serialization.NewSerializer(eval.Puppet.RootContext(), eval.EMPTY_MAP).Convert(v, pc)
 	return pc.Value()
 }
 
 func FromDataPB(c eval.Context, d *datapb.Data) eval.Value {
+	if d == nil {
+		return nil
+	}
 	ds := serialization.NewDeserializer(c, eval.EMPTY_MAP)
 	proto.ConsumePBData(d, ds)
 	return ds.Value()

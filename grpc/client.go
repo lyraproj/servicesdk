@@ -66,7 +66,9 @@ func (c *Client) Metadata(ctx eval.Context) (typeSet eval.TypeSet, definitions [
 	if err != nil {
 		panic(err)
 	}
-	typeSet = FromDataPB(ctx, rr.GetTypeset()).(eval.TypeSet)
+	if ts := rr.GetTypeset(); ts != nil {
+		typeSet = FromDataPB(ctx, rr.GetTypeset()).(eval.TypeSet)
+	}
 	ds := FromDataPB(ctx, rr.GetDefinitions()).(eval.List)
 	definitions = make([]serviceapi.Definition, ds.Len())
 	ds.EachWithIndex(func(d eval.Value, i int) { definitions[i] = d.(serviceapi.Definition) })
