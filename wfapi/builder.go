@@ -28,7 +28,7 @@ type ChildBuilder interface {
 	StateHandler(func(StateHandlerBuilder))
 	Resource(func(ResourceBuilder))
 	Workflow(func(WorkflowBuilder))
-	Stateless(func(StatelessBuilder))
+	Action(func(ActionBuilder))
 	AddChild(Builder)
 }
 
@@ -56,7 +56,7 @@ type ResourceBuilder interface {
 	StateStruct(state interface{})
 }
 
-type StatelessBuilder interface {
+type ActionBuilder interface {
 	Builder
 	Doer(interface{})
 }
@@ -69,5 +69,5 @@ type WorkflowBuilder interface {
 var NewStateHandler func(eval.Context, func(StateHandlerBuilder)) StateHandler
 var NewIterator func(eval.Context, func(IteratorBuilder)) Iterator
 var NewResource func(eval.Context, func(ResourceBuilder)) Resource
-var NewStateless func(eval.Context, func(StatelessBuilder)) Stateless
+var NewAction func(eval.Context, func(ActionBuilder)) Action
 var NewWorkflow func(eval.Context, func(WorkflowBuilder)) Workflow

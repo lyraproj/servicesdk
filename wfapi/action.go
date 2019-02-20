@@ -1,6 +1,6 @@
 package wfapi
 
-type Stateless interface {
+type Action interface {
 	Activity
 
 	Function() interface{}

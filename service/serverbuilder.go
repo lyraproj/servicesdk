@@ -270,10 +270,10 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 			ifd = ds.types[tn]
 		}
 		props = append(props, types.WrapHashEntry2(`interface`, ifd))
-	case wfapi.Stateless:
-		style = `stateless`
+	case wfapi.Action:
+		style = `action`
 		tn := strings.Title(name)
-		api := activity.(wfapi.Stateless).Function()
+		api := activity.(wfapi.Action).Function()
 		ds.RegisterAPI(tn, api)
 		var ifd eval.Type
 		if po, ok := api.(eval.PuppetObject); ok {
