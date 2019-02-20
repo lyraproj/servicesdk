@@ -258,10 +258,10 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		if extId != `` {
 			props = append(props, types.WrapHashEntry2(`externalId`, types.WrapString(extId)))
 		}
-	case wfapi.Action:
-		style = `action`
+	case wfapi.StateHandler:
+		style = `stateHandler`
 		tn := strings.Title(name)
-		api := activity.(wfapi.Action).Interface()
+		api := activity.(wfapi.StateHandler).Interface()
 		ds.RegisterAPI(tn, api)
 		var ifd eval.Type
 		if po, ok := api.(eval.PuppetObject); ok {

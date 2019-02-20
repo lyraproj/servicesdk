@@ -1,6 +1,6 @@
 package wfapi
 
-type Action interface {
+type StateHandler interface {
 	Activity
 
 	Interface() interface{}
