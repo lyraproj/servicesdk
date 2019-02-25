@@ -6,91 +6,86 @@ import (
 	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/puppet-evaluator/types"
 	"github.com/lyraproj/puppet-evaluator/utils"
-	"github.com/lyraproj/servicesdk/lang"
+	"io"
 	"strings"
 )
 
-type tsGenerator struct {
-	ctx      eval.Context
-	excludes []string
+type tsGenerator struct{}
+
+func (g *tsGenerator) GenerateTypes(typeSet eval.TypeSet, directory string) {
+	hasNonTypeSetTypes := false
+	typeSet.Types().EachValue(func(t eval.Value) {
+		if ts, ok := t.(eval.TypeSet); ok {
+			g.GenerateTypes(ts, directory)
+		} else {
+			hasNonTypeSetTypes = true
+		}
+	})
+
+	if hasNonTypeSetTypes {
+		typeToStream(typeSet, directory, `.ts`, func(b io.Writer) {
+			write(b, "// this file is generated\n")
+			write(b, "import {PcoreValue, Value} from 'lyra-workflow';")
+			g.generateTypes(typeSet, namespace(typeSet.Name()), 0, b)
+		})
+	}
 }
 
-// NewTsGenerator creates and returns a lang.Generator that will generate TypeScript types
-func NewTsGenerator(ctx eval.Context, excludes ...string) lang.Generator {
-	return &tsGenerator{ctx, excludes}
+func (g *tsGenerator) GenerateType(typ eval.Type, directory string) {
+	typeToStream(typ, directory, `.ts`, func(b io.Writer) {
+		write(b, "// this file is generated\n")
+		write(b, "import {PcoreValue, Value} from 'lyra-workflow';")
+		g.generateType(typ, namespace(typ.Name()), 0, b)
+	})
 }
 
 // GenerateTypes produces TypeScript types for all types in the given TypeSet and appends them to
 // the given buffer.
-func (g *tsGenerator) GenerateTypes(ts eval.TypeSet, ns []string, indent int, bld *bytes.Buffer) {
-	rns := relativeNs(ns, ts.Name())
-	for _, n := range rns {
-		newLine(indent, bld)
-		bld.WriteString(`export namespace `)
-		bld.WriteString(n)
-		bld.WriteString(` {`)
-		indent += 2
-		ns = append(ns, n)
-	}
+func (g *tsGenerator) generateTypes(ts eval.TypeSet, ns []string, indent int, bld io.Writer) {
 	newLine(indent, bld)
 	leafName := nsName(ns, ts.Name())
-	bld.WriteString(`export namespace `)
-	bld.WriteString(leafName)
-	bld.WriteString(` {`)
-	indent += 2
 	ns = append(ns, leafName)
-	ts.Types().EachValue(func(t eval.Value) { g.GenerateType(t.(eval.Type), ns, indent, bld) })
-	for i := len(rns); i > 0; i-- {
-		indent -= 2
-		newLine(indent, bld)
-		bld.WriteByte('}')
-	}
-	indent -= 2
-	newLine(indent, bld)
-	bld.WriteByte('}')
-	bld.WriteByte('\n')
+	ts.Types().EachValue(func(t eval.Value) { g.generateType(t.(eval.Type), ns, indent, bld) })
 }
 
 // GenerateType produces a TypeScript type for the given Type and appends it to
 // the given buffer.
-func (g *tsGenerator) GenerateType(t eval.Type, ns []string, indent int, bld *bytes.Buffer) {
-	if ts, ok := t.(eval.TypeSet); ok {
-		g.GenerateTypes(ts, ns, indent, bld)
+func (g *tsGenerator) generateType(t eval.Type, ns []string, indent int, bld io.Writer) {
+	if _, ok := t.(eval.TypeSet); ok {
 		return
 	}
 
 	if pt, ok := t.(eval.ObjectType); ok {
-		bld.WriteByte('\n')
 		newLine(indent, bld)
-		bld.WriteString(`export class `)
-		bld.WriteString(nsName(ns, pt.Name()))
+		write(bld, `export class `)
+		write(bld, nsName(ns, pt.Name()))
 		if ppt, ok := pt.Parent().(eval.ObjectType); ok {
-			bld.WriteString(` extends `)
-			bld.WriteString(nsName(ns, ppt.Name()))
+			write(bld, ` extends `)
+			write(bld, nsName(ns, ppt.Name()))
 		} else {
-			bld.WriteString(` implements PcoreValue`)
+			write(bld, ` implements PcoreValue`)
 		}
-		bld.WriteString(` {`)
+		write(bld, ` {`)
 		indent += 2
 		ai := pt.AttributesInfo()
 		allAttrs, thisAttrs, superAttrs := g.toTsAttrs(pt, ns, ai.Attributes())
 		appendFields(thisAttrs, indent, bld)
 		if len(thisAttrs) > 0 {
-			bld.WriteByte('\n')
+			writeByte(bld, '\n')
 		}
 		if len(allAttrs) > 0 {
 			appendConstructor(allAttrs, thisAttrs, superAttrs, indent, bld)
-			bld.WriteByte('\n')
+			writeByte(bld, '\n')
 		}
 		hasSuper := len(superAttrs) > 0
 		if len(thisAttrs) > 0 || !hasSuper {
 			appendPValueGetter(hasSuper, thisAttrs, indent, bld)
-			bld.WriteByte('\n')
+			writeByte(bld, '\n')
 		}
 		appendPTypeGetter(pt.Name(), indent, bld)
 		indent -= 2
 		newLine(indent, bld)
-		bld.WriteByte('}')
+		write(bld, "}\n")
 	} else {
 		appendTsType(ns, t, bld)
 	}
@@ -129,143 +124,146 @@ func (g *tsGenerator) toTsAttrs(t eval.ObjectType, ns []string, attrs []eval.Att
 	return
 }
 
-func appendFields(thisAttrs []*tsAttribute, indent int, bld *bytes.Buffer) {
+func appendFields(thisAttrs []*tsAttribute, indent int, bld io.Writer) {
 	for _, attr := range thisAttrs {
 		newLine(indent, bld)
-		bld.WriteString(`readonly `)
-		bld.WriteString(attr.name)
-		bld.WriteString(`: `)
-		bld.WriteString(attr.typ)
-		bld.WriteString(`;`)
+		write(bld, `readonly `)
+		write(bld, attr.name)
+		write(bld, `: `)
+		write(bld, attr.typ)
+		write(bld, `;`)
 	}
 	return
 }
 
-func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent int, bld *bytes.Buffer) {
+func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent int, bld io.Writer) {
 	newLine(indent, bld)
-	bld.WriteString(`constructor(`)
+	write(bld, `constructor(`)
 	appendParameters(allAttrs, indent, bld)
-	bld.WriteString(`) {`)
+	write(bld, `) {`)
 	indent += 2
 	if len(superAttrs) > 0 {
 		newLine(indent, bld)
-		bld.WriteString(`super({`)
+		write(bld, `super({`)
 		for i, attr := range superAttrs {
 			if i > 0 {
-				bld.WriteString(`, `)
+				write(bld, `, `)
 			}
-			bld.WriteString(attr.name)
-			bld.WriteString(`: `)
-			bld.WriteString(attr.name)
+			write(bld, attr.name)
+			write(bld, `: `)
+			write(bld, attr.name)
 		}
-		bld.WriteString(`});`)
+		write(bld, `});`)
 	}
 	for _, attr := range thisAttrs {
 		newLine(indent, bld)
-		bld.WriteString(`this.`)
-		bld.WriteString(attr.name)
-		bld.WriteString(` = `)
-		bld.WriteString(attr.name)
-		bld.WriteByte(';')
+		write(bld, `this.`)
+		write(bld, attr.name)
+		write(bld, ` = `)
+		write(bld, attr.name)
+		writeByte(bld, ';')
 	}
 	indent -= 2
 	newLine(indent, bld)
-	bld.WriteByte('}')
+	writeByte(bld, '}')
 }
 
-func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld *bytes.Buffer) {
+func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld io.Writer) {
 	newLine(indent, bld)
-	bld.WriteString(`__pvalue(): {[s: string]: Value} {`)
+	write(bld, `__pvalue(): {[s: string]: Value} {`)
 	indent += 2
 	newLine(indent, bld)
 	if len(thisAttrs) == 0 {
 		if hasSuper {
-			bld.WriteString(`return super.__pvalue();`)
+			write(bld, `return super.__pvalue();`)
 		} else {
-			bld.WriteString(`return {};`)
+			write(bld, `return {};`)
 		}
 	} else {
 		if hasSuper {
-			bld.WriteString(`const ih = super.__pvalue();`)
+			write(bld, `const ih = super.__pvalue();`)
 		} else {
-			bld.WriteString(`const ih: {[s: string]: Value} = {};`)
+			write(bld, `const ih: {[s: string]: Value} = {};`)
 		}
 		for _, attr := range thisAttrs {
 			newLine(indent, bld)
 			if attr.value != nil {
-				bld.WriteString(`if (this.`)
-				bld.WriteString(attr.name)
-				bld.WriteString(` !== `)
-				bld.WriteString(*attr.value)
-				bld.WriteString(`) {`)
+				write(bld, `if (this.`)
+				write(bld, attr.name)
+				write(bld, ` !== `)
+				write(bld, *attr.value)
+				write(bld, `) {`)
 				indent += 2
 				newLine(indent, bld)
 			}
-			bld.WriteString(`ih['`)
-			bld.WriteString(attr.name)
-			bld.WriteString(`'] = this.`)
-			bld.WriteString(attr.name)
-			bld.WriteString(`;`)
+			write(bld, `ih['`)
+			write(bld, attr.name)
+			write(bld, `'] = this.`)
+			write(bld, attr.name)
+			write(bld, `;`)
 			if attr.value != nil {
 				indent -= 2
 				newLine(indent, bld)
-				bld.WriteString(`}`)
+				write(bld, `}`)
 			}
 		}
 		newLine(indent, bld)
-		bld.WriteString(`return ih;`)
+		write(bld, `return ih;`)
 	}
 	indent -= 2
 	newLine(indent, bld)
-	bld.WriteByte('}')
+	writeByte(bld, '}')
 }
 
-func appendPTypeGetter(name string, indent int, bld *bytes.Buffer) {
+func appendPTypeGetter(name string, indent int, bld io.Writer) {
 	newLine(indent, bld)
-	bld.WriteString(`__ptype(): string {`)
+	write(bld, `__ptype(): string {`)
 	indent += 2
 	newLine(indent, bld)
-	bld.WriteString(`return '`)
-	bld.WriteString(name)
-	bld.WriteString(`';`)
+	write(bld, `return '`)
+	write(bld, name)
+	write(bld, `';`)
 	indent -= 2
 	newLine(indent, bld)
-	bld.WriteByte('}')
+	writeByte(bld, '}')
 }
 
-func appendParameters(params []*tsAttribute, indent int, bld *bytes.Buffer) {
+func appendParameters(params []*tsAttribute, indent int, bld io.Writer) {
 	indent += 2
-	bld.WriteString(`{`)
-	for _, attr := range params {
+	write(bld, `{`)
+	last := len(params) - 1
+	for i, attr := range params {
 		newLine(indent, bld)
-		bld.WriteString(attr.name)
+		write(bld, attr.name)
 		if attr.value != nil {
-			bld.WriteString(` = `)
-			bld.WriteString(*attr.value)
+			write(bld, ` = `)
+			write(bld, *attr.value)
 		}
-		bld.WriteString(`,`)
+		if i < last {
+			write(bld, `,`)
+		}
 	}
-	bld.Truncate(bld.Len() - 1) // Truncate last comma
 	indent -= 2
 	newLine(indent, bld)
-	bld.WriteString(`}: {`)
+	write(bld, `}: {`)
 	indent += 2
 
-	for _, attr := range params {
+	for i, attr := range params {
 		newLine(indent, bld)
-		bld.WriteString(attr.name)
+		write(bld, attr.name)
 		if attr.value != nil {
-			bld.WriteByte('?')
+			writeByte(bld, '?')
 		}
-		bld.WriteString(`: `)
-		bld.WriteString(attr.typ)
-		bld.WriteByte(',')
+		write(bld, `: `)
+		write(bld, attr.typ)
+		if i < last {
+			writeByte(bld, ',')
+		}
 	}
 
-	bld.Truncate(bld.Len() - 1) // Truncate last comma
 	indent -= 2
 	newLine(indent, bld)
-	bld.WriteString(`}`)
+	write(bld, `}`)
 }
 
 func toTsValue(value eval.Value) *string {
@@ -275,85 +273,90 @@ func toTsValue(value eval.Value) *string {
 	return &s
 }
 
-func appendTsValue(value eval.Value, bld *bytes.Buffer) {
+func appendTsValue(value eval.Value, bld io.Writer) {
 	switch value.(type) {
 	case *types.UndefValue:
-		bld.WriteString(`null`)
+		write(bld, `null`)
 	case eval.StringValue:
 		utils.PuppetQuote(bld, value.String())
 	case eval.BooleanValue, eval.IntegerValue, eval.FloatValue:
-		bld.WriteString(value.String())
+		write(bld, value.String())
 	case *types.ArrayValue:
-		bld.WriteByte('[')
+		writeByte(bld, '[')
 		value.(*types.ArrayValue).EachWithIndex(func(e eval.Value, i int) {
 			if i > 0 {
-				bld.WriteString(`, `)
+				write(bld, `, `)
 			}
 			appendTsValue(e, bld)
 		})
-		bld.WriteByte(']')
+		writeByte(bld, ']')
 	case *types.HashValue:
-		bld.WriteByte('{')
+		writeByte(bld, '{')
 		value.(*types.HashValue).EachWithIndex(func(e eval.Value, i int) {
 			ev := e.(*types.HashEntry)
 			if i > 0 {
-				bld.WriteString(`, `)
+				write(bld, `, `)
 			}
 			utils.PuppetQuote(bld, ev.Key().String())
-			bld.WriteString(`: `)
+			write(bld, `: `)
 			appendTsValue(ev.Value(), bld)
 		})
-		bld.WriteByte('}')
+		writeByte(bld, '}')
 	}
 }
 
-func appendTsType(ns []string, pType eval.Type, bld *bytes.Buffer) {
+func appendTsType(ns []string, pType eval.Type, bld io.Writer) {
 	switch pType.(type) {
 	case *types.BooleanType:
-		bld.WriteString(`boolean`)
+		write(bld, `boolean`)
 	case *types.IntegerType, *types.FloatType:
-		bld.WriteString(`number`)
+		write(bld, `number`)
 	case eval.StringType:
-		bld.WriteString(`string`)
+		write(bld, `string`)
 	case *types.OptionalType:
 		appendTsType(ns, pType.(*types.OptionalType).ContainedType(), bld)
-		bld.WriteString(`|null`)
+		write(bld, `|null`)
 	case *types.ArrayType:
 		appendTsType(ns, pType.(*types.ArrayType).ElementType(), bld)
-		bld.WriteString(`[]`)
+		write(bld, `[]`)
 	case *types.VariantType:
 		for i, v := range pType.(*types.VariantType).Types() {
 			if i > 0 {
-				bld.WriteString(`|`)
+				write(bld, `|`)
 			}
 			appendTsType(ns, v, bld)
 		}
 	case *types.HashType:
 		ht := pType.(*types.HashType)
-		bld.WriteString(`{[s: `)
+		write(bld, `{[s: `)
 		appendTsType(ns, ht.KeyType(), bld)
-		bld.WriteString(`]: `)
+		write(bld, `]: `)
 		appendTsType(ns, ht.ValueType(), bld)
-		bld.WriteString(`}`)
+		write(bld, `}`)
 	case *types.EnumType:
 		for i, s := range pType.(*types.EnumType).Parameters() {
 			if i > 0 {
-				bld.WriteString(`|`)
+				write(bld, `|`)
 			}
 			appendTsValue(s, bld)
 		}
 	case *types.TypeAliasType:
-		bld.WriteString(nsName(ns, pType.(*types.TypeAliasType).Name()))
+		write(bld, nsName(ns, pType.(*types.TypeAliasType).Name()))
 	case eval.ObjectType:
-		bld.WriteString(nsName(ns, pType.(eval.ObjectType).Name()))
+		write(bld, nsName(ns, pType.(eval.ObjectType).Name()))
 	}
 }
 
-func newLine(indent int, bld *bytes.Buffer) {
-	bld.WriteByte('\n')
+func newLine(indent int, bld io.Writer) {
+	writeByte(bld, '\n')
 	for n := 0; n < indent; n++ {
-		bld.WriteByte(' ')
+		writeByte(bld, ' ')
 	}
+}
+
+func namespace(name string) []string {
+	parts := strings.Split(name, `::`)
+	return parts[:len(parts)-1]
 }
 
 func relativeNs(ns []string, name string) []string {
