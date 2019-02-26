@@ -100,9 +100,69 @@ func (g *tsGenerator) ToTsType(ns []string, pType eval.Type) string {
 }
 
 type tsAttribute struct {
-	name  string
-	typ   string
-	value *string
+	tsName string
+	name   string
+	typ    string
+	value  *string
+}
+
+var keywords = map[string]bool{
+	// The following keywords are reserved and cannot be used as an Identifier:
+	`arguments`:  true,
+	`break`:      true,
+	`case`:       true,
+	`catch`:      true,
+	`class`:      true,
+	`const`:      true,
+	`continue`:   true,
+	`debugger`:   true,
+	`default`:    true,
+	`delete`:     true,
+	`do`:         true,
+	`else`:       true,
+	`enum`:       true,
+	`export`:     true,
+	`extends`:    true,
+	`false`:      true,
+	`finally`:    true,
+	`for`:        true,
+	`function`:   true,
+	`if`:         true,
+	`import`:     true,
+	`in`:         true,
+	`instanceof`: true,
+	`new`:        true,
+	`null`:       true,
+	`return`:     true,
+	`super`:      true,
+	`switch`:     true,
+	`this`:       true,
+	`throw`:      true,
+	`true`:       true,
+	`try`:        true,
+	`typeof`:     true,
+	`var`:        true,
+	`void`:       true,
+	`while`:      true,
+	`with`:       true,
+
+	// The following keywords cannot be used as identifiers in strict mode code, but are otherwise not restricted:
+	`implements`: true,
+	`interface`:  true,
+	`let`:        true,
+	`package`:    true,
+	`private`:    true,
+	`protected`:  true,
+	`public`:     true,
+	`static`:     true,
+	`yield`:      true,
+
+	// The following keywords cannot be used as user defined type names, but are otherwise not restricted:
+	`any`:        true,
+	`boolean`:    true,
+	`number`:     true,
+	`string`:     true,
+	`symbol`:     true,
 }
 
 func (g *tsGenerator) toTsAttrs(t eval.ObjectType, ns []string, attrs []eval.Attribute) (allAttrs, thisAttrs, superAttrs []*tsAttribute) {
@@ -110,7 +170,12 @@ func (g *tsGenerator) toTsAttrs(t eval.ObjectType, ns []string, attrs []eval.Att
 	superAttrs = make([]*tsAttribute, 0)
 	thisAttrs = make([]*tsAttribute, 0)
 	for i, attr := range attrs {
-		tsAttr := &tsAttribute{name: attr.Name(), typ: g.ToTsType(ns, attr.Type())}
+		n := attr.Name()
+		tsn := n
+		if keywords[n] {
+			tsn = n + `_`
+		}
+		tsAttr := &tsAttribute{tsName: tsn, name: n, typ: g.ToTsType(ns, attr.Type())}
 		if attr.HasValue() {
 			tsAttr.value = toTsValue(attr.Value())
 		}
@@ -128,7 +193,7 @@ func appendFields(thisAttrs []*tsAttribute, indent int, bld io.Writer) {
 	for _, attr := range thisAttrs {
 		newLine(indent, bld)
 		write(bld, `readonly `)
-		write(bld, attr.name)
+		write(bld, attr.tsName)
 		write(bld, `: `)
 		write(bld, attr.typ)
 		write(bld, `;`)
@@ -149,18 +214,18 @@ func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent in
 			if i > 0 {
 				write(bld, `, `)
 			}
-			write(bld, attr.name)
+			write(bld, attr.tsName)
 			write(bld, `: `)
-			write(bld, attr.name)
+			write(bld, attr.tsName)
 		}
 		write(bld, `});`)
 	}
 	for _, attr := range thisAttrs {
 		newLine(indent, bld)
 		write(bld, `this.`)
-		write(bld, attr.name)
+		write(bld, attr.tsName)
 		write(bld, ` = `)
-		write(bld, attr.name)
+		write(bld, attr.tsName)
 		writeByte(bld, ';')
 	}
 	indent -= 2
@@ -189,7 +254,7 @@ func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld
 			newLine(indent, bld)
 			if attr.value != nil {
 				write(bld, `if (this.`)
-				write(bld, attr.name)
+				write(bld, attr.tsName)
 				write(bld, ` !== `)
 				write(bld, *attr.value)
 				write(bld, `) {`)
@@ -199,7 +264,7 @@ func appendPValueGetter(hasSuper bool, thisAttrs []*tsAttribute, indent int, bld
 			write(bld, `ih['`)
 			write(bld, attr.name)
 			write(bld, `'] = this.`)
-			write(bld, attr.name)
+			write(bld, attr.tsName)
 			write(bld, `;`)
 			if attr.value != nil {
 				indent -= 2
@@ -234,7 +299,7 @@ func appendParameters(params []*tsAttribute, indent int, bld io.Writer) {
 	last := len(params) - 1
 	for i, attr := range params {
 		newLine(indent, bld)
-		write(bld, attr.name)
+		write(bld, attr.tsName)
 		if attr.value != nil {
 			write(bld, ` = `)
 			write(bld, *attr.value)
@@ -250,7 +315,7 @@ func appendParameters(params []*tsAttribute, indent int, bld io.Writer) {
 
 	for i, attr := range params {
 		newLine(indent, bld)
-		write(bld, attr.name)
+		write(bld, attr.tsName)
 		if attr.value != nil {
 			writeByte(bld, '?')
 		}
@@ -317,8 +382,16 @@ func appendTsType(ns []string, pType eval.Type, bld io.Writer) {
 		appendTsType(ns, pType.(*types.OptionalType).ContainedType(), bld)
 		write(bld, `|null`)
 	case *types.ArrayType:
-		appendTsType(ns, pType.(*types.ArrayType).ElementType(), bld)
-		write(bld, `[]`)
+		et := pType.(*types.ArrayType).ElementType()
+		switch et.(type) {
+		case *types.ArrayType, *types.EnumType, *types.HashType, *types.OptionalType, *types.VariantType:
+			write(bld, `Array<`)
+			appendTsType(ns, et, bld)
+			write(bld, `>`)
+		default:
+			appendTsType(ns, et, bld)
+			write(bld, `[]`)
+		}
 	case *types.VariantType:
 		for i, v := range pType.(*types.VariantType).Types() {
 			if i > 0 {
