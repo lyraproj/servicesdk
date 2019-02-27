@@ -27,7 +27,7 @@ func ExampleGenerator_GenerateTypes() {
 	type ExtendedPerson struct {
 		Person
 		Age    *int `puppet:"type=>Optional[Integer],value=>undef"`
-		Active bool `puppet:"name=>enabled"`
+		Active bool `puppet:"name=>import"`
 	}
 
 	c := eval.Puppet.RootContext()
@@ -121,30 +121,30 @@ func ExampleGenerator_GenerateTypes() {
 	// }
 	//
 	// export class ExtendedPerson extends Person {
-	//   readonly enabled: boolean;
+	//   readonly import_: boolean;
 	//   readonly age: number|null;
 	//
 	//   constructor({
 	//     name,
 	//     gender,
-	//     enabled,
+	//     import_,
 	//     address = null,
 	//     age = null
 	//   }: {
 	//     name: string,
 	//     gender: 'male'|'female'|'other',
-	//     enabled: boolean,
+	//     import_: boolean,
 	//     address?: Address|null,
 	//     age?: number|null
 	//   }) {
 	//     super({name: name, gender: gender, address: address});
-	//     this.enabled = enabled;
+	//     this.import_ = import_;
 	//     this.age = age;
 	//   }
 	//
 	//   __pvalue(): {[s: string]: Value} {
 	//     const ih = super.__pvalue();
-	//     ih['enabled'] = this.enabled;
+	//     ih['import'] = this.import_;
 	//     if (this.age !== null) {
 	//       ih['age'] = this.age;
 	//     }
