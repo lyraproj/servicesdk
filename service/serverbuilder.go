@@ -6,23 +6,23 @@ import (
 	"strings"
 
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/condition"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/wfapi"
 )
 
 type GoState struct {
-	t eval.ObjectType
+	t px.ObjectType
 	v reflect.Value
 }
 
-func NewGoState(t eval.ObjectType, v reflect.Value) *GoState {
+func NewGoState(t px.ObjectType, v reflect.Value) *GoState {
 	return &GoState{t, v}
 }
 
-func (s *GoState) Type() eval.ObjectType {
+func (s *GoState) Type() px.ObjectType {
 	return s.t
 }
 
@@ -30,39 +30,39 @@ func (s *GoState) State() interface{} {
 	return s.v
 }
 
-func GoStateConverter(c eval.Context, state wfapi.State, input eval.OrderedMap) eval.PuppetObject {
-	return eval.WrapReflected(c, state.State().(reflect.Value)).(eval.PuppetObject)
+func GoStateConverter(c px.Context, state wfapi.State, input px.OrderedMap) px.PuppetObject {
+	return px.WrapReflected(c, state.State().(reflect.Value)).(px.PuppetObject)
 }
 
 type ServerBuilder struct {
-	ctx             eval.Context
-	serviceId       eval.TypedName
+	ctx             px.Context
+	serviceId       px.TypedName
 	stateConv       wfapi.StateConverter
-	types           map[string]eval.Type
-	handlerFor      map[string]eval.Type
+	types           map[string]px.Type
+	handlerFor      map[string]px.Type
 	activities      map[string]serviceapi.Definition
 	callables       map[string]reflect.Value
 	states          map[string]wfapi.State
-	callableObjects map[string]eval.PuppetObject
+	callableObjects map[string]px.PuppetObject
 }
 
-func NewServerBuilder(ctx eval.Context, serviceName string) *ServerBuilder {
+func NewServerBuilder(ctx px.Context, serviceName string) *ServerBuilder {
 	return &ServerBuilder{
 		ctx:             ctx,
-		serviceId:       eval.NewTypedName(eval.NsService, assertTypeName(serviceName)),
+		serviceId:       px.NewTypedName(px.NsService, assertTypeName(serviceName)),
 		callables:       make(map[string]reflect.Value),
-		callableObjects: make(map[string]eval.PuppetObject),
-		handlerFor:      make(map[string]eval.Type),
+		callableObjects: make(map[string]px.PuppetObject),
+		handlerFor:      make(map[string]px.Type),
 		activities:      make(map[string]serviceapi.Definition),
-		types:           make(map[string]eval.Type),
+		types:           make(map[string]px.Type),
 		states:          make(map[string]wfapi.State)}
 }
 
 func assertTypeName(name string) string {
-	if types.QREF_PATTERN.MatchString(name) {
+	if types.TypeNamePattern.MatchString(name) {
 		return name
 	}
-	panic(eval.Error(WF_ILLEGAL_TYPE_NAME, issue.H{`name`: name}))
+	panic(px.Error(WF_ILLEGAL_TYPE_NAME, issue.H{`name`: name}))
 }
 
 func (ds *ServerBuilder) RegisterStateConverter(sf wfapi.StateConverter) {
@@ -73,7 +73,7 @@ func (ds *ServerBuilder) RegisterStateConverter(sf wfapi.StateConverter) {
 // actual receiver the calls.
 func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 	name = assertTypeName(name)
-	if po, ok := callable.(eval.PuppetObject); ok {
+	if po, ok := callable.(px.PuppetObject); ok {
 		ds.callableObjects[name] = po
 	} else {
 		rv := reflect.ValueOf(callable)
@@ -110,15 +110,15 @@ func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
 	ds.states[name] = state
 }
 
-func (ds *ServerBuilder) BuildResource(goType interface{}, bld func(f ResourceTypeBuilder)) eval.AnnotatedType {
+func (ds *ServerBuilder) BuildResource(goType interface{}, bld func(f ResourceTypeBuilder)) px.AnnotatedType {
 	rb := &rtBuilder{ctx: ds.ctx}
 	bld(rb)
 	return rb.Build(goType)
 }
 
 // RegisterHandler registers a callable struct as an invokable capable of handling a state described using
-// eval.Type. The callable instance given as the argument becomes the actual receiver the calls.
-func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stateType eval.Type) {
+// px.Type. The callable instance given as the argument becomes the actual receiver the calls.
+func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stateType px.Type) {
 	ds.RegisterAPI(name, callable)
 	ds.types[stateType.Name()] = stateType
 	ds.handlerFor[name] = stateType
@@ -128,28 +128,28 @@ func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stat
 //
 // A value is typically a pointer to the zero value of a struct. The name of the generated type for
 // that struct will be the struct name prefixed by the service ID.
-func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) []eval.Type {
-	ts := make([]eval.Type, len(values))
+func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) []px.Type {
+	ts := make([]px.Type, len(values))
 	for i, v := range values {
 		switch v.(type) {
-		case eval.Type:
-			t := v.(eval.Type)
+		case px.Type:
+			t := v.(px.Type)
 			ds.types[t.Name()] = t
 			ts[i] = t
-		case eval.AnnotatedType:
-			ts[i] = ds.registerReflectedType(namespace, v.(eval.AnnotatedType))
+		case px.AnnotatedType:
+			ts[i] = ds.registerReflectedType(namespace, v.(px.AnnotatedType))
 		case reflect.Type:
-			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(v.(reflect.Type), nil))
+			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(v.(reflect.Type), nil))
 		case reflect.Value:
-			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(v.(reflect.Value).Type(), nil))
+			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(v.(reflect.Value).Type(), nil))
 		default:
-			ts[i] = ds.registerReflectedType(namespace, eval.NewTaggedType(reflect.TypeOf(v), nil))
+			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(reflect.TypeOf(v), nil))
 		}
 	}
 	return ts
 }
 
-func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.AnnotatedType) eval.Type {
+func (ds *ServerBuilder) registerReflectedType(namespace string, tg px.AnnotatedType) px.Type {
 	typ := tg.Type()
 	if typ.Kind() == reflect.Ptr {
 		el := typ.Elem()
@@ -159,9 +159,9 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.Annotat
 	}
 
 	parent := types.ParentType(typ)
-	var pt eval.Type
+	var pt px.Type
 	if parent != nil {
-		pt = ds.registerReflectedType(namespace, eval.NewTaggedType(parent, nil))
+		pt = ds.registerReflectedType(namespace, px.NewTaggedType(parent, nil))
 	}
 
 	name := namespace + `::` + typ.Name()
@@ -181,8 +181,8 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.Annotat
 				break
 			}
 			// Register type unless it's already registered
-			if _, err := eval.WrapReflectedType(ds.ctx, ft); err != nil {
-				ds.registerReflectedType(namespace, eval.NewAnnotatedType(ft, nil, nil))
+			if _, err := px.WrapReflectedType(ds.ctx, ft); err != nil {
+				ds.registerReflectedType(namespace, px.NewAnnotatedType(ft, nil, nil))
 			}
 		}
 	}
@@ -206,25 +206,25 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg eval.Annotat
 func (ds *ServerBuilder) RegisterActivity(activity wfapi.Activity) {
 	name := activity.Name()
 	if _, found := ds.activities[name]; found {
-		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsDefinition, `identifier`: name}))
+		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsDefinition, `identifier`: name}))
 	}
 	ds.activities[name] = ds.createActivityDefinition(activity)
 }
 
 func (ds *ServerBuilder) registerCallable(name string, callable reflect.Value) {
 	if _, found := ds.callables[name]; found {
-		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsInterface, `identifier`: name}))
+		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsInterface, `identifier`: name}))
 	}
 	ds.callables[name] = callable
 }
 
-func (ds *ServerBuilder) RegisterType(typ eval.Type) {
+func (ds *ServerBuilder) RegisterType(typ px.Type) {
 	ds.registerType(typ.Name(), typ)
 }
 
-func (ds *ServerBuilder) registerType(name string, typ eval.Type) {
+func (ds *ServerBuilder) registerType(name string, typ px.Type) {
 	if _, found := ds.types[name]; found {
-		panic(eval.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: eval.NsType, `identifier`: name}))
+		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsType, `identifier`: name}))
 	}
 	ds.types[name] = typ
 }
@@ -263,8 +263,8 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		tn := strings.Title(name)
 		api := activity.(wfapi.StateHandler).Interface()
 		ds.RegisterAPI(tn, api)
-		var ifd eval.Type
-		if po, ok := api.(eval.PuppetObject); ok {
+		var ifd px.Type
+		if po, ok := api.(px.PuppetObject); ok {
 			ifd = po.PType()
 		} else {
 			ifd = ds.types[tn]
@@ -275,8 +275,8 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		tn := strings.Title(name)
 		api := activity.(wfapi.Action).Function()
 		ds.RegisterAPI(tn, api)
-		var ifd eval.Type
-		if po, ok := api.(eval.PuppetObject); ok {
+		var ifd px.Type
+		if po, ok := api.(px.PuppetObject); ok {
 			ifd = po.PType()
 		} else {
 			ifd = ds.types[tn]
@@ -291,37 +291,37 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(iter.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
-	return serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, name), ds.serviceId, types.WrapHash(props))
+	return serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), ds.serviceId, types.WrapHash(props))
 }
 
-func paramsAsList(params []eval.Parameter) eval.List {
+func paramsAsList(params []px.Parameter) px.List {
 	np := len(params)
 	if np == 0 {
 		return nil
 	}
-	ps := make([]eval.Value, np)
+	ps := make([]px.Value, np)
 	for i, p := range params {
 		ps[i] = p
 	}
 	return types.WrapValues(ps)
 }
 
-func (ds *ServerBuilder) activitiesAsList(activities []wfapi.Activity) eval.List {
-	as := make([]eval.Value, len(activities))
+func (ds *ServerBuilder) activitiesAsList(activities []wfapi.Activity) px.List {
+	as := make([]px.Value, len(activities))
 	for i, a := range activities {
 		as[i] = ds.createActivityDefinition(a)
 	}
 	return types.WrapValues(as)
 }
 
-func CreateTypeSet(ts map[string]eval.Type) eval.TypeSet {
+func CreateTypeSet(ts map[string]px.Type) px.TypeSet {
 	result := make(map[string]interface{})
 	for k, t := range ts {
 		addName(strings.Split(k, `::`), result, t)
 	}
 
 	if len(result) != 1 {
-		panic(eval.Error(WF_NO_COMMON_NAMESPACE, issue.NO_ARGS))
+		panic(px.Error(WF_NO_COMMON_NAMESPACE, issue.NO_ARGS))
 	}
 
 next:
@@ -339,7 +339,7 @@ next:
 		}
 	}
 	t := makeType(``, result)
-	if ts, ok := t.(eval.TypeSet); ok {
+	if ts, ok := t.(px.TypeSet); ok {
 		return ts
 	}
 
@@ -347,19 +347,19 @@ next:
 	tsn := strings.Join(sgs[:len(sgs)-1], `::`)
 	tn := sgs[len(sgs)-1]
 	es := make([]*types.HashEntry, 0)
-	es = append(es, types.WrapHashEntry2(eval.KEY_PCORE_URI, types.WrapString(string(eval.PCORE_URI))))
-	es = append(es, types.WrapHashEntry2(eval.KEY_PCORE_VERSION, types.WrapSemVer(eval.PCORE_VERSION)))
-	es = append(es, types.WrapHashEntry2(types.KEY_VERSION, types.WrapSemVer(ServerVersion)))
-	es = append(es, types.WrapHashEntry2(types.KEY_TYPES, types.SingletonHash2(tn, t)))
-	return types.NewTypeSetType(eval.RUNTIME_NAME_AUTHORITY, tsn, types.WrapHash(es))
+	es = append(es, types.WrapHashEntry2(px.KeyPcoreUri, types.WrapString(string(px.PcoreUri))))
+	es = append(es, types.WrapHashEntry2(px.KeyPcoreVersion, types.WrapSemVer(px.PcoreVersion)))
+	es = append(es, types.WrapHashEntry2(types.KeyVersion, types.WrapSemVer(ServerVersion)))
+	es = append(es, types.WrapHashEntry2(types.KeyTypes, px.SingletonMap(tn, t)))
+	return types.NewTypeSet(px.RuntimeNameAuthority, tsn, types.WrapHash(es))
 }
 
-func makeType(name string, tree map[string]interface{}) eval.Type {
+func makeType(name string, tree map[string]interface{}) px.Type {
 	rl := len(tree)
-	ts := make(map[string]eval.Type, rl)
+	ts := make(map[string]px.Type, rl)
 	for k, v := range tree {
-		var t eval.Type
-		if x, ok := v.(eval.Type); ok {
+		var t px.Type
+		if x, ok := v.(px.Type); ok {
 			t = x
 		} else {
 			var tn string
@@ -376,14 +376,14 @@ func makeType(name string, tree map[string]interface{}) eval.Type {
 		ts[k] = t
 	}
 	es := make([]*types.HashEntry, 0)
-	es = append(es, types.WrapHashEntry2(eval.KEY_PCORE_URI, types.WrapString(string(eval.PCORE_URI))))
-	es = append(es, types.WrapHashEntry2(eval.KEY_PCORE_VERSION, types.WrapSemVer(eval.PCORE_VERSION)))
-	es = append(es, types.WrapHashEntry2(types.KEY_VERSION, types.WrapSemVer(ServerVersion)))
-	es = append(es, types.WrapHashEntry2(types.KEY_TYPES, types.WrapStringToTypeMap(ts)))
-	return types.NewTypeSetType(eval.RUNTIME_NAME_AUTHORITY, name, types.WrapHash(es))
+	es = append(es, types.WrapHashEntry2(px.KeyPcoreUri, types.WrapString(string(px.PcoreUri))))
+	es = append(es, types.WrapHashEntry2(px.KeyPcoreVersion, types.WrapSemVer(px.PcoreVersion)))
+	es = append(es, types.WrapHashEntry2(types.KeyVersion, types.WrapSemVer(ServerVersion)))
+	es = append(es, types.WrapHashEntry2(types.KeyTypes, types.WrapStringToTypeMap(ts)))
+	return types.NewTypeSet(px.RuntimeNameAuthority, name, types.WrapHash(es))
 }
 
-func addName(ks []string, tree map[string]interface{}, t eval.Type) {
+func addName(ks []string, tree map[string]interface{}, t px.Type) {
 	kl := len(ks)
 	k0 := ks[0]
 	if sn, ok := tree[k0]; ok {
@@ -405,13 +405,13 @@ func addName(ks []string, tree map[string]interface{}, t eval.Type) {
 }
 
 func (ds *ServerBuilder) Server() *Server {
-	var ts eval.TypeSet
+	var ts px.TypeSet
 	if len(ds.types) > 0 {
 		ts = CreateTypeSet(ds.types)
-		ds.ctx.AddTypes(ts)
+		px.AddTypes(ds.ctx, ts)
 	}
 
-	defs := make([]eval.Value, 0, len(ds.callables)+len(ds.activities))
+	defs := make([]px.Value, 0, len(ds.callables)+len(ds.activities))
 
 	callableStyle := types.WrapString(`callable`)
 	// Create invokable definitions for callables
@@ -422,7 +422,7 @@ func (ds *ServerBuilder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	for k, po := range ds.callableObjects {
@@ -432,7 +432,7 @@ func (ds *ServerBuilder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(eval.NewTypedName(eval.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	// Add registered activities
@@ -443,9 +443,9 @@ func (ds *ServerBuilder) Server() *Server {
 		return defs[i].(serviceapi.Definition).Identifier().Name() < defs[j].(serviceapi.Definition).Identifier().Name()
 	})
 
-	callables := make(map[string]eval.Value, len(ds.callables)+len(ds.callableObjects))
+	callables := make(map[string]px.Value, len(ds.callables)+len(ds.callableObjects))
 	for k, v := range ds.callables {
-		callables[k] = eval.WrapReflected(ds.ctx, v)
+		callables[k] = px.WrapReflected(ds.ctx, v)
 	}
 
 	for k, po := range ds.callableObjects {

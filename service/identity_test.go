@@ -2,14 +2,15 @@ package service_test
 
 import (
 	"fmt"
+	"github.com/lyraproj/pcore/pcore"
 	"os"
 
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/serviceapi"
 
 	// Initialize pcore
-	_ "github.com/lyraproj/puppet-evaluator/pcore"
+	_ "github.com/lyraproj/pcore/pcore"
 )
 
 type identity struct {
@@ -36,14 +37,14 @@ func (*identity) RemoveInternal(internalID string) {
 }
 
 func ExampleServerBuilder_RegisterAPI_identity() {
-	eval.Puppet.Do(func(c eval.Context) {
+	pcore.Do(func(c px.Context) {
 		var api serviceapi.Identity
 		api = &identity{}
 		sb := service.NewServerBuilder(c, `My::Identity::Service`)
 		sb.RegisterAPI(serviceapi.IdentityName, api)
 		s := sb.Server()
 		ts, defs := s.Metadata(c)
-		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		ts.ToString(os.Stdout, px.PrettyExpanded, nil)
 		fmt.Println()
 		fmt.Println(defs)
 	})

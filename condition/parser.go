@@ -1,8 +1,8 @@
 package condition
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wfapi"
 	"regexp"
 	"strings"
@@ -22,7 +22,7 @@ func Parse(str string) wfapi.Condition {
 	p.scn.Init(strings.NewReader(str))
 	c, r := p.parseOr()
 	if r != scanner.EOF {
-		panic(eval.Error(WF_CONDITION_SYNTAX_ERROR, issue.H{`text`: p.str, `pos`: p.scn.Offset}))
+		panic(px.Error(WF_CONDITION_SYNTAX_ERROR, issue.H{`text`: p.str, `pos`: p.scn.Offset}))
 	}
 	return c
 }
@@ -66,14 +66,14 @@ func (p *parser) parseUnary() (c wfapi.Condition, r rune) {
 
 func (p *parser) parseAtom(r rune) (wfapi.Condition, rune) {
 	if r == scanner.EOF {
-		panic(eval.Error(WF_CONDITION_UNEXPECTED_END, issue.H{`text`: p.str, `pos`: p.scn.Offset}))
+		panic(px.Error(WF_CONDITION_UNEXPECTED_END, issue.H{`text`: p.str, `pos`: p.scn.Offset}))
 	}
 
 	if r == '(' {
 		var c wfapi.Condition
 		c, r = p.parseOr()
 		if r != ')' {
-			panic(eval.Error(WF_CONDITION_MISSING_RP, issue.H{`text`: p.str, `pos`: p.scn.Offset}))
+			panic(px.Error(WF_CONDITION_MISSING_RP, issue.H{`text`: p.str, `pos`: p.scn.Offset}))
 		}
 		return c, p.scn.Scan()
 	}
@@ -89,5 +89,5 @@ func (p *parser) parseAtom(r rune) (wfapi.Condition, rune) {
 			return newTruthy(w), r
 		}
 	}
-	panic(eval.Error(WF_CONDITION_INVALID_NAME, issue.H{`name`: w, `text`: p.str, `pos`: p.scn.Offset}))
+	panic(px.Error(WF_CONDITION_INVALID_NAME, issue.H{`name`: w, `text`: p.str, `pos`: p.scn.Offset}))
 }

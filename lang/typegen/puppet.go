@@ -2,7 +2,7 @@ package typegen
 
 import (
 	"bufio"
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,16 +11,16 @@ import (
 
 type puppetGenerator struct{}
 
-func (g *puppetGenerator) GenerateTypes(typeSet eval.TypeSet, directory string) {
+func (g *puppetGenerator) GenerateTypes(typeSet px.TypeSet, directory string) {
 	g.GenerateType(typeSet, directory)
 }
 
-func (g *puppetGenerator) GenerateType(typ eval.Type, directory string) {
+func (g *puppetGenerator) GenerateType(typ px.Type, directory string) {
 	typeToStream(typ, directory, `.pp`, func(b io.Writer) {
 		write(b, "# this file is generated\ntype ")
 		write(b, typ.Name())
 		write(b, " = ")
-		typ.ToString(b, eval.PRETTY_EXPANDED, nil)
+		typ.ToString(b, px.PrettyExpanded, nil)
 		write(b, "\n")
 	})
 }
@@ -39,7 +39,7 @@ func write(w io.Writer, s string) {
 	}
 }
 
-func typeToStream(typ eval.Type, directory, extension string, gen func(io.Writer)) {
+func typeToStream(typ px.Type, directory, extension string, gen func(io.Writer)) {
 	tsp := strings.Split(typ.Name(), `::`)
 	fn := filepath.Join(directory, filepath.Join(tsp...)) + extension
 

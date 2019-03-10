@@ -1,7 +1,7 @@
 package wfapi
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"strings"
 )
 
@@ -11,16 +11,16 @@ func LeafName(name string) string {
 }
 
 type Builder interface {
-	Context() eval.Context
+	Context() px.Context
 	Build() Activity
 	Name(string)
 	When(string)
-	Input(...eval.Parameter)
-	Output(...eval.Parameter)
+	Input(...px.Parameter)
+	Output(...px.Parameter)
 	QualifyName(childName string) string
-	GetInput() []eval.Parameter
+	GetInput() []px.Parameter
 	GetName() string
-	Parameter(name, typeName string) eval.Parameter
+	Parameter(name, typeName string) px.Parameter
 }
 
 type ChildBuilder interface {
@@ -45,8 +45,8 @@ type StateHandlerBuilder interface {
 type IteratorBuilder interface {
 	ChildBuilder
 	Style(IterationStyle)
-	Over(...eval.Parameter)
-	Variables(...eval.Parameter)
+	Over(...px.Parameter)
+	Variables(...px.Parameter)
 }
 
 type ResourceBuilder interface {
@@ -66,8 +66,8 @@ type WorkflowBuilder interface {
 	Iterator(func(IteratorBuilder))
 }
 
-var NewStateHandler func(eval.Context, func(StateHandlerBuilder)) StateHandler
-var NewIterator func(eval.Context, func(IteratorBuilder)) Iterator
-var NewResource func(eval.Context, func(ResourceBuilder)) Resource
-var NewAction func(eval.Context, func(ActionBuilder)) Action
-var NewWorkflow func(eval.Context, func(WorkflowBuilder)) Workflow
+var NewStateHandler func(px.Context, func(StateHandlerBuilder)) StateHandler
+var NewIterator func(px.Context, func(IteratorBuilder)) Iterator
+var NewResource func(px.Context, func(ResourceBuilder)) Resource
+var NewAction func(px.Context, func(ActionBuilder)) Action
+var NewWorkflow func(px.Context, func(WorkflowBuilder)) Workflow

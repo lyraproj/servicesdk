@@ -1,13 +1,13 @@
 package wfapi
 
-import "github.com/lyraproj/puppet-evaluator/eval"
+import "github.com/lyraproj/pcore/px"
 
 type State interface {
-	Type() eval.ObjectType
+	Type() px.ObjectType
 	State() interface{}
 }
 
-type StateConverter func(ctx eval.Context, state State, input eval.OrderedMap) eval.PuppetObject
+type StateConverter func(ctx px.Context, state State, input px.OrderedMap) px.PuppetObject
 
 type Resource interface {
 	Activity

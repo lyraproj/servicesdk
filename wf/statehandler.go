@@ -1,7 +1,7 @@
 package wf
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wfapi"
 )
 
@@ -10,7 +10,7 @@ type stateHandler struct {
 	api interface{}
 }
 
-func NewStateHandler(name string, when wfapi.Condition, input, output []eval.Parameter, api interface{}) wfapi.StateHandler {
+func NewStateHandler(name string, when wfapi.Condition, input, output []px.Parameter, api interface{}) wfapi.StateHandler {
 	return &stateHandler{activity{name, when, input, output}, api}
 }
 

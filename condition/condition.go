@@ -2,7 +2,7 @@ package condition
 
 import (
 	"bytes"
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wfapi"
 	"sort"
 )
@@ -35,7 +35,7 @@ func (b boolean) Precedence() int {
 	return 5
 }
 
-func (b boolean) IsTrue(input eval.OrderedMap) bool {
+func (b boolean) IsTrue(input px.OrderedMap) bool {
 	return bool(b)
 }
 
@@ -49,9 +49,9 @@ func newTruthy(name string) wfapi.Condition {
 	return truthy(name)
 }
 
-func (v truthy) IsTrue(input eval.OrderedMap) bool {
+func (v truthy) IsTrue(input px.OrderedMap) bool {
 	value, ok := input.Get4(string(v))
-	return ok && eval.IsTruthy(value)
+	return ok && px.IsTruthy(value)
 }
 
 func (v truthy) Names() []string {
@@ -74,7 +74,7 @@ type not struct {
 	condition wfapi.Condition
 }
 
-func (n *not) IsTrue(input eval.OrderedMap) bool {
+func (n *not) IsTrue(input px.OrderedMap) bool {
 	return !n.condition.IsTrue(input)
 }
 
@@ -100,7 +100,7 @@ func newAnd(conditions []wfapi.Condition) wfapi.Condition {
 	return &and{conditions}
 }
 
-func (a *and) IsTrue(input eval.OrderedMap) bool {
+func (a *and) IsTrue(input px.OrderedMap) bool {
 	for _, condition := range a.conditions {
 		if !condition.IsTrue(input) {
 			return false
@@ -129,7 +129,7 @@ type or struct {
 	conditions []wfapi.Condition
 }
 
-func (o *or) IsTrue(input eval.OrderedMap) bool {
+func (o *or) IsTrue(input px.OrderedMap) bool {
 	for _, condition := range o.conditions {
 		if condition.IsTrue(input) {
 			return true

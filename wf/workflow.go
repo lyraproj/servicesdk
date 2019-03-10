@@ -1,7 +1,7 @@
 package wf
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wfapi"
 )
 
@@ -10,7 +10,7 @@ type workflow struct {
 	activities []wfapi.Activity
 }
 
-func NewWorkflow(name string, when wfapi.Condition, input, output []eval.Parameter, activities []wfapi.Activity) wfapi.Workflow {
+func NewWorkflow(name string, when wfapi.Condition, input, output []px.Parameter, activities []wfapi.Activity) wfapi.Workflow {
 	return &workflow{activity{name, when, input, output}, activities}
 }
 

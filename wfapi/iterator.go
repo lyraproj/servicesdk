@@ -2,7 +2,7 @@ package wfapi
 
 import (
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 )
 
 type IterationStyle int
@@ -38,7 +38,7 @@ func NewIterationStyle(style string) IterationStyle {
 	case `times`:
 		return IterationStyleTimes
 	}
-	panic(eval.Error(WF_ILLEGAL_ITERATION_STYLE, issue.H{`style`: style}))
+	panic(px.Error(WF_ILLEGAL_ITERATION_STYLE, issue.H{`style`: style}))
 }
 
 type Iterator interface {
@@ -52,10 +52,10 @@ type Iterator interface {
 
 	// Over returns what this iterator will iterate over. These parameters will be added
 	// to the declared input set when the final requirements for the activity are computed.
-	Over() []eval.Parameter
+	Over() []px.Parameter
 
 	// Variables returns the variables that this iterator will produce for each iteration. These
 	// variables will be removed from the declared input set when the final requirements
 	// for the activity are computed.
-	Variables() []eval.Parameter
+	Variables() []px.Parameter
 }

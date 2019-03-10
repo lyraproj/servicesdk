@@ -1,8 +1,8 @@
 package wfapi
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/px"
 )
 
 // An Activity of a Workflow. The workflow is an Activity in itself and can be used in
@@ -18,8 +18,8 @@ type Activity interface {
 	Name() string
 
 	// Input returns the input requirements for the Activity
-	Input() []eval.Parameter
+	Input() []px.Parameter
 
 	// Output returns the definition of that this Activity will produce
-	Output() []eval.Parameter
+	Output() []px.Parameter
 }

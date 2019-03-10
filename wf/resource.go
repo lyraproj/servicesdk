@@ -1,7 +1,7 @@
 package wf
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wfapi"
 )
 
@@ -11,7 +11,7 @@ type resource struct {
 	extId string
 }
 
-func NewResource(name string, when wfapi.Condition, input, output []eval.Parameter, extId string, state wfapi.State) wfapi.Resource {
+func NewResource(name string, when wfapi.Condition, input, output []px.Parameter, extId string, state wfapi.State) wfapi.Resource {
 	return &resource{activity{name, when, input, output}, state, extId}
 }
 

@@ -1,7 +1,7 @@
 package wf
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wfapi"
 )
 
@@ -10,7 +10,7 @@ type action struct {
 	function interface{}
 }
 
-func NewAction(name string, when wfapi.Condition, input, output []eval.Parameter, function interface{}) wfapi.Action {
+func NewAction(name string, when wfapi.Condition, input, output []px.Parameter, function interface{}) wfapi.Action {
 	return &action{activity{name, when, input, output}, function}
 }
 

@@ -2,7 +2,7 @@ package wfapi
 
 import (
 	"fmt"
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 )
 
 // A Condition evaluates to true or false depending on its given input
@@ -13,7 +13,7 @@ type Condition interface {
 	Precedence() int
 
 	// IsTrue returns true if the given input satisfies the condition, false otherwise
-	IsTrue(input eval.OrderedMap) bool
+	IsTrue(input px.OrderedMap) bool
 
 	// Returns all names in use by this condition and its nested conditions. The returned
 	// slice is guaranteed to be unique and sorted alphabetically

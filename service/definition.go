@@ -2,15 +2,15 @@ package service
 
 import (
 	"fmt"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"io"
 	"reflect"
 )
 
 func init() {
-	serviceapi.Definition_Type = eval.NewGoObjectType(`Service::Definition`, reflect.TypeOf((*serviceapi.Definition)(nil)).Elem(), `{
+	serviceapi.DefinitionMetaType = px.NewGoObjectType(`Service::Definition`, reflect.TypeOf((*serviceapi.Definition)(nil)).Elem(), `{
     attributes => {
       identifier => TypedName,
       serviceId => TypedName,
@@ -18,39 +18,39 @@ func init() {
     }
   }`,
 
-		func(ctx eval.Context, args []eval.Value) eval.Value {
-			identifier := args[0].(eval.TypedName)
-			service_id := args[1].(eval.TypedName)
-			properties := args[2].(eval.OrderedMap)
+		func(ctx px.Context, args []px.Value) px.Value {
+			identifier := args[0].(px.TypedName)
+			service_id := args[1].(px.TypedName)
+			properties := args[2].(px.OrderedMap)
 			return newDefinition(identifier, service_id, properties)
 		},
 
-		func(ctx eval.Context, args []eval.Value) eval.Value {
-			h := args[0].(*types.HashValue)
-			identifier := h.Get5(`identifier`, eval.UNDEF).(eval.TypedName)
-			service_id := h.Get5(`serviceId`, eval.UNDEF).(eval.TypedName)
-			properties := h.Get5(`properties`, eval.EMPTY_MAP).(eval.OrderedMap)
+		func(ctx px.Context, args []px.Value) px.Value {
+			h := args[0].(*types.Hash)
+			identifier := h.Get5(`identifier`, px.Undef).(px.TypedName)
+			service_id := h.Get5(`serviceId`, px.Undef).(px.TypedName)
+			properties := h.Get5(`properties`, px.EmptyMap).(px.OrderedMap)
 			return newDefinition(identifier, service_id, properties)
 		})
 
 	serviceapi.NewDefinition = newDefinition
 }
 
-func newDefinition(identifier, serviceId eval.TypedName, properties eval.OrderedMap) serviceapi.Definition {
+func newDefinition(identifier, serviceId px.TypedName, properties px.OrderedMap) serviceapi.Definition {
 	return &definition{identifier, serviceId, properties}
 }
 
 type definition struct {
-	identifier eval.TypedName
-	serviceId  eval.TypedName
-	properties eval.OrderedMap
+	identifier px.TypedName
+	serviceId  px.TypedName
+	properties px.OrderedMap
 }
 
 func (d *definition) Label() string {
 	return fmt.Sprintf(`%s %s`, d.serviceId.String(), d.identifier.String())
 }
 
-func (d *definition) Get(key string) (value eval.Value, ok bool) {
+func (d *definition) Get(key string) (value px.Value, ok bool) {
 	switch key {
 	case `identifier`:
 		return d.identifier, true
@@ -62,7 +62,7 @@ func (d *definition) Get(key string) (value eval.Value, ok bool) {
 	return nil, false
 }
 
-func (d *definition) InitHash() eval.OrderedMap {
+func (d *definition) InitHash() px.OrderedMap {
 	es := make([]*types.HashEntry, 0, 3)
 	es = append(es, types.WrapHashEntry2(`identifier`, d.identifier))
 	es = append(es, types.WrapHashEntry2(`serviceId`, d.serviceId))
@@ -70,33 +70,33 @@ func (d *definition) InitHash() eval.OrderedMap {
 	return types.WrapHash(es)
 }
 
-func (d *definition) Equals(other interface{}, g eval.Guard) bool {
+func (d *definition) Equals(other interface{}, g px.Guard) bool {
 	if o, ok := other.(*definition); ok {
 		return d.identifier == o.identifier && d.serviceId.Equals(o.serviceId, g) && d.properties.Equals(o.properties, g)
 	}
 	return false
 }
 
-func (d *definition) Identifier() eval.TypedName {
+func (d *definition) Identifier() px.TypedName {
 	return d.identifier
 }
 
-func (d *definition) ServiceId() eval.TypedName {
+func (d *definition) ServiceId() px.TypedName {
 	return d.serviceId
 }
 
-func (d *definition) Properties() eval.OrderedMap {
+func (d *definition) Properties() px.OrderedMap {
 	return d.properties
 }
 
 func (d *definition) String() string {
-	return eval.ToString(d)
+	return px.ToString(d)
 }
 
-func (d *definition) ToString(bld io.Writer, format eval.FormatContext, g eval.RDetect) {
+func (d *definition) ToString(bld io.Writer, format px.FormatContext, g px.RDetect) {
 	types.ObjectToString(d, format, bld, g)
 }
 
-func (d *definition) PType() eval.Type {
-	return serviceapi.Definition_Type
+func (d *definition) PType() px.Type {
+	return serviceapi.DefinitionMetaType
 }

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/annotation"
 	"reflect"
 )
@@ -12,11 +12,11 @@ type ResourceTypeBuilder interface {
 	ImmutableAttributes(names ...string)
 	ProvidedAttributes(names ...string)
 	Tags(tags map[string]string)
-	Build(goType interface{}) eval.AnnotatedType
+	Build(goType interface{}) px.AnnotatedType
 }
 
 type rtBuilder struct {
-	ctx            eval.Context
+	ctx            px.Context
 	rels           []*types.HashEntry
 	immutableAttrs []string
 	providedAttrs  []string
@@ -65,7 +65,7 @@ func (rb *rtBuilder) Tags(tags map[string]string) {
 	}
 }
 
-func (rb *rtBuilder) Build(goType interface{}) eval.AnnotatedType {
+func (rb *rtBuilder) Build(goType interface{}) px.AnnotatedType {
 	var rt reflect.Type
 	switch goType.(type) {
 	case reflect.Type:
@@ -76,7 +76,7 @@ func (rb *rtBuilder) Build(goType interface{}) eval.AnnotatedType {
 		rt = reflect.TypeOf(goType)
 	}
 
-	annotations := eval.EMPTY_MAP
+	annotations := px.EmptyMap
 	if rb.immutableAttrs != nil || rb.providedAttrs != nil || rb.rels != nil {
 		as := make([]*types.HashEntry, 0, 3)
 		if rb.immutableAttrs != nil {
@@ -88,7 +88,7 @@ func (rb *rtBuilder) Build(goType interface{}) eval.AnnotatedType {
 		if rb.rels != nil {
 			as = append(as, types.WrapHashEntry2(`relationships`, types.WrapHash(rb.rels)))
 		}
-		annotations = types.SingletonHash(annotation.ResourceType, types.WrapHash(as))
+		annotations = types.WrapHash([]*types.HashEntry{types.WrapHashEntry(annotation.ResourceType, types.WrapHash(as))})
 	}
-	return eval.NewAnnotatedType(rt, rb.tags, annotations)
+	return px.NewAnnotatedType(rt, rb.tags, annotations)
 }
