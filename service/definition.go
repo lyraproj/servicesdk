@@ -47,7 +47,7 @@ type definition struct {
 }
 
 func (d *definition) Label() string {
-	return fmt.Sprintf(`%s %s`, d.serviceId.String(), d.identifier.String())
+	return fmt.Sprintf(`%s/%s`, d.serviceId.Name(), d.identifier.Name())
 }
 
 func (d *definition) Get(key string) (value px.Value, ok bool) {
