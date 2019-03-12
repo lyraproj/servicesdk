@@ -1,11 +1,12 @@
 package typegen
 
 import (
+	"sort"
+	"strings"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/lang"
-	"sort"
-	"strings"
 )
 
 // The Generator interface is implemented by generators that can transform Pcore types
@@ -30,11 +31,11 @@ func GetGenerator(language string) Generator {
 	generator, ok := generators[strings.ToLower(language)]
 	if !ok {
 		sl := make([]string, 0, len(generators))
-		for l, _ := range generators {
+		for l := range generators {
 			sl = append(sl, l)
 		}
 		sort.Strings(sl)
-		panic(px.Error(lang.WF_UNSUPPORTED_LANGUAGE,
+		panic(px.Error(lang.UnsupportedLanguage,
 			issue.H{`language`: language, `supportedLanguages`: strings.Join(sl, `, `)}))
 	}
 	return generator

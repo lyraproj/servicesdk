@@ -1,28 +1,29 @@
 package service
 
 import (
+	"reflect"
+	"strings"
+	"sync"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/semver/semver"
 	"github.com/lyraproj/servicesdk/serviceapi"
-	"github.com/lyraproj/servicesdk/wfapi"
-	"reflect"
-	"strings"
-	"sync"
+	"github.com/lyraproj/servicesdk/wf"
 )
 
 var ServerVersion = semver.MustParseVersion(`0.1.0`)
 
 type Server struct {
-	context   px.Context
-	id        px.TypedName
-	lock      sync.RWMutex
-	typeSet   px.TypeSet
-	metadata  px.List
-	stateConv wfapi.StateConverter
-	states    map[string]wfapi.State
-	callables map[string]px.Value
+	context        px.Context
+	id             px.TypedName
+	lock           sync.RWMutex
+	typeSet        px.TypeSet
+	metadata       px.List
+	stateConverter wf.StateConverter
+	states         map[string]wf.State
+	callables      map[string]px.Value
 }
 
 func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition {
@@ -30,7 +31,7 @@ func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition
 	rt := rv.Type()
 	pt, ok := s.context.ImplementationRegistry().ReflectedToType(rt)
 	if !ok {
-		panic(px.Error(WF_API_TYPE_NOT_REGISTERED, issue.H{`type`: rt.Name()}))
+		panic(px.Error(ApiTypeNotRegistered, issue.H{`type`: rt.Name()}))
 	}
 
 	s.lock.RLock()
@@ -38,7 +39,7 @@ func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition
 	s.lock.RUnlock()
 
 	if found {
-		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsInterface, `identifier`: name}))
+		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsInterface, `identifier`: name}))
 	}
 
 	props := make([]*types.HashEntry, 0, 2)
@@ -47,10 +48,10 @@ func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition
 	def := serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), s.id, types.WrapHash(props))
 
 	nmd := s.metadata.Add(def)
-	defw := px.WrapReflected(s.context, rv)
+	cls := px.WrapReflected(s.context, rv)
 
 	s.lock.Lock()
-	s.callables[name] = defw
+	s.callables[name] = cls
 	s.metadata = nmd
 	s.lock.Unlock()
 
@@ -58,16 +59,16 @@ func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition
 }
 
 func (s *Server) State(c px.Context, name string, input px.OrderedMap) px.PuppetObject {
-	if s.stateConv != nil {
+	if s.stateConverter != nil {
 		s.lock.RLock()
 		st, ok := s.states[name]
 		s.lock.RUnlock()
 		if ok {
-			return s.stateConv(c, st, input)
+			return s.stateConverter(c, st, input)
 		}
-		panic(px.Error(WF_NO_SUCH_STATE, issue.H{`name`: name}))
+		panic(px.Error(NoSuchState, issue.H{`name`: name}))
 	}
-	panic(px.Error(WF_NO_STATE_CONVERTER, issue.H{`name`: name}))
+	panic(px.Error(NoStateConverter, issue.H{`name`: name}))
 }
 
 func (s *Server) Identifier(px.Context) px.TypedName {
@@ -93,9 +94,9 @@ func (s *Server) Invoke(c px.Context, api, name string, arguments ...px.Value) (
 			result = m.Call(c, iv, nil, arguments)
 			return
 		}
-		panic(px.Error(WF_NO_SUCH_METHOD, issue.H{`api`: api, `method`: name}))
+		panic(px.Error(NoSuchMethod, issue.H{`api`: api, `method`: name}))
 	}
-	panic(px.Error(WF_NO_SUCH_API, issue.H{`api`: api}))
+	panic(px.Error(NoSuchApi, issue.H{`api`: api}))
 }
 
 func (s *Server) Metadata(px.Context) (typeSet px.TypeSet, definitions []serviceapi.Definition) {

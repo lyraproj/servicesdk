@@ -2,15 +2,20 @@ package wf
 
 import (
 	"github.com/lyraproj/pcore/px"
-	"github.com/lyraproj/servicesdk/wfapi"
 )
+
+type Workflow interface {
+	Activity
+
+	Activities() []Activity
+}
 
 type workflow struct {
 	activity
-	activities []wfapi.Activity
+	activities []Activity
 }
 
-func NewWorkflow(name string, when wfapi.Condition, input, output []px.Parameter, activities []wfapi.Activity) wfapi.Workflow {
+func MakeWorkflow(name string, when Condition, input, output []px.Parameter, activities []Activity) Workflow {
 	return &workflow{activity{name, when, input, output}, activities}
 }
 
@@ -18,6 +23,6 @@ func (w *workflow) Label() string {
 	return `workflow ` + w.name
 }
 
-func (w *workflow) Activities() []wfapi.Activity {
+func (w *workflow) Activities() []Activity {
 	return w.activities
 }

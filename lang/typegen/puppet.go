@@ -2,11 +2,12 @@ package typegen
 
 import (
 	"bufio"
-	"github.com/lyraproj/pcore/px"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/lyraproj/pcore/px"
 )
 
 type puppetGenerator struct{}
@@ -51,6 +52,7 @@ func typeToStream(typ px.Type, directory, extension string, gen func(io.Writer))
 	if err != nil {
 		panic(err)
 	}
+	//noinspection ALL
 	defer f.Close()
 
 	b := bufio.NewWriter(f)

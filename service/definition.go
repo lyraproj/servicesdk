@@ -2,11 +2,12 @@ package service
 
 import (
 	"fmt"
+	"io"
+	"reflect"
+
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/serviceapi"
-	"io"
-	"reflect"
 )
 
 func init() {
@@ -20,17 +21,17 @@ func init() {
 
 		func(ctx px.Context, args []px.Value) px.Value {
 			identifier := args[0].(px.TypedName)
-			service_id := args[1].(px.TypedName)
+			serviceId := args[1].(px.TypedName)
 			properties := args[2].(px.OrderedMap)
-			return newDefinition(identifier, service_id, properties)
+			return newDefinition(identifier, serviceId, properties)
 		},
 
 		func(ctx px.Context, args []px.Value) px.Value {
 			h := args[0].(*types.Hash)
 			identifier := h.Get5(`identifier`, px.Undef).(px.TypedName)
-			service_id := h.Get5(`serviceId`, px.Undef).(px.TypedName)
+			serviceId := h.Get5(`serviceId`, px.Undef).(px.TypedName)
 			properties := h.Get5(`properties`, px.EmptyMap).(px.OrderedMap)
-			return newDefinition(identifier, service_id, properties)
+			return newDefinition(identifier, serviceId, properties)
 		})
 
 	serviceapi.NewDefinition = newDefinition

@@ -8,46 +8,24 @@ import (
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
-	"github.com/lyraproj/servicesdk/condition"
 	"github.com/lyraproj/servicesdk/serviceapi"
-	"github.com/lyraproj/servicesdk/wfapi"
+	"github.com/lyraproj/servicesdk/wf"
 )
 
-type GoState struct {
-	t px.ObjectType
-	v reflect.Value
-}
-
-func NewGoState(t px.ObjectType, v reflect.Value) *GoState {
-	return &GoState{t, v}
-}
-
-func (s *GoState) Type() px.ObjectType {
-	return s.t
-}
-
-func (s *GoState) State() interface{} {
-	return s.v
-}
-
-func GoStateConverter(c px.Context, state wfapi.State, input px.OrderedMap) px.PuppetObject {
-	return px.WrapReflected(c, state.State().(reflect.Value)).(px.PuppetObject)
-}
-
-type ServerBuilder struct {
+type Builder struct {
 	ctx             px.Context
 	serviceId       px.TypedName
-	stateConv       wfapi.StateConverter
+	stateConverter  wf.StateConverter
 	types           map[string]px.Type
 	handlerFor      map[string]px.Type
 	activities      map[string]serviceapi.Definition
 	callables       map[string]reflect.Value
-	states          map[string]wfapi.State
+	states          map[string]wf.State
 	callableObjects map[string]px.PuppetObject
 }
 
-func NewServerBuilder(ctx px.Context, serviceName string) *ServerBuilder {
-	return &ServerBuilder{
+func NewServiceBuilder(ctx px.Context, serviceName string) *Builder {
+	return &Builder{
 		ctx:             ctx,
 		serviceId:       px.NewTypedName(px.NsService, assertTypeName(serviceName)),
 		callables:       make(map[string]reflect.Value),
@@ -55,23 +33,23 @@ func NewServerBuilder(ctx px.Context, serviceName string) *ServerBuilder {
 		handlerFor:      make(map[string]px.Type),
 		activities:      make(map[string]serviceapi.Definition),
 		types:           make(map[string]px.Type),
-		states:          make(map[string]wfapi.State)}
+		states:          make(map[string]wf.State)}
 }
 
 func assertTypeName(name string) string {
 	if types.TypeNamePattern.MatchString(name) {
 		return name
 	}
-	panic(px.Error(WF_ILLEGAL_TYPE_NAME, issue.H{`name`: name}))
+	panic(px.Error(IllegalTypeName, issue.H{`name`: name}))
 }
 
-func (ds *ServerBuilder) RegisterStateConverter(sf wfapi.StateConverter) {
-	ds.stateConv = sf
+func (ds *Builder) RegisterStateConverter(sf wf.StateConverter) {
+	ds.stateConverter = sf
 }
 
 // RegisterAPI registers a struct as an invokable. The callable instance given as the argument becomes the
 // actual receiver the calls.
-func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
+func (ds *Builder) RegisterAPI(name string, callable interface{}) {
 	name = assertTypeName(name)
 	if po, ok := callable.(px.PuppetObject); ok {
 		ds.callableObjects[name] = po
@@ -92,7 +70,7 @@ func (ds *ServerBuilder) RegisterAPI(name string, callable interface{}) {
 // RegisterAPIType registers a the type of a struct as an invokable type. The struct should be a zero
 // value. This method must be used to ensure that all type info is present for callable instances added to an
 // already created service
-func (ds *ServerBuilder) RegisterApiType(name string, callable interface{}) {
+func (ds *Builder) RegisterApiType(name string, callable interface{}) {
 	name = assertTypeName(name)
 	rv := reflect.ValueOf(callable)
 	rt := rv.Type()
@@ -106,11 +84,11 @@ func (ds *ServerBuilder) RegisterApiType(name string, callable interface{}) {
 }
 
 // RegisterState registers the unresolved state of a resource.
-func (ds *ServerBuilder) RegisterState(name string, state wfapi.State) {
+func (ds *Builder) RegisterState(name string, state wf.State) {
 	ds.states[name] = state
 }
 
-func (ds *ServerBuilder) BuildResource(goType interface{}, bld func(f ResourceTypeBuilder)) px.AnnotatedType {
+func (ds *Builder) BuildResource(goType interface{}, bld func(f ResourceTypeBuilder)) px.AnnotatedType {
 	rb := &rtBuilder{ctx: ds.ctx}
 	bld(rb)
 	return rb.Build(goType)
@@ -118,7 +96,7 @@ func (ds *ServerBuilder) BuildResource(goType interface{}, bld func(f ResourceTy
 
 // RegisterHandler registers a callable struct as an invokable capable of handling a state described using
 // px.Type. The callable instance given as the argument becomes the actual receiver the calls.
-func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stateType px.Type) {
+func (ds *Builder) RegisterHandler(name string, callable interface{}, stateType px.Type) {
 	ds.RegisterAPI(name, callable)
 	ds.types[stateType.Name()] = stateType
 	ds.handlerFor[name] = stateType
@@ -128,20 +106,19 @@ func (ds *ServerBuilder) RegisterHandler(name string, callable interface{}, stat
 //
 // A value is typically a pointer to the zero value of a struct. The name of the generated type for
 // that struct will be the struct name prefixed by the service ID.
-func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) []px.Type {
+func (ds *Builder) RegisterTypes(namespace string, values ...interface{}) []px.Type {
 	ts := make([]px.Type, len(values))
 	for i, v := range values {
-		switch v.(type) {
+		switch v := v.(type) {
 		case px.Type:
-			t := v.(px.Type)
-			ds.types[t.Name()] = t
-			ts[i] = t
+			ds.types[v.Name()] = v
+			ts[i] = v
 		case px.AnnotatedType:
-			ts[i] = ds.registerReflectedType(namespace, v.(px.AnnotatedType))
+			ts[i] = ds.registerReflectedType(namespace, v)
 		case reflect.Type:
-			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(v.(reflect.Type), nil))
+			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(v, nil))
 		case reflect.Value:
-			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(v.(reflect.Value).Type(), nil))
+			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(v.Type(), nil))
 		default:
 			ts[i] = ds.registerReflectedType(namespace, px.NewTaggedType(reflect.TypeOf(v), nil))
 		}
@@ -149,7 +126,7 @@ func (ds *ServerBuilder) RegisterTypes(namespace string, values ...interface{}) 
 	return ts
 }
 
-func (ds *ServerBuilder) registerReflectedType(namespace string, tg px.AnnotatedType) px.Type {
+func (ds *Builder) registerReflectedType(namespace string, tg px.AnnotatedType) px.Type {
 	typ := tg.Type()
 	if typ.Kind() == reflect.Ptr {
 		el := typ.Elem()
@@ -203,33 +180,33 @@ func (ds *ServerBuilder) registerReflectedType(namespace string, tg px.Annotated
 }
 
 // RegisterActivity registers an activity
-func (ds *ServerBuilder) RegisterActivity(activity wfapi.Activity) {
+func (ds *Builder) RegisterActivity(activity wf.Activity) {
 	name := activity.Name()
 	if _, found := ds.activities[name]; found {
-		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsDefinition, `identifier`: name}))
+		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsDefinition, `identifier`: name}))
 	}
 	ds.activities[name] = ds.createActivityDefinition(activity)
 }
 
-func (ds *ServerBuilder) registerCallable(name string, callable reflect.Value) {
+func (ds *Builder) registerCallable(name string, callable reflect.Value) {
 	if _, found := ds.callables[name]; found {
-		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsInterface, `identifier`: name}))
+		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsInterface, `identifier`: name}))
 	}
 	ds.callables[name] = callable
 }
 
-func (ds *ServerBuilder) RegisterType(typ px.Type) {
+func (ds *Builder) RegisterType(typ px.Type) {
 	ds.registerType(typ.Name(), typ)
 }
 
-func (ds *ServerBuilder) registerType(name string, typ px.Type) {
+func (ds *Builder) registerType(name string, typ px.Type) {
 	if _, found := ds.types[name]; found {
-		panic(px.Error(WF_ALREADY_REGISTERED, issue.H{`namespace`: px.NsType, `identifier`: name}))
+		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsType, `identifier`: name}))
 	}
 	ds.types[name] = typ
 }
 
-func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) serviceapi.Definition {
+func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Definition {
 	props := make([]*types.HashEntry, 0, 5)
 
 	if input := paramsAsList(activity.Input()); input != nil {
@@ -238,30 +215,29 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 	if output := paramsAsList(activity.Output()); output != nil {
 		props = append(props, types.WrapHashEntry2(`output`, output))
 	}
-	if activity.When() != condition.Always {
+	if activity.When() != wf.Always {
 		props = append(props, types.WrapHashEntry2(`when`, types.WrapString(activity.When().String())))
 	}
 
 	name := activity.Name()
 	var style string
-	switch activity.(type) {
-	case wfapi.Workflow:
+	switch activity := activity.(type) {
+	case wf.Workflow:
 		style = `workflow`
-		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(activity.(wfapi.Workflow).Activities())))
-	case wfapi.Resource:
-		rs := activity.(wfapi.Resource)
+		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(activity.Activities())))
+	case wf.Resource:
 		style = `resource`
-		state := rs.State()
-		extId := rs.ExternalId()
+		state := activity.State()
+		extId := activity.ExternalId()
 		ds.RegisterState(name, state)
 		props = append(props, types.WrapHashEntry2(`resourceType`, state.Type()))
 		if extId != `` {
 			props = append(props, types.WrapHashEntry2(`externalId`, types.WrapString(extId)))
 		}
-	case wfapi.StateHandler:
+	case wf.StateHandler:
 		style = `stateHandler`
 		tn := strings.Title(name)
-		api := activity.(wfapi.StateHandler).Interface()
+		api := activity.Interface()
 		ds.RegisterAPI(tn, api)
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
@@ -270,10 +246,10 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 			ifd = ds.types[tn]
 		}
 		props = append(props, types.WrapHashEntry2(`interface`, ifd))
-	case wfapi.Action:
+	case wf.Action:
 		style = `action`
 		tn := strings.Title(name)
-		api := activity.(wfapi.Action).Function()
+		api := activity.Function()
 		ds.RegisterAPI(tn, api)
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
@@ -282,13 +258,12 @@ func (ds *ServerBuilder) createActivityDefinition(activity wfapi.Activity) servi
 			ifd = ds.types[tn]
 		}
 		props = append(props, types.WrapHashEntry2(`interface`, ifd))
-	case wfapi.Iterator:
+	case wf.Iterator:
 		style = `iterator`
-		iter := activity.(wfapi.Iterator)
-		props = append(props, types.WrapHashEntry2(`iterationStyle`, types.WrapString(iter.IterationStyle().String())))
-		props = append(props, types.WrapHashEntry2(`over`, paramsAsList(iter.Over())))
-		props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(iter.Variables())))
-		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(iter.Producer())))
+		props = append(props, types.WrapHashEntry2(`iterationStyle`, types.WrapString(activity.IterationStyle().String())))
+		props = append(props, types.WrapHashEntry2(`over`, paramsAsList(activity.Over())))
+		props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(activity.Variables())))
+		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(activity.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
 	return serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), ds.serviceId, types.WrapHash(props))
@@ -306,7 +281,7 @@ func paramsAsList(params []px.Parameter) px.List {
 	return types.WrapValues(ps)
 }
 
-func (ds *ServerBuilder) activitiesAsList(activities []wfapi.Activity) px.List {
+func (ds *Builder) activitiesAsList(activities []wf.Activity) px.List {
 	as := make([]px.Value, len(activities))
 	for i, a := range activities {
 		as[i] = ds.createActivityDefinition(a)
@@ -321,7 +296,7 @@ func CreateTypeSet(ts map[string]px.Type) px.TypeSet {
 	}
 
 	if len(result) != 1 {
-		panic(px.Error(WF_NO_COMMON_NAMESPACE, issue.NO_ARGS))
+		panic(px.Error(NoCommonNamespace, issue.NO_ARGS))
 	}
 
 next:
@@ -404,7 +379,7 @@ func addName(ks []string, tree map[string]interface{}, t px.Type) {
 	}
 }
 
-func (ds *ServerBuilder) Server() *Server {
+func (ds *Builder) Server() *Server {
 	var ts px.TypeSet
 	if len(ds.types) > 0 {
 		ts = CreateTypeSet(ds.types)
@@ -452,5 +427,5 @@ func (ds *ServerBuilder) Server() *Server {
 		callables[k] = po
 	}
 
-	return &Server{context: ds.ctx, id: ds.serviceId, typeSet: ts, metadata: types.WrapValues(defs), stateConv: ds.stateConv, callables: callables, states: ds.states}
+	return &Server{context: ds.ctx, id: ds.serviceId, typeSet: ts, metadata: types.WrapValues(defs), stateConverter: ds.stateConverter, callables: callables, states: ds.states}
 }

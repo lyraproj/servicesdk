@@ -1,14 +1,15 @@
 package service
 
 import (
+	"reflect"
+
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/annotation"
-	"reflect"
 )
 
 type ResourceTypeBuilder interface {
-	AddRelationship(name, to, kind, cardinality, reverse_name string, keys []string)
+	AddRelationship(name, to, kind, cardinality, reverseName string, keys []string)
 	ImmutableAttributes(names ...string)
 	ProvidedAttributes(names ...string)
 	Tags(tags map[string]string)
@@ -17,7 +18,7 @@ type ResourceTypeBuilder interface {
 
 type rtBuilder struct {
 	ctx            px.Context
-	rels           []*types.HashEntry
+	relationships  []*types.HashEntry
 	immutableAttrs []string
 	providedAttrs  []string
 	tags           map[string]string
@@ -36,7 +37,7 @@ func (rb *rtBuilder) AddRelationship(name, to, kind, cardinality, reverseName st
 	if reverseName != `` {
 		es[4] = types.WrapHashEntry2(`reverseName`, types.WrapString(reverseName))
 	}
-	rb.rels = append(rb.rels, types.WrapHashEntry2(name, types.WrapHash(es)))
+	rb.relationships = append(rb.relationships, types.WrapHashEntry2(name, types.WrapHash(es)))
 }
 
 func (rb *rtBuilder) ImmutableAttributes(names ...string) {
@@ -67,17 +68,17 @@ func (rb *rtBuilder) Tags(tags map[string]string) {
 
 func (rb *rtBuilder) Build(goType interface{}) px.AnnotatedType {
 	var rt reflect.Type
-	switch goType.(type) {
+	switch goType := goType.(type) {
 	case reflect.Type:
-		rt = goType.(reflect.Type)
+		rt = goType
 	case reflect.Value:
-		rt = goType.(reflect.Value).Type()
+		rt = goType.Type()
 	default:
 		rt = reflect.TypeOf(goType)
 	}
 
 	annotations := px.EmptyMap
-	if rb.immutableAttrs != nil || rb.providedAttrs != nil || rb.rels != nil {
+	if rb.immutableAttrs != nil || rb.providedAttrs != nil || rb.relationships != nil {
 		as := make([]*types.HashEntry, 0, 3)
 		if rb.immutableAttrs != nil {
 			as = append(as, types.WrapHashEntry2(`immutableAttributes`, types.WrapStrings(rb.immutableAttrs)))
@@ -85,8 +86,8 @@ func (rb *rtBuilder) Build(goType interface{}) px.AnnotatedType {
 		if rb.providedAttrs != nil {
 			as = append(as, types.WrapHashEntry2(`providedAttributes`, types.WrapStrings(rb.providedAttrs)))
 		}
-		if rb.rels != nil {
-			as = append(as, types.WrapHashEntry2(`relationships`, types.WrapHash(rb.rels)))
+		if rb.relationships != nil {
+			as = append(as, types.WrapHashEntry2(`relationships`, types.WrapHash(rb.relationships)))
 		}
 		annotations = types.WrapHash([]*types.HashEntry{types.WrapHashEntry(annotation.ResourceType, types.WrapHash(as))})
 	}

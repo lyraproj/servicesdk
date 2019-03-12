@@ -1,10 +1,11 @@
-package condition
+package wf
 
 import (
 	"bytes"
-	"github.com/lyraproj/pcore/px"
-	"github.com/lyraproj/servicesdk/wfapi"
+	"fmt"
 	"sort"
+
+	"github.com/lyraproj/pcore/px"
 )
 
 type boolean bool
@@ -12,15 +13,23 @@ type boolean bool
 const Always = boolean(true)
 const Never = boolean(false)
 
-func init() {
-	wfapi.Boolean = newBoolean
-	wfapi.Truthy = newTruthy
-	wfapi.Not = newNot
-	wfapi.And = newAnd
-	wfapi.Or = newOr
+// A Condition evaluates to true or false depending on its given input
+type Condition interface {
+	fmt.Stringer
+
+	// Precedence returns the operator precedence for this Condition
+	Precedence() int
+
+	// IsTrue returns true if the given input satisfies the condition, false otherwise
+	IsTrue(input px.OrderedMap) bool
+
+	// Returns all names in use by this condition and its nested conditions. The returned
+	// slice is guaranteed to be unique and sorted alphabetically
+	Names() []string
 }
 
-func newBoolean(v bool) wfapi.Condition {
+// Boolean returns that Condition that yields the given boolean
+func Boolean(v bool) Condition {
 	return boolean(v)
 }
 
@@ -45,7 +54,9 @@ func (b boolean) Names() []string {
 
 type truthy string
 
-func newTruthy(name string) wfapi.Condition {
+// Truthy returns a Condition that yields true when the variable
+// named by the given name contains a truthy value (i.e. not undef or false)
+func Truthy(name string) Condition {
 	return truthy(name)
 }
 
@@ -66,12 +77,14 @@ func (v truthy) String() string {
 	return string(v)
 }
 
-func newNot(condition wfapi.Condition) wfapi.Condition {
+// Not returns a Condition that yields true when the given condition
+// yields false
+func Not(condition Condition) Condition {
 	return &not{condition}
 }
 
 type not struct {
-	condition wfapi.Condition
+	condition Condition
 }
 
 func (n *not) IsTrue(input px.OrderedMap) bool {
@@ -93,10 +106,12 @@ func (n *not) String() string {
 }
 
 type and struct {
-	conditions []wfapi.Condition
+	conditions []Condition
 }
 
-func newAnd(conditions []wfapi.Condition) wfapi.Condition {
+// And returns a Condition that yields true when all given conditions
+// yield true
+func And(conditions []Condition) Condition {
 	return &and{conditions}
 }
 
@@ -121,12 +136,14 @@ func (a *and) String() string {
 	return concat(a.conditions, a.Precedence(), `and`)
 }
 
-func newOr(conditions []wfapi.Condition) wfapi.Condition {
+// And returns a Condition that yields true when all given conditions
+// yield true
+func Or(conditions []Condition) Condition {
 	return &or{conditions}
 }
 
 type or struct {
-	conditions []wfapi.Condition
+	conditions []Condition
 }
 
 func (o *or) IsTrue(input px.OrderedMap) bool {
@@ -150,7 +167,7 @@ func (o *or) String() string {
 	return concat(o.conditions, o.Precedence(), `or`)
 }
 
-func mergeNames(conditions []wfapi.Condition) []string {
+func mergeNames(conditions []Condition) []string {
 	h := make(map[string]bool)
 	for _, c := range conditions {
 		for _, n := range c.Names() {
@@ -165,7 +182,7 @@ func mergeNames(conditions []wfapi.Condition) []string {
 	return names
 }
 
-func concat(conditions []wfapi.Condition, precedence int, op string) string {
+func concat(conditions []Condition, precedence int, op string) string {
 	b := bytes.NewBufferString(``)
 	for i, c := range conditions {
 		if i > 0 {
@@ -178,7 +195,7 @@ func concat(conditions []wfapi.Condition, precedence int, op string) string {
 	return b.String()
 }
 
-func emitContained(c wfapi.Condition, p int, b *bytes.Buffer) {
+func emitContained(c Condition, p int, b *bytes.Buffer) {
 	if p > c.Precedence() {
 		b.WriteByte('(')
 		b.WriteString(c.String())

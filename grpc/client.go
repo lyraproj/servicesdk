@@ -3,6 +3,8 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"os/exec"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/lyraproj/issue/issue"
@@ -11,7 +13,9 @@ import (
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/servicepb"
 	"google.golang.org/grpc"
-	"os/exec"
+
+	// Ensure that service is initialized
+	_ "github.com/lyraproj/servicesdk/service"
 )
 
 var handshake = plugin.HandshakeConfig{
@@ -56,7 +60,7 @@ func (c *Client) Invoke(ctx px.Context, identifier, name string, arguments ...px
 	}
 	result := FromDataPB(ctx, rr)
 	if eo, ok := result.(serviceapi.ErrorObject); ok {
-		panic(px.Error(WF_INVOCATION_ERROR, issue.H{`identifier`: identifier, `name`: name, `code`: eo.IssueCode(), `message`: eo.Message()}))
+		panic(px.Error(InvocationError, issue.H{`identifier`: identifier, `name`: name, `code`: eo.IssueCode(), `message`: eo.Message()}))
 	}
 	return result
 }

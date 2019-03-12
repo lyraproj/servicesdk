@@ -1,4 +1,4 @@
-package wfapi
+package wf
 
 import (
 	"github.com/lyraproj/issue/issue"
@@ -28,10 +28,10 @@ func NewOperation(operation string) Operation {
 	switch operation {
 	case `read`:
 		return Read
-	case `detete`:
+	case `delete`:
 		return Delete
 	case `upsert`:
 		return Upsert
 	}
-	panic(px.Error(WF_ILLEGAL_OPERATION, issue.H{`operation`: operation}))
+	panic(px.Error(IllegalOperation, issue.H{`operation`: operation}))
 }

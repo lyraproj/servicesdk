@@ -1,12 +1,10 @@
-package condition
+package wf
 
 import (
 	"fmt"
+
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
-
-	// Ensure pcore initialization
-	_ "github.com/lyraproj/pcore/pcore"
 )
 
 func ExampleParse() {

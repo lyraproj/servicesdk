@@ -2,17 +2,15 @@ package typegen_test
 
 import (
 	"fmt"
-	"github.com/lyraproj/pcore/pcore"
-	"github.com/lyraproj/pcore/px"
-	"github.com/lyraproj/semver/semver"
-	"github.com/lyraproj/servicesdk/lang/typegen"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 
-	_ "github.com/lyraproj/pcore/pcore"
-	_ "github.com/lyraproj/servicesdk/annotation"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/semver/semver"
+	"github.com/lyraproj/servicesdk/lang/typegen"
 )
 
 func ExampleGenerator_GenerateTypes() {
@@ -42,6 +40,7 @@ func ExampleGenerator_GenerateTypes() {
 
 	tmpDir, err := ioutil.TempDir("", "tsgen_")
 	if err == nil {
+		//noinspection GoUnhandledErrorResult
 		defer os.RemoveAll(tmpDir)
 		g := typegen.GetGenerator(`typescript`)
 		g.GenerateTypes(typeSet, tmpDir)

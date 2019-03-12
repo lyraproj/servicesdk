@@ -31,12 +31,12 @@ func init() {
 func (r *Relationship) Validate(c px.Context, typ px.ObjectType, name string) {
 	at, ok := r.Type.(px.ObjectType)
 	if !ok {
-		panic(px.Error(RA_RELATIONSHIP_TYPE_IS_NOT_OBJECT, issue.H{`type`: r.Type}))
+		panic(px.Error(RelationshipTypeIsNotObject, issue.H{`type`: r.Type}))
 	}
 
 	nk := len(r.Keys)
 	if nk%2 != 0 {
-		panic(px.Error(RA_RELATIONSHIP_KEYS_UNEVEN_NUMBER, issue.H{`type`: r.Type}))
+		panic(px.Error(RelationshipKeysUnevenNumber, issue.H{`type`: r.Type}))
 	}
 
 	for i := 0; i < nk; i += 2 {
@@ -50,7 +50,7 @@ func (r *Relationship) Validate(c px.Context, typ px.ObjectType, name string) {
 		rs, ok = ra.(Resource)
 	}
 	if !ok {
-		panic(px.Error(RA_NO_RESOURCE_ANNOTATION, issue.H{`type`: r.Type}))
+		panic(px.Error(NoResourceAnnotation, issue.H{`type`: r.Type}))
 	}
 
 	var cr, v *Relationship
@@ -63,14 +63,14 @@ func (r *Relationship) Validate(c px.Context, typ px.ObjectType, name string) {
 		for _, v = range cs {
 			if v.IsCounterpartOf(name, typ, r) {
 				if cr != nil {
-					panic(px.Error(RA_MULTIPLE_COUNTERPARTS, issue.H{`type`: r.Type, `name`: name}))
+					panic(px.Error(MultipleCounterparts, issue.H{`type`: r.Type, `name`: name}))
 				}
 				cr = v
 			}
 		}
 	}
 	if cr == nil {
-		panic(px.Error(RA_COUNTERPART_NOT_FOUND, issue.H{`type`: r.Type, `name`: name}))
+		panic(px.Error(CounterpartNotFound, issue.H{`type`: r.Type, `name`: name}))
 	}
 }
 
@@ -94,6 +94,9 @@ func (r *Relationship) IsCounterpartOf(name string, typ px.ObjectType, o *Relati
 			match = o.Cardinality != CardinalityMany
 		case CardinalityOne:
 			match = o.Cardinality != CardinalityOne
+		case CardinalityZeroOrOne:
+		default:
+			match = false
 		}
 	}
 

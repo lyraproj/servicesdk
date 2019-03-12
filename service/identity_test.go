@@ -2,22 +2,18 @@ package service_test
 
 import (
 	"fmt"
-	"github.com/lyraproj/pcore/pcore"
 	"os"
 
+	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/serviceapi"
-
-	// Initialize pcore
-	_ "github.com/lyraproj/pcore/pcore"
 )
 
 type identity struct {
 }
 
 func (*identity) Associate(internalID, externalID string) {
-	return
 }
 
 func (*identity) GetExternal(internalID string) (externalID string) {
@@ -26,7 +22,7 @@ func (*identity) GetExternal(internalID string) (externalID string) {
 }
 
 func (*identity) GetInternal(externalID string) (internalID string) {
-	externalID = "internalID456"
+	internalID = "internalID456"
 	return
 }
 
@@ -36,11 +32,10 @@ func (*identity) RemoveExternal(externalID string) {
 func (*identity) RemoveInternal(internalID string) {
 }
 
-func ExampleServerBuilder_RegisterAPI_identity() {
+func ExampleBuilder_RegisterAPI_identity() {
 	pcore.Do(func(c px.Context) {
-		var api serviceapi.Identity
-		api = &identity{}
-		sb := service.NewServerBuilder(c, `My::Identity::Service`)
+		api := &identity{}
+		sb := service.NewServiceBuilder(c, `My::Identity::Service`)
 		sb.RegisterAPI(serviceapi.IdentityName, api)
 		s := sb.Server()
 		ts, defs := s.Metadata(c)

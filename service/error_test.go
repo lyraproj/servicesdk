@@ -2,10 +2,11 @@ package service_test
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/service"
-	"reflect"
 )
 
 func ExampleErrorMetaType() {

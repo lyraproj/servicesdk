@@ -1,14 +1,15 @@
 package annotation
 
 import (
+	"io"
+	"reflect"
+	"sort"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/pcore/utils"
-	"io"
-	"reflect"
-	"sort"
 )
 
 var ResourceType px.ObjectType
@@ -94,12 +95,12 @@ func NewResource(ctx px.Context, immutableAttributes, providedAttributes px.Valu
 	r.immutableAttributes = stringsOrNil(immutableAttributes)
 	r.providedAttributes = stringsOrNil(providedAttributes)
 	if rs, ok := relationships.(px.OrderedMap); ok {
-		rels := make(map[string]*Relationship, rs.Len())
+		rls := make(map[string]*Relationship, rs.Len())
 		rs.EachPair(func(k, v px.Value) {
 			rv := px.New(ctx, RelationshipType, v).(px.Reflected).Reflect(ctx)
-			rels[k.String()] = rv.Addr().Interface().(*Relationship)
+			rls[k.String()] = rv.Addr().Interface().(*Relationship)
 		})
-		r.relationships = rels
+		r.relationships = rls
 	}
 	return r
 }
@@ -146,7 +147,7 @@ func (r *resource) RelationshipsMap() px.Value {
 func (r *resource) Validate(c px.Context, annotatedType px.Annotatable) {
 	ot, ok := annotatedType.(px.ObjectType)
 	if !ok {
-		panic(px.Error(RA_ANNOTATED_IS_NOT_OBJECT, issue.H{`type`: annotatedType}))
+		panic(px.Error(AnnotatedIsNotObject, issue.H{`type`: annotatedType}))
 	}
 	if r.relationships != nil {
 		isContained := false
@@ -154,7 +155,7 @@ func (r *resource) Validate(c px.Context, annotatedType px.Annotatable) {
 			v.Validate(c, ot, k)
 			if v.Kind == KindContained {
 				if isContained {
-					panic(px.Error(RA_CONTAINED_MORE_THAN_ONCE, issue.H{`type`: ot}))
+					panic(px.Error(ContainedMoreThanOnce, issue.H{`type`: ot}))
 				}
 				isContained = true
 			}
@@ -171,7 +172,7 @@ func (r *resource) Validate(c px.Context, annotatedType px.Annotatable) {
 			if a.HasValue() {
 				continue
 			}
-			panic(px.Error(RA_PROVIDED_ATTRIBUTE_IS_REQUIRED, issue.H{`attr`: a}))
+			panic(px.Error(ProvidedAttributeIsRequired, issue.H{`attr`: a}))
 		}
 	}
 }
@@ -256,7 +257,7 @@ func assertAttribute(ot px.ObjectType, n string) (a px.Attribute) {
 			return
 		}
 	}
-	panic(px.Error(RA_ATTRIBUTE_NOT_FOUND, issue.H{`type`: ot, `name`: n}))
+	panic(px.Error(AttributeNotFound, issue.H{`type`: ot, `name`: n}))
 }
 
 func (r *resource) isProvided(name string) bool {

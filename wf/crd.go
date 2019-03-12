@@ -1,4 +1,4 @@
-package wfapi
+package wf
 
 import "github.com/lyraproj/pcore/px"
 

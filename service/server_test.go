@@ -3,19 +3,17 @@ package service_test
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"time"
+
+	"github.com/lyraproj/servicesdk/wf"
+
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/serialization"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/annotation"
 	"github.com/lyraproj/servicesdk/service"
-	"github.com/lyraproj/servicesdk/wfapi"
-	"os"
-	"time"
-
-	// Initialize pcore
-	_ "github.com/lyraproj/pcore/pcore"
-	_ "github.com/lyraproj/servicesdk/wf"
 )
 
 type testAPI struct{}
@@ -31,7 +29,7 @@ func (*testAPI) Second(suffix string) string {
 func ExampleServer_Invoke() {
 	pcore.Do(func(c px.Context) {
 		api := `My::TheApi`
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterAPI(api, &testAPI{})
 
@@ -52,7 +50,7 @@ type MyRes struct {
 
 func ExampleServer_Metadata_typeSet() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterAPI(`My::TheApi`, &testAPI{})
 		sb.RegisterTypes("My", &MyRes{})
@@ -96,9 +94,9 @@ type MyOuterRes struct {
 	What string
 }
 
-func ExampleServer_Nested_type() {
+func ExampleBuilder_RegisterTypes_nestedType() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyOuterRes{})
 
@@ -141,9 +139,9 @@ type Person struct {
 	Born     time.Time
 }
 
-func ExampleServer_Recursive_type() {
+func ExampleBuilder_RegisterTypes_recursiveType() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &Person{})
 
@@ -183,12 +181,12 @@ func ExampleServer_Recursive_type() {
 
 func ExampleServer_Metadata_definitions() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterActivity(wfapi.NewWorkflow(c, func(b wfapi.WorkflowBuilder) {
+		sb.RegisterActivity(wf.NewWorkflow(c, func(b wf.WorkflowBuilder) {
 			b.Name(`My::Test`)
-			b.Resource(func(w wfapi.ResourceBuilder) {
+			b.Resource(func(w wf.ResourceBuilder) {
 				w.Name(`X`)
 				w.Input(w.Parameter(`a`, `String`))
 				w.Input(w.Parameter(`b`, `String`))
@@ -255,9 +253,9 @@ type ContainedRes struct {
 	Stuff   string
 }
 
-func ExampleServer_TypeSet_annotated() {
+func ExampleBuilder_RegisterTypes_annotatedTypeSet() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My",
 			sb.BuildResource(&OwnerRes{}, func(rtb service.ResourceTypeBuilder) {
@@ -347,13 +345,13 @@ func ExampleServer_TypeSet_annotated() {
 
 func ExampleServer_Metadata_state() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterStateConverter(service.GoStateConverter)
-		sb.RegisterActivity(wfapi.NewWorkflow(c, func(b wfapi.WorkflowBuilder) {
+		sb.RegisterStateConverter(wf.GoStateConverter)
+		sb.RegisterActivity(wf.NewWorkflow(c, func(b wf.WorkflowBuilder) {
 			b.Name(`My::Test`)
-			b.Resource(func(w wfapi.ResourceBuilder) {
+			b.Resource(func(w wf.ResourceBuilder) {
 				w.Name(`X`)
 				w.Input(w.Parameter(`a`, `String`))
 				w.Input(w.Parameter(`b`, `String`))
@@ -381,19 +379,19 @@ func (is *MyIdentityService) GetExternal(id px.URI) (string, error) {
 	if ext, ok := is.idToExt[id]; ok {
 		return ext, nil
 	}
-	return ``, wfapi.NotFound
+	return ``, wf.NotFound
 }
 
 func (is *MyIdentityService) GetInternal(ext string) (px.URI, error) {
 	if id, ok := is.extToId[ext]; ok {
 		return id, nil
 	}
-	return px.URI(``), wfapi.NotFound
+	return px.URI(``), wf.NotFound
 }
 
 func ExampleServer_Metadata_api() {
 	pcore.Do(func(c px.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterAPI(`My::Identity`, &MyIdentityService{map[string]px.URI{}, map[px.URI]string{}})
 

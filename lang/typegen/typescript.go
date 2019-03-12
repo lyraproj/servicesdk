@@ -2,12 +2,12 @@ package typegen
 
 import (
 	"bytes"
-	"fmt"
+	"io"
+	"strings"
+
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/pcore/utils"
-	"io"
-	"strings"
 )
 
 type tsGenerator struct{}
@@ -198,7 +198,6 @@ func appendFields(thisAttrs []*tsAttribute, indent int, bld io.Writer) {
 		write(bld, attr.typ)
 		write(bld, `;`)
 	}
-	return
 }
 
 func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent int, bld io.Writer) {
@@ -429,17 +428,6 @@ func newLine(indent int, bld io.Writer) {
 func namespace(name string) []string {
 	parts := strings.Split(name, `::`)
 	return parts[:len(parts)-1]
-}
-
-func relativeNs(ns []string, name string) []string {
-	parts := strings.Split(name, `::`)
-	if len(parts) == 1 {
-		return []string{}
-	}
-	if len(ns) == 0 || isParent(ns, parts) {
-		return parts[len(ns) : len(parts)-1]
-	}
-	panic(fmt.Errorf("cannot generate %s in namespace %s", name, ns))
 }
 
 func nsName(ns []string, name string) string {
