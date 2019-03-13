@@ -136,7 +136,7 @@ func (a *and) String() string {
 	return concat(a.conditions, a.Precedence(), `and`)
 }
 
-// And returns a Condition that yields true when all given conditions
+// Or returns a Condition that yields true when at least one of the given conditions
 // yield true
 func Or(conditions []Condition) Condition {
 	return &or{conditions}

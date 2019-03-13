@@ -44,7 +44,7 @@ func NewIterationStyle(style string) IterationStyle {
 type Iterator interface {
 	Activity
 
-	// Style returns the style of iterator, times, range, each, or eachPair.
+	// IterationStyle returns the style of iterator, times, range, each, or eachPair.
 	IterationStyle() IterationStyle
 
 	// Producer returns the Activity that will be invoked once for each iteration

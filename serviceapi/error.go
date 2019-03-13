@@ -22,7 +22,7 @@ type ErrorObject interface {
 	PartialResult() px.Value
 
 	// Details returns the optional details. It returns
-	// an empty map when o details exist
+	// an empty map when no details exist
 	Details() px.OrderedMap
 }
 
