@@ -1,15 +1,14 @@
-package condition
+package wf
 
 import (
 	"fmt"
-	"github.com/lyraproj/puppet-evaluator/eval"
 
-	// Ensure pcore initialization
-	_ "github.com/lyraproj/puppet-evaluator/pcore"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
 )
 
 func ExampleParse() {
-	eval.Puppet.Do(func(eval.Context) {
+	pcore.Do(func(px.Context) {
 		c := Parse("hello")
 		fmt.Println(c)
 	})
@@ -17,7 +16,7 @@ func ExampleParse() {
 }
 
 func ExampleParse_and() {
-	eval.Puppet.Do(func(eval.Context) {
+	pcore.Do(func(px.Context) {
 		c := Parse("hello and goodbye")
 		fmt.Println(c)
 	})
@@ -25,7 +24,7 @@ func ExampleParse_and() {
 }
 
 func ExampleParse_not() {
-	eval.Puppet.Do(func(eval.Context) {
+	pcore.Do(func(px.Context) {
 		c := Parse("!(hello and goodbye)")
 		fmt.Println(c)
 	})
@@ -33,7 +32,7 @@ func ExampleParse_not() {
 }
 
 func ExampleParse_or() {
-	eval.Puppet.Do(func(eval.Context) {
+	pcore.Do(func(px.Context) {
 		c := Parse("greeting and (hello or goodbye)")
 		fmt.Println(c)
 	})

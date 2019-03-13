@@ -2,20 +2,20 @@ package typegen
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/puppet-evaluator/utils"
 	"io"
 	"strings"
+
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/pcore/utils"
 )
 
 type tsGenerator struct{}
 
-func (g *tsGenerator) GenerateTypes(typeSet eval.TypeSet, directory string) {
+func (g *tsGenerator) GenerateTypes(typeSet px.TypeSet, directory string) {
 	hasNonTypeSetTypes := false
-	typeSet.Types().EachValue(func(t eval.Value) {
-		if ts, ok := t.(eval.TypeSet); ok {
+	typeSet.Types().EachValue(func(t px.Value) {
+		if ts, ok := t.(px.TypeSet); ok {
 			g.GenerateTypes(ts, directory)
 		} else {
 			hasNonTypeSetTypes = true
@@ -31,7 +31,7 @@ func (g *tsGenerator) GenerateTypes(typeSet eval.TypeSet, directory string) {
 	}
 }
 
-func (g *tsGenerator) GenerateType(typ eval.Type, directory string) {
+func (g *tsGenerator) GenerateType(typ px.Type, directory string) {
 	typeToStream(typ, directory, `.ts`, func(b io.Writer) {
 		write(b, "// this file is generated\n")
 		write(b, "import {PcoreValue, Value} from 'lyra-workflow';")
@@ -41,25 +41,25 @@ func (g *tsGenerator) GenerateType(typ eval.Type, directory string) {
 
 // GenerateTypes produces TypeScript types for all types in the given TypeSet and appends them to
 // the given buffer.
-func (g *tsGenerator) generateTypes(ts eval.TypeSet, ns []string, indent int, bld io.Writer) {
+func (g *tsGenerator) generateTypes(ts px.TypeSet, ns []string, indent int, bld io.Writer) {
 	newLine(indent, bld)
 	leafName := nsName(ns, ts.Name())
 	ns = append(ns, leafName)
-	ts.Types().EachValue(func(t eval.Value) { g.generateType(t.(eval.Type), ns, indent, bld) })
+	ts.Types().EachValue(func(t px.Value) { g.generateType(t.(px.Type), ns, indent, bld) })
 }
 
 // GenerateType produces a TypeScript type for the given Type and appends it to
 // the given buffer.
-func (g *tsGenerator) generateType(t eval.Type, ns []string, indent int, bld io.Writer) {
-	if _, ok := t.(eval.TypeSet); ok {
+func (g *tsGenerator) generateType(t px.Type, ns []string, indent int, bld io.Writer) {
+	if _, ok := t.(px.TypeSet); ok {
 		return
 	}
 
-	if pt, ok := t.(eval.ObjectType); ok {
+	if pt, ok := t.(px.ObjectType); ok {
 		newLine(indent, bld)
 		write(bld, `export class `)
 		write(bld, nsName(ns, pt.Name()))
-		if ppt, ok := pt.Parent().(eval.ObjectType); ok {
+		if ppt, ok := pt.Parent().(px.ObjectType); ok {
 			write(bld, ` extends `)
 			write(bld, nsName(ns, ppt.Name()))
 		} else {
@@ -93,7 +93,7 @@ func (g *tsGenerator) generateType(t eval.Type, ns []string, indent int, bld io.
 
 // ToTsType converts the given pType to a string representation of a TypeScript type. The given
 // pType can not be a TypeSet.
-func (g *tsGenerator) ToTsType(ns []string, pType eval.Type) string {
+func (g *tsGenerator) ToTsType(ns []string, pType px.Type) string {
 	bld := bytes.NewBufferString(``)
 	appendTsType(ns, pType, bld)
 	return bld.String()
@@ -158,14 +158,14 @@ var keywords = map[string]bool{
 	`yield`:      true,
 
 	// The following keywords cannot be used as user defined type names, but are otherwise not restricted:
-	`any`:        true,
-	`boolean`:    true,
-	`number`:     true,
-	`string`:     true,
-	`symbol`:     true,
+	`any`:     true,
+	`boolean`: true,
+	`number`:  true,
+	`string`:  true,
+	`symbol`:  true,
 }
 
-func (g *tsGenerator) toTsAttrs(t eval.ObjectType, ns []string, attrs []eval.Attribute) (allAttrs, thisAttrs, superAttrs []*tsAttribute) {
+func (g *tsGenerator) toTsAttrs(t px.ObjectType, ns []string, attrs []px.Attribute) (allAttrs, thisAttrs, superAttrs []*tsAttribute) {
 	allAttrs = make([]*tsAttribute, len(attrs))
 	superAttrs = make([]*tsAttribute, 0)
 	thisAttrs = make([]*tsAttribute, 0)
@@ -198,7 +198,6 @@ func appendFields(thisAttrs []*tsAttribute, indent int, bld io.Writer) {
 		write(bld, attr.typ)
 		write(bld, `;`)
 	}
-	return
 }
 
 func appendConstructor(allAttrs, thisAttrs, superAttrs []*tsAttribute, indent int, bld io.Writer) {
@@ -331,33 +330,33 @@ func appendParameters(params []*tsAttribute, indent int, bld io.Writer) {
 	write(bld, `}`)
 }
 
-func toTsValue(value eval.Value) *string {
+func toTsValue(value px.Value) *string {
 	bld := bytes.NewBufferString(``)
 	appendTsValue(value, bld)
 	s := bld.String()
 	return &s
 }
 
-func appendTsValue(value eval.Value, bld io.Writer) {
-	switch value.(type) {
+func appendTsValue(value px.Value, bld io.Writer) {
+	switch value := value.(type) {
 	case *types.UndefValue:
 		write(bld, `null`)
-	case eval.StringValue:
+	case px.StringValue:
 		utils.PuppetQuote(bld, value.String())
-	case eval.BooleanValue, eval.IntegerValue, eval.FloatValue:
+	case px.Boolean, px.Integer, px.Float:
 		write(bld, value.String())
-	case *types.ArrayValue:
+	case *types.Array:
 		writeByte(bld, '[')
-		value.(*types.ArrayValue).EachWithIndex(func(e eval.Value, i int) {
+		value.EachWithIndex(func(e px.Value, i int) {
 			if i > 0 {
 				write(bld, `, `)
 			}
 			appendTsValue(e, bld)
 		})
 		writeByte(bld, ']')
-	case *types.HashValue:
+	case *types.Hash:
 		writeByte(bld, '{')
-		value.(*types.HashValue).EachWithIndex(func(e eval.Value, i int) {
+		value.EachWithIndex(func(e px.Value, i int) {
 			ev := e.(*types.HashEntry)
 			if i > 0 {
 				write(bld, `, `)
@@ -370,19 +369,19 @@ func appendTsValue(value eval.Value, bld io.Writer) {
 	}
 }
 
-func appendTsType(ns []string, pType eval.Type, bld io.Writer) {
-	switch pType.(type) {
+func appendTsType(ns []string, pType px.Type, bld io.Writer) {
+	switch pType := pType.(type) {
 	case *types.BooleanType:
 		write(bld, `boolean`)
 	case *types.IntegerType, *types.FloatType:
 		write(bld, `number`)
-	case eval.StringType:
+	case px.StringType:
 		write(bld, `string`)
 	case *types.OptionalType:
-		appendTsType(ns, pType.(*types.OptionalType).ContainedType(), bld)
+		appendTsType(ns, pType.ContainedType(), bld)
 		write(bld, `|null`)
 	case *types.ArrayType:
-		et := pType.(*types.ArrayType).ElementType()
+		et := pType.ElementType()
 		switch et.(type) {
 		case *types.ArrayType, *types.EnumType, *types.HashType, *types.OptionalType, *types.VariantType:
 			write(bld, `Array<`)
@@ -393,30 +392,29 @@ func appendTsType(ns []string, pType eval.Type, bld io.Writer) {
 			write(bld, `[]`)
 		}
 	case *types.VariantType:
-		for i, v := range pType.(*types.VariantType).Types() {
+		for i, v := range pType.Types() {
 			if i > 0 {
 				write(bld, `|`)
 			}
 			appendTsType(ns, v, bld)
 		}
 	case *types.HashType:
-		ht := pType.(*types.HashType)
 		write(bld, `{[s: `)
-		appendTsType(ns, ht.KeyType(), bld)
+		appendTsType(ns, pType.KeyType(), bld)
 		write(bld, `]: `)
-		appendTsType(ns, ht.ValueType(), bld)
+		appendTsType(ns, pType.ValueType(), bld)
 		write(bld, `}`)
 	case *types.EnumType:
-		for i, s := range pType.(*types.EnumType).Parameters() {
+		for i, s := range pType.Parameters() {
 			if i > 0 {
 				write(bld, `|`)
 			}
 			appendTsValue(s, bld)
 		}
 	case *types.TypeAliasType:
-		write(bld, nsName(ns, pType.(*types.TypeAliasType).Name()))
-	case eval.ObjectType:
-		write(bld, nsName(ns, pType.(eval.ObjectType).Name()))
+		write(bld, nsName(ns, pType.Name()))
+	case px.ObjectType:
+		write(bld, nsName(ns, pType.Name()))
 	}
 }
 
@@ -430,17 +428,6 @@ func newLine(indent int, bld io.Writer) {
 func namespace(name string) []string {
 	parts := strings.Split(name, `::`)
 	return parts[:len(parts)-1]
-}
-
-func relativeNs(ns []string, name string) []string {
-	parts := strings.Split(name, `::`)
-	if len(parts) == 1 {
-		return []string{}
-	}
-	if len(ns) == 0 || isParent(ns, parts) {
-		return parts[len(ns) : len(parts)-1]
-	}
-	panic(fmt.Errorf("cannot generate %s in namespace %s", name, ns))
 }
 
 func nsName(ns []string, name string) string {

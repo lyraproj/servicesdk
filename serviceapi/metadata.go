@@ -1,9 +1,9 @@
 package serviceapi
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
+	"github.com/lyraproj/pcore/px"
 )
 
 type Metadata interface {
-	Metadata(eval.Context) (typeSet eval.TypeSet, definitions []Definition)
+	Metadata(px.Context) (typeSet px.TypeSet, definitions []Definition)
 }

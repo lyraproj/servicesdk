@@ -26,11 +26,11 @@ type MyPlugin struct {
 	plugin.NetRPCUnsupportedPlugin
 }
 
-func ( MyPlugin) GRPCServer(*plugin.GRPCBroker, *grpc.Server) error {
+func (MyPlugin) GRPCServer(*plugin.GRPCBroker, *grpc.Server) error {
 	panic("No server")
 }
 
-func ( MyPlugin) GRPCClient(c context.Context, broker *plugin.GRPCBroker, clientConn *grpc.ClientConn) (interface{}, error) {
+func (MyPlugin) GRPCClient(c context.Context, broker *plugin.GRPCBroker, clientConn *grpc.ClientConn) (interface{}, error) {
 	return &Client{client: shared.NewHelloServiceClient(clientConn)}, nil
 }
 
@@ -41,9 +41,9 @@ func main() {
 	}
 	fmt.Println(wd)
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: shared.Handshake,
-		Plugins:         map[string]plugin.Plugin{"hello": &MyPlugin{}},
-		Cmd:             exec.Command("go", "run", "test/server/main.go", "--debug"),
+		HandshakeConfig:  shared.Handshake,
+		Plugins:          map[string]plugin.Plugin{"hello": &MyPlugin{}},
+		Cmd:              exec.Command("go", "run", "test/server/main.go", "--debug"),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 	})
 	defer client.Kill()

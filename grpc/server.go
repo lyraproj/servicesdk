@@ -2,49 +2,48 @@ package grpc
 
 import (
 	"fmt"
+	"log"
+	"net/rpc"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/lyraproj/data-protobuf/datapb"
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/proto"
-	"github.com/lyraproj/puppet-evaluator/serialization"
-	"github.com/lyraproj/puppet-evaluator/threadlocal"
-	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/proto"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/serialization"
+	"github.com/lyraproj/pcore/threadlocal"
+	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/servicepb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"log"
-	"net/rpc"
-
-	// Ensure that pcore is initialized
-	_ "github.com/lyraproj/puppet-evaluator/pcore"
 )
 
-type GRPCServer struct {
-	ctx  eval.Context
+type Server struct {
+	ctx  px.Context
 	impl serviceapi.Service
 }
 
-func (a *GRPCServer) Server(*plugin.MuxBroker) (interface{}, error) {
-	return nil, fmt.Errorf(`%T has no server implementation for rpc`, a)
+func (s *Server) Server(*plugin.MuxBroker) (interface{}, error) {
+	return nil, fmt.Errorf(`%T has no server implementation for rpc`, s)
 }
 
-func (a *GRPCServer) Client(*plugin.MuxBroker, *rpc.Client) (interface{}, error) {
-	return nil, fmt.Errorf(`%T has no RPC client implementation for rpc`, a)
+func (s *Server) Client(*plugin.MuxBroker, *rpc.Client) (interface{}, error) {
+	return nil, fmt.Errorf(`%T has no RPC client implementation for rpc`, s)
 }
 
-func (a *GRPCServer) GRPCServer(broker *plugin.GRPCBroker, impl *grpc.Server) error {
-	servicepb.RegisterDefinitionServiceServer(impl, a)
+func (s *Server) GRPCServer(broker *plugin.GRPCBroker, impl *grpc.Server) error {
+	servicepb.RegisterDefinitionServiceServer(impl, s)
 	return nil
 }
 
-func (a *GRPCServer) GRPCClient(context.Context, *plugin.GRPCBroker, *grpc.ClientConn) (interface{}, error) {
-	return nil, fmt.Errorf(`%T has no client implementation for rpc`, a)
+func (s *Server) GRPCClient(context.Context, *plugin.GRPCBroker, *grpc.ClientConn) (interface{}, error) {
+	return nil, fmt.Errorf(`%T has no client implementation for rpc`, s)
 }
 
-func (a *GRPCServer) Do(doer func(c eval.Context)) (err error) {
+func (s *Server) Do(doer func(c px.Context)) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			if e, ok := x.(issue.Reported); ok {
@@ -54,25 +53,25 @@ func (a *GRPCServer) Do(doer func(c eval.Context)) (err error) {
 			}
 		}
 	}()
-	c := a.ctx.Fork()
+	c := s.ctx.Fork()
 	threadlocal.Init()
-	threadlocal.Set(eval.PuppetContextKey, c)
+	threadlocal.Set(px.PuppetContextKey, c)
 	doer(c)
 	return nil
 }
 
-func (d *GRPCServer) Identity(context.Context, *servicepb.EmptyRequest) (result *datapb.Data, err error) {
-	err = d.Do(func(c eval.Context) {
-		result = ToDataPB(d.impl.Identifier(c))
+func (s *Server) Identity(context.Context, *servicepb.EmptyRequest) (result *datapb.Data, err error) {
+	err = s.Do(func(c px.Context) {
+		result = ToDataPB(s.impl.Identifier(c))
 	})
 	return
 }
 
-func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
-	err = d.Do(func(c eval.Context) {
+func (s *Server) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
+	err = s.Do(func(c px.Context) {
 		wrappedArgs := FromDataPB(c, r.Arguments)
-		arguments := wrappedArgs.(*types.ArrayValue).AppendTo([]eval.Value{})
-		rrr := d.impl.Invoke(
+		arguments := wrappedArgs.(*types.Array).AppendTo([]px.Value{})
+		rrr := s.impl.Invoke(
 			c,
 			r.Identifier,
 			r.Method,
@@ -82,10 +81,10 @@ func (d *GRPCServer) Invoke(_ context.Context, r *servicepb.InvokeRequest) (resu
 	return
 }
 
-func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result *servicepb.MetadataResponse, err error) {
-	err = d.Do(func(c eval.Context) {
-		ts, ds := d.impl.Metadata(c)
-		vs := make([]eval.Value, len(ds))
+func (s *Server) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result *servicepb.MetadataResponse, err error) {
+	err = s.Do(func(c px.Context) {
+		ts, ds := s.impl.Metadata(c)
+		vs := make([]px.Value, len(ds))
 		for i, d := range ds {
 			vs[i] = d
 		}
@@ -94,37 +93,37 @@ func (d *GRPCServer) Metadata(_ context.Context, r *servicepb.EmptyRequest) (res
 	return
 }
 
-func (d *GRPCServer) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
-	err = d.Do(func(c eval.Context) {
-		result = ToDataPB(d.impl.State(c, r.Identifier, FromDataPB(c, r.Input).(eval.OrderedMap)))
+func (s *Server) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
+	err = s.Do(func(c px.Context) {
+		result = ToDataPB(s.impl.State(c, r.Identifier, FromDataPB(c, r.Input).(px.OrderedMap)))
 	})
 	return
 }
 
-func ToDataPB(v eval.Value) *datapb.Data {
+func ToDataPB(v px.Value) *datapb.Data {
 	if v == nil {
 		return nil
 	}
 	pc := proto.NewProtoConsumer()
-	serialization.NewSerializer(eval.Puppet.RootContext(), eval.EMPTY_MAP).Convert(v, pc)
+	serialization.NewSerializer(pcore.RootContext(), px.EmptyMap).Convert(v, pc)
 	return pc.Value()
 }
 
-func FromDataPB(c eval.Context, d *datapb.Data) eval.Value {
+func FromDataPB(c px.Context, d *datapb.Data) px.Value {
 	if d == nil {
 		return nil
 	}
-	ds := serialization.NewDeserializer(c, eval.EMPTY_MAP)
+	ds := serialization.NewDeserializer(c, px.EmptyMap)
 	proto.ConsumePBData(d, ds)
 	return ds.Value()
 }
 
 // Serve the supplied Server as a go-plugin
-func Serve(c eval.Context, s serviceapi.Service) {
+func Serve(c px.Context, s serviceapi.Service) {
 	cfg := &plugin.ServeConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{
-			"server": &GRPCServer{ctx: c, impl: s},
+			"server": &Server{ctx: c, impl: s},
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
 		Logger:     hclog.Default(),

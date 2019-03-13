@@ -1,8 +1,8 @@
-package wfapi
+package wf
 
 import (
-	"github.com/lyraproj/puppet-evaluator/eval"
 	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/px"
 )
 
 type Operation int
@@ -28,10 +28,10 @@ func NewOperation(operation string) Operation {
 	switch operation {
 	case `read`:
 		return Read
-	case `detete`:
+	case `delete`:
 		return Delete
 	case `upsert`:
 		return Upsert
 	}
-	panic(eval.Error(WF_ILLEGAL_OPERATION, issue.H{`operation`: operation}))
+	panic(px.Error(IllegalOperation, issue.H{`operation`: operation}))
 }

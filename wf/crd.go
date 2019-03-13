@@ -1,6 +1,6 @@
-package wfapi
+package wf
 
-import "github.com/lyraproj/puppet-evaluator/eval"
+import "github.com/lyraproj/pcore/px"
 
 type ErrorConstant string
 
@@ -14,11 +14,11 @@ const NotFound = ErrorConstant(`not found`)
 type CRD interface {
 	// Create creates the desired state and returns a possibly amended version of that state
 	// together with the externalId by which the state can henceforth be identified.
-	Create(state eval.OrderedMap) (eval.OrderedMap, string, error)
+	Create(state px.OrderedMap) (px.OrderedMap, string, error)
 
 	// Read reads and returns the current state identified by the given externalId. The error NotFound
 	// is returned when no state can be found.
-	Read(externalId string) (eval.OrderedMap, error)
+	Read(externalId string) (px.OrderedMap, error)
 
 	// Delete deletes the state identified by the given externalId. The error NotFound is returned when
 	// no state can be found.
@@ -30,5 +30,5 @@ type CRUD interface {
 
 	// Update updates the state identified by the given externalId to a new state and returns a possibly
 	// amended version of that state. The error NotFound is returned when no state can be found.
-	Update(externalId string, state eval.OrderedMap) (eval.OrderedMap, error)
+	Update(externalId string, state px.OrderedMap) (px.OrderedMap, error)
 }

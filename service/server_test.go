@@ -3,18 +3,17 @@ package service_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/serialization"
-	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/servicesdk/annotation"
-	"github.com/lyraproj/servicesdk/service"
-	"github.com/lyraproj/servicesdk/wfapi"
 	"os"
 	"time"
 
-	// Initialize pcore
-	_ "github.com/lyraproj/puppet-evaluator/pcore"
-	_ "github.com/lyraproj/servicesdk/wf"
+	"github.com/lyraproj/servicesdk/wf"
+
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/serialization"
+	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/servicesdk/annotation"
+	"github.com/lyraproj/servicesdk/service"
 )
 
 type testAPI struct{}
@@ -28,15 +27,15 @@ func (*testAPI) Second(suffix string) string {
 }
 
 func ExampleServer_Invoke() {
-	eval.Puppet.Do(func(c eval.Context) {
+	pcore.Do(func(c px.Context) {
 		api := `My::TheApi`
-		sb := service.NewServerBuilder(c, `My::Service`)
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterAPI(api, &testAPI{})
 
 		s := sb.Server()
 		fmt.Println(s.Invoke(c, api, `first`))
-		fmt.Println(s.Invoke(c, api, `second`, eval.Wrap(c, `place`)))
+		fmt.Println(s.Invoke(c, api, `second`, px.Wrap(c, `place`)))
 	})
 
 	// Output:
@@ -50,15 +49,15 @@ type MyRes struct {
 }
 
 func ExampleServer_Metadata_typeSet() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterAPI(`My::TheApi`, &testAPI{})
 		sb.RegisterTypes("My", &MyRes{})
 
 		s := sb.Server()
 		ts, _ := s.Metadata(c)
-		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		ts.ToString(os.Stdout, px.PrettyExpanded, nil)
 		fmt.Println()
 	})
 
@@ -95,15 +94,15 @@ type MyOuterRes struct {
 	What string
 }
 
-func ExampleServer_Nested_type() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+func ExampleBuilder_RegisterTypes_nestedType() {
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyOuterRes{})
 
 		s := sb.Server()
 		ts, _ := s.Metadata(c)
-		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		ts.ToString(os.Stdout, px.PrettyExpanded, nil)
 		fmt.Println()
 	})
 
@@ -140,15 +139,15 @@ type Person struct {
 	Born     time.Time
 }
 
-func ExampleServer_Recursive_type() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+func ExampleBuilder_RegisterTypes_recursiveType() {
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &Person{})
 
 		s := sb.Server()
 		ts, _ := s.Metadata(c)
-		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		ts.ToString(os.Stdout, px.PrettyExpanded, nil)
 		fmt.Println()
 	})
 
@@ -181,13 +180,13 @@ func ExampleServer_Recursive_type() {
 }
 
 func ExampleServer_Metadata_definitions() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterActivity(wfapi.NewWorkflow(c, func(b wfapi.WorkflowBuilder) {
+		sb.RegisterActivity(wf.NewWorkflow(c, func(b wf.WorkflowBuilder) {
 			b.Name(`My::Test`)
-			b.Resource(func(w wfapi.ResourceBuilder) {
+			b.Resource(func(w wf.ResourceBuilder) {
 				w.Name(`X`)
 				w.Input(w.Parameter(`a`, `String`))
 				w.Input(w.Parameter(`b`, `String`))
@@ -198,7 +197,7 @@ func ExampleServer_Metadata_definitions() {
 		s := sb.Server()
 		_, defs := s.Metadata(c)
 		for _, def := range defs {
-			fmt.Println(eval.ToPrettyString(def))
+			fmt.Println(px.ToPrettyString(def))
 		}
 	})
 
@@ -254,9 +253,9 @@ type ContainedRes struct {
 	Stuff   string
 }
 
-func ExampleServer_TypeSet_annotated() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+func ExampleBuilder_RegisterTypes_annotatedTypeSet() {
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My",
 			sb.BuildResource(&OwnerRes{}, func(rtb service.ResourceTypeBuilder) {
@@ -275,13 +274,13 @@ func ExampleServer_TypeSet_annotated() {
 		bld := bytes.NewBufferString(``)
 		coll := serialization.NewJsonStreamer(bld)
 
-		sr := serialization.NewSerializer(eval.Puppet.RootContext(), eval.EMPTY_MAP)
-		sr.Convert(types.WrapValues([]eval.Value{ts, eval.Wrap(c, md)}), coll)
+		sr := serialization.NewSerializer(pcore.RootContext(), px.EmptyMap)
+		sr.Convert(types.WrapValues([]px.Value{ts, px.Wrap(c, md)}), coll)
 
-		dr := serialization.NewDeserializer(c, eval.EMPTY_MAP)
+		dr := serialization.NewDeserializer(c, px.EmptyMap)
 		serialization.JsonToData(`/tmp/tst`, bld, dr)
-		dt := dr.Value().(*types.ArrayValue)
-		dt.At(0).ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		dt := dr.Value().(*types.Array)
+		dt.At(0).ToString(os.Stdout, px.PrettyExpanded, nil)
 		fmt.Println()
 	})
 
@@ -345,14 +344,14 @@ func ExampleServer_TypeSet_annotated() {
 }
 
 func ExampleServer_Metadata_state() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterStateConverter(service.GoStateConverter)
-		sb.RegisterActivity(wfapi.NewWorkflow(c, func(b wfapi.WorkflowBuilder) {
+		sb.RegisterStateConverter(wf.GoStateConverter)
+		sb.RegisterActivity(wf.NewWorkflow(c, func(b wf.WorkflowBuilder) {
 			b.Name(`My::Test`)
-			b.Resource(func(w wfapi.ResourceBuilder) {
+			b.Resource(func(w wf.ResourceBuilder) {
 				w.Name(`X`)
 				w.Input(w.Parameter(`a`, `String`))
 				w.Input(w.Parameter(`b`, `String`))
@@ -361,7 +360,7 @@ func ExampleServer_Metadata_state() {
 		}))
 
 		s := sb.Server()
-		fmt.Println(eval.ToPrettyString(s.State(c, `My::Test::X`, eval.EMPTY_MAP)))
+		fmt.Println(px.ToPrettyString(s.State(c, `My::Test::X`, px.EmptyMap)))
 	})
 
 	// Output:
@@ -372,36 +371,36 @@ func ExampleServer_Metadata_state() {
 }
 
 type MyIdentityService struct {
-	extToId map[string]eval.URI
-	idToExt map[eval.URI]string
+	extToId map[string]px.URI
+	idToExt map[px.URI]string
 }
 
-func (is *MyIdentityService) GetExternal(id eval.URI) (string, error) {
+func (is *MyIdentityService) GetExternal(id px.URI) (string, error) {
 	if ext, ok := is.idToExt[id]; ok {
 		return ext, nil
 	}
-	return ``, wfapi.NotFound
+	return ``, wf.NotFound
 }
 
-func (is *MyIdentityService) GetInternal(ext string) (eval.URI, error) {
+func (is *MyIdentityService) GetInternal(ext string) (px.URI, error) {
 	if id, ok := is.extToId[ext]; ok {
 		return id, nil
 	}
-	return eval.URI(``), wfapi.NotFound
+	return px.URI(``), wf.NotFound
 }
 
 func ExampleServer_Metadata_api() {
-	eval.Puppet.Do(func(c eval.Context) {
-		sb := service.NewServerBuilder(c, `My::Service`)
+	pcore.Do(func(c px.Context) {
+		sb := service.NewServiceBuilder(c, `My::Service`)
 
-		sb.RegisterAPI(`My::Identity`, &MyIdentityService{map[string]eval.URI{}, map[eval.URI]string{}})
+		sb.RegisterAPI(`My::Identity`, &MyIdentityService{map[string]px.URI{}, map[px.URI]string{}})
 
 		s := sb.Server()
 		ts, defs := s.Metadata(c)
-		ts.ToString(os.Stdout, eval.PRETTY_EXPANDED, nil)
+		ts.ToString(os.Stdout, px.PrettyExpanded, nil)
 		fmt.Println()
 		for _, def := range defs {
-			fmt.Println(eval.ToPrettyString(def))
+			fmt.Println(px.ToPrettyString(def))
 		}
 	})
 

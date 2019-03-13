@@ -3,15 +3,19 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"os/exec"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/types"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/servicepb"
 	"google.golang.org/grpc"
-	"os/exec"
+
+	// Ensure that service is initialized
+	_ "github.com/lyraproj/servicesdk/service"
 )
 
 var handshake = plugin.HandshakeConfig{
@@ -36,15 +40,15 @@ type Client struct {
 	client servicepb.DefinitionServiceClient
 }
 
-func (c *Client) Identifier(ctx eval.Context) eval.TypedName {
+func (c *Client) Identifier(ctx px.Context) px.TypedName {
 	rr, err := c.client.Identity(ctx, &servicepb.EmptyRequest{})
 	if err != nil {
 		panic(err)
 	}
-	return FromDataPB(ctx, rr).(eval.TypedName)
+	return FromDataPB(ctx, rr).(px.TypedName)
 }
 
-func (c *Client) Invoke(ctx eval.Context, identifier, name string, arguments ...eval.Value) eval.Value {
+func (c *Client) Invoke(ctx px.Context, identifier, name string, arguments ...px.Value) px.Value {
 	rq := servicepb.InvokeRequest{
 		Identifier: identifier,
 		Method:     name,
@@ -55,33 +59,33 @@ func (c *Client) Invoke(ctx eval.Context, identifier, name string, arguments ...
 		panic(err)
 	}
 	result := FromDataPB(ctx, rr)
-	if eo, ok := result.(eval.ErrorObject); ok {
-		panic(eval.Error(WF_INVOCATION_ERROR, issue.H{`identifier`: identifier, `name`: name, `code`: eo.IssueCode(), `message`: eo.Message()}))
+	if eo, ok := result.(serviceapi.ErrorObject); ok {
+		panic(px.Error(InvocationError, issue.H{`identifier`: identifier, `name`: name, `code`: eo.IssueCode(), `message`: eo.Message()}))
 	}
 	return result
 }
 
-func (c *Client) Metadata(ctx eval.Context) (typeSet eval.TypeSet, definitions []serviceapi.Definition) {
+func (c *Client) Metadata(ctx px.Context) (typeSet px.TypeSet, definitions []serviceapi.Definition) {
 	rr, err := c.client.Metadata(ctx, &servicepb.EmptyRequest{})
 	if err != nil {
 		panic(err)
 	}
 	if ts := rr.GetTypeset(); ts != nil {
-		typeSet = FromDataPB(ctx, rr.GetTypeset()).(eval.TypeSet)
+		typeSet = FromDataPB(ctx, rr.GetTypeset()).(px.TypeSet)
 	}
-	ds := FromDataPB(ctx, rr.GetDefinitions()).(eval.List)
+	ds := FromDataPB(ctx, rr.GetDefinitions()).(px.List)
 	definitions = make([]serviceapi.Definition, ds.Len())
-	ds.EachWithIndex(func(d eval.Value, i int) { definitions[i] = d.(serviceapi.Definition) })
+	ds.EachWithIndex(func(d px.Value, i int) { definitions[i] = d.(serviceapi.Definition) })
 	return
 }
 
-func (c *Client) State(ctx eval.Context, identifier string, input eval.OrderedMap) eval.PuppetObject {
+func (c *Client) State(ctx px.Context, identifier string, input px.OrderedMap) px.PuppetObject {
 	rq := servicepb.StateRequest{Identifier: identifier, Input: ToDataPB(input)}
 	rr, err := c.client.State(ctx, &rq)
 	if err != nil {
 		panic(err)
 	}
-	return FromDataPB(ctx, rr).(eval.PuppetObject)
+	return FromDataPB(ctx, rr).(px.PuppetObject)
 }
 
 // Load  ...

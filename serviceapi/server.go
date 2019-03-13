@@ -1,11 +1,11 @@
 package serviceapi
 
-import "github.com/lyraproj/puppet-evaluator/eval"
+import "github.com/lyraproj/pcore/px"
 
 type Service interface {
 	Invokable
 	Metadata
 	StateResolver
 
-	Identifier(eval.Context) eval.TypedName
+	Identifier(px.Context) px.TypedName
 }

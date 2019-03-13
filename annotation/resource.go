@@ -1,20 +1,21 @@
 package annotation
 
 import (
-	"github.com/hashicorp/go-hclog"
-	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/puppet-evaluator/types"
-	"github.com/lyraproj/puppet-evaluator/utils"
 	"io"
 	"reflect"
 	"sort"
+
+	"github.com/hashicorp/go-hclog"
+	"github.com/lyraproj/issue/issue"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/pcore/utils"
 )
 
-var ResourceType eval.ObjectType
+var ResourceType px.ObjectType
 
 func init() {
-	ResourceType = eval.NewGoObjectType(`Lyra::Resource`, reflect.TypeOf((*Resource)(nil)).Elem(), `Annotation{
+	ResourceType = px.NewGoObjectType(`Lyra::Resource`, reflect.TypeOf((*Resource)(nil)).Elem(), `Annotation{
     attributes => {
       # immutableAttributes lists the names of the attributes that cannot be
       # changed. If a difference is detected between the desired state and the
@@ -33,7 +34,7 @@ func init() {
     }
   }`,
 
-		func(ctx eval.Context, args []eval.Value) eval.Value {
+		func(ctx px.Context, args []px.Value) px.Value {
 			switch len(args) {
 			case 0:
 				return NewResource(ctx, nil, nil, nil)
@@ -46,14 +47,14 @@ func init() {
 			}
 		},
 
-		func(ctx eval.Context, args []eval.Value) eval.Value {
-			h := args[0].(*types.HashValue)
-			return NewResource(ctx, h.Get5(`immutableAttributes`, eval.UNDEF), h.Get5(`providedAttributes`, eval.UNDEF), h.Get5(`relationships`, eval.UNDEF))
+		func(ctx px.Context, args []px.Value) px.Value {
+			h := args[0].(*types.Hash)
+			return NewResource(ctx, h.Get5(`immutableAttributes`, px.Undef), h.Get5(`providedAttributes`, px.Undef), h.Get5(`relationships`, px.Undef))
 		})
 }
 
 type Resource interface {
-	eval.PuppetObject
+	px.PuppetObject
 
 	// Changed returns two booleans.
 	//
@@ -63,7 +64,7 @@ type Resource interface {
 	//
 	// The second boolean is true when the first is true and the attribute in question is listed in the
 	// immutableAttributes array.
-	Changed(x, y eval.PuppetObject) (bool, bool)
+	Changed(x, y px.PuppetObject) (bool, bool)
 
 	ImmutableAttributes() []string
 
@@ -78,12 +79,12 @@ type resource struct {
 	relationships       map[string]*Relationship
 }
 
-func NewResource(ctx eval.Context, immutableAttributes, providedAttributes eval.Value, relationships eval.Value) Resource {
+func NewResource(ctx px.Context, immutableAttributes, providedAttributes px.Value, relationships px.Value) Resource {
 	r := &resource{}
 
-	stringsOrNil := func(v eval.Value) []string {
-		if a, ok := v.(*types.ArrayValue); ok {
-			sa := eval.StringElements(a)
+	stringsOrNil := func(v px.Value) []string {
+		if a, ok := v.(*types.Array); ok {
+			sa := px.StringElements(a)
 			if len(sa) > 0 {
 				return sa
 			}
@@ -93,13 +94,13 @@ func NewResource(ctx eval.Context, immutableAttributes, providedAttributes eval.
 
 	r.immutableAttributes = stringsOrNil(immutableAttributes)
 	r.providedAttributes = stringsOrNil(providedAttributes)
-	if rs, ok := relationships.(eval.OrderedMap); ok {
-		rels := make(map[string]*Relationship, rs.Len())
-		rs.EachPair(func(k, v eval.Value) {
-			rv := eval.New(ctx, RelationshipType, v).(eval.Reflected).Reflect(ctx)
-			rels[k.String()] = rv.Addr().Interface().(*Relationship)
+	if rs, ok := relationships.(px.OrderedMap); ok {
+		rls := make(map[string]*Relationship, rs.Len())
+		rs.EachPair(func(k, v px.Value) {
+			rv := px.New(ctx, RelationshipType, v).(px.Reflected).Reflect(ctx)
+			rls[k.String()] = rv.Addr().Interface().(*Relationship)
 		})
-		r.relationships = rels
+		r.relationships = rls
 	}
 	return r
 }
@@ -108,9 +109,9 @@ func (r *resource) ImmutableAttributes() []string {
 	return r.immutableAttributes
 }
 
-func (r *resource) ImmutableAttributesList() eval.Value {
+func (r *resource) ImmutableAttributesList() px.Value {
 	if r.immutableAttributes == nil {
-		return eval.UNDEF
+		return px.Undef
 	}
 	return types.WrapStrings(r.immutableAttributes)
 }
@@ -119,9 +120,9 @@ func (r *resource) ProvidedAttributes() []string {
 	return r.providedAttributes
 }
 
-func (r *resource) ProvidedAttributesList() eval.Value {
+func (r *resource) ProvidedAttributesList() px.Value {
 	if r.providedAttributes == nil {
-		return eval.UNDEF
+		return px.Undef
 	}
 	return types.WrapStrings(r.providedAttributes)
 }
@@ -130,9 +131,9 @@ func (r *resource) Relationships() map[string]*Relationship {
 	return r.relationships
 }
 
-func (r *resource) RelationshipsMap() eval.Value {
+func (r *resource) RelationshipsMap() px.Value {
 	if r.relationships == nil {
-		return eval.UNDEF
+		return px.Undef
 	}
 	es := make([]*types.HashEntry, len(r.relationships))
 	for k, v := range r.relationships {
@@ -143,10 +144,10 @@ func (r *resource) RelationshipsMap() eval.Value {
 	return types.WrapHash(es)
 }
 
-func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
-	ot, ok := annotatedType.(eval.ObjectType)
+func (r *resource) Validate(c px.Context, annotatedType px.Annotatable) {
+	ot, ok := annotatedType.(px.ObjectType)
 	if !ok {
-		panic(eval.Error(RA_ANNOTATED_IS_NOT_OBJECT, issue.H{`type`: annotatedType}))
+		panic(px.Error(AnnotatedIsNotObject, issue.H{`type`: annotatedType}))
 	}
 	if r.relationships != nil {
 		isContained := false
@@ -154,7 +155,7 @@ func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
 			v.Validate(c, ot, k)
 			if v.Kind == KindContained {
 				if isContained {
-					panic(eval.Error(RA_CONTAINED_MORE_THAN_ONCE, issue.H{`type`: ot}))
+					panic(px.Error(ContainedMoreThanOnce, issue.H{`type`: ot}))
 				}
 				isContained = true
 			}
@@ -171,7 +172,7 @@ func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
 			if a.HasValue() {
 				continue
 			}
-			panic(eval.Error(RA_PROVIDED_ATTRIBUTE_IS_REQUIRED, issue.H{`attr`: a}))
+			panic(px.Error(ProvidedAttributeIsRequired, issue.H{`attr`: a}))
 		}
 	}
 }
@@ -184,8 +185,8 @@ func (r *resource) Validate(c eval.Context, annotatedType eval.Annotatable) {
 //
 // The second boolean is true when the first is true and the attribute in question is listed in the
 // immutableAttributes array.
-func (r *resource) Changed(desired, actual eval.PuppetObject) (bool, bool) {
-	typ := desired.PType().(eval.ObjectType)
+func (r *resource) Changed(desired, actual px.PuppetObject) (bool, bool) {
+	typ := desired.PType().(px.ObjectType)
 	for _, a := range typ.AttributesInfo().Attributes() {
 		dv := a.Get(desired)
 		if r.isProvided(a.Name()) && a.Default(dv) {
@@ -206,25 +207,25 @@ func (r *resource) Changed(desired, actual eval.PuppetObject) (bool, bool) {
 }
 
 func (r *resource) String() string {
-	return eval.ToString(r)
+	return px.ToString(r)
 }
 
-func (r *resource) Equals(other interface{}, guard eval.Guard) bool {
+func (r *resource) Equals(other interface{}, guard px.Guard) bool {
 	if or, ok := other.(*resource); ok {
-		return eval.Equals(r.providedAttributes, or.providedAttributes) && eval.Equals(r.relationships, or.relationships)
+		return px.Equals(r.providedAttributes, or.providedAttributes, guard) && px.Equals(r.relationships, or.relationships, guard)
 	}
 	return false
 }
 
-func (r *resource) ToString(bld io.Writer, format eval.FormatContext, g eval.RDetect) {
+func (r *resource) ToString(bld io.Writer, format px.FormatContext, g px.RDetect) {
 	types.ObjectToString(r, format, bld, g)
 }
 
-func (r *resource) PType() eval.Type {
+func (r *resource) PType() px.Type {
 	return ResourceType
 }
 
-func (r *resource) Get(key string) (value eval.Value, ok bool) {
+func (r *resource) Get(key string) (value px.Value, ok bool) {
 	switch key {
 	case `immutableAttributes`:
 		return r.ImmutableAttributesList(), true
@@ -236,7 +237,7 @@ func (r *resource) Get(key string) (value eval.Value, ok bool) {
 	return nil, false
 }
 
-func (r *resource) InitHash() eval.OrderedMap {
+func (r *resource) InitHash() px.OrderedMap {
 	es := make([]*types.HashEntry, 3)
 	if r.immutableAttributes != nil {
 		es = append(es, types.WrapHashEntry2(`immutableAttributes`, r.ImmutableAttributesList()))
@@ -250,13 +251,13 @@ func (r *resource) InitHash() eval.OrderedMap {
 	return types.WrapHash(es)
 }
 
-func assertAttribute(ot eval.ObjectType, n string) (a eval.Attribute) {
+func assertAttribute(ot px.ObjectType, n string) (a px.Attribute) {
 	if m, ok := ot.Member(n); ok {
-		if a, ok = m.(eval.Attribute); ok {
+		if a, ok = m.(px.Attribute); ok {
 			return
 		}
 	}
-	panic(eval.Error(RA_ATTRIBUTE_NOT_FOUND, issue.H{`type`: ot, `name`: n}))
+	panic(px.Error(AttributeNotFound, issue.H{`type`: ot, `name`: n}))
 }
 
 func (r *resource) isProvided(name string) bool {

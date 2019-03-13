@@ -2,16 +2,15 @@ package typegen_test
 
 import (
 	"fmt"
-	"github.com/lyraproj/puppet-evaluator/eval"
-	"github.com/lyraproj/semver/semver"
-	"github.com/lyraproj/servicesdk/lang/typegen"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 
-	_ "github.com/lyraproj/puppet-evaluator/pcore"
-	_ "github.com/lyraproj/servicesdk/annotation"
+	"github.com/lyraproj/pcore/pcore"
+	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/semver/semver"
+	"github.com/lyraproj/servicesdk/lang/typegen"
 )
 
 func ExampleGenerator_GenerateTypes_puppet() {
@@ -30,17 +29,18 @@ func ExampleGenerator_GenerateTypes_puppet() {
 		Active bool `puppet:"name=>enabled"`
 	}
 
-	c := eval.Puppet.RootContext()
+	c := pcore.RootContext()
 
 	// Create a TypeSet from a list of Go structs
 	typeSet := c.Reflector().TypeSetFromReflect(`My::Own`, semver.MustParseVersion(`1.0.0`), nil,
 		reflect.TypeOf(&Address{}), reflect.TypeOf(&Person{}), reflect.TypeOf(&ExtendedPerson{}))
 
 	// Make the types known to the current loader
-	c.AddTypes(typeSet)
+	px.AddTypes(c, typeSet)
 
 	tmpDir, err := ioutil.TempDir(``, `puppetgen_`)
 	if err == nil {
+		//noinspection GoUnhandledErrorResult
 		defer os.RemoveAll(tmpDir)
 		g := typegen.GetGenerator(`puppet`)
 		g.GenerateTypes(typeSet, tmpDir)
