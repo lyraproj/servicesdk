@@ -2,7 +2,6 @@ package grpc
 
 import (
 	"fmt"
-	"log"
 	"net/rpc"
 
 	"github.com/hashicorp/go-hclog"
@@ -120,16 +119,17 @@ func FromDataPB(c px.Context, d *datapb.Data) px.Value {
 
 // Serve the supplied Server as a go-plugin
 func Serve(c px.Context, s serviceapi.Service) {
+	logger := hclog.Default()
 	cfg := &plugin.ServeConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{
 			"server": &Server{ctx: c, impl: s},
 		},
 		GRPCServer: plugin.DefaultGRPCServer,
-		Logger:     hclog.Default(),
+		Logger:     logger,
 	}
-	id := s.Identifier(c)
-	log.Printf("Starting to serve %s\n", id)
+	name := s.Identifier(c).Name()
+	logger.Debug("Starting to serve", "name", name)
 	plugin.Serve(cfg)
-	log.Printf("Done serve %s\n", id)
+	logger.Debug("Done serving", "name", name)
 }

@@ -6,14 +6,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/lyraproj/servicesdk/wf"
-
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/serialization"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/annotation"
 	"github.com/lyraproj/servicesdk/service"
+	"github.com/lyraproj/servicesdk/wf"
 )
 
 type testAPI struct{}
