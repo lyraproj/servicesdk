@@ -52,7 +52,7 @@ func (c *Client) Invoke(ctx px.Context, identifier, name string, arguments ...px
 	rq := servicepb.InvokeRequest{
 		Identifier: identifier,
 		Method:     name,
-		Arguments:  ToDataPB(types.WrapValues(arguments)),
+		Arguments:  ToDataPB(ctx, types.WrapValues(arguments)),
 	}
 	rr, err := c.client.Invoke(ctx, &rq)
 	if err != nil {
@@ -80,7 +80,7 @@ func (c *Client) Metadata(ctx px.Context) (typeSet px.TypeSet, definitions []ser
 }
 
 func (c *Client) State(ctx px.Context, identifier string, input px.OrderedMap) px.PuppetObject {
-	rq := servicepb.StateRequest{Identifier: identifier, Input: ToDataPB(input)}
+	rq := servicepb.StateRequest{Identifier: identifier, Input: ToDataPB(ctx, input)}
 	rr, err := c.client.State(ctx, &rq)
 	if err != nil {
 		panic(err)
