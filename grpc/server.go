@@ -61,7 +61,7 @@ func (s *Server) Do(doer func(c px.Context)) (err error) {
 
 func (s *Server) Identity(context.Context, *servicepb.EmptyRequest) (result *datapb.Data, err error) {
 	err = s.Do(func(c px.Context) {
-		result = ToDataPB(s.impl.Identifier(c))
+		result = ToDataPB(c, s.impl.Identifier(c))
 	})
 	return
 }
@@ -75,7 +75,7 @@ func (s *Server) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *
 			r.Identifier,
 			r.Method,
 			arguments...)
-		result = ToDataPB(rrr)
+		result = ToDataPB(c, rrr)
 	})
 	return
 }
@@ -87,25 +87,28 @@ func (s *Server) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result 
 		for i, d := range ds {
 			vs[i] = d
 		}
-		result = &servicepb.MetadataResponse{Typeset: ToDataPB(ts), Definitions: ToDataPB(types.WrapValues(vs))}
+		result = &servicepb.MetadataResponse{Typeset: ToDataPB(c, ts), Definitions: ToDataPB(c, types.WrapValues(vs))}
 	})
 	return
 }
 
 func (s *Server) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
 	err = s.Do(func(c px.Context) {
-		result = ToDataPB(s.impl.State(c, r.Identifier, FromDataPB(c, r.Input).(px.OrderedMap)))
+		result = ToDataPB(c, s.impl.State(c, r.Identifier, FromDataPB(c, r.Input).(px.OrderedMap)))
 	})
 	return
 }
 
-func ToDataPB(v px.Value) *datapb.Data {
+func ToDataPB(c px.Context, v px.Value) (data *datapb.Data) {
 	if v == nil {
-		return nil
+		return
 	}
-	pc := proto.NewProtoConsumer()
-	serialization.NewSerializer(pcore.RootContext(), px.EmptyMap).Convert(v, pc)
-	return pc.Value()
+	c.DoWithLoader(pcore.SystemLoader(), func() {
+		pc := proto.NewProtoConsumer()
+		serialization.NewSerializer(c, px.EmptyMap).Convert(v, pc)
+		data = pc.Value()
+	})
+	return
 }
 
 func FromDataPB(c px.Context, d *datapb.Data) px.Value {

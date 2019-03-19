@@ -29,6 +29,7 @@ func ExampleGenerator_GenerateTypes_puppet() {
 		Active bool `puppet:"name=>enabled"`
 	}
 
+	pcore.Reset()
 	c := pcore.RootContext()
 
 	// Create a TypeSet from a list of Go structs
