@@ -296,7 +296,7 @@ func CreateTypeSet(ts map[string]px.Type) px.TypeSet {
 	}
 
 	if len(result) != 1 {
-		panic(px.Error(NoCommonNamespace, issue.NO_ARGS))
+		panic(px.Error(NoCommonNamespace, issue.NoArgs))
 	}
 
 next:
