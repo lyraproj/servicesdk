@@ -128,7 +128,7 @@ func (b *builder) When(w string) {
 
 func (b *builder) validate() {
 	if b.name == `` {
-		panic(px.Error(ActivityNoName, issue.NO_ARGS))
+		panic(px.Error(ActivityNoName, issue.NoArgs))
 	}
 }
 
@@ -281,7 +281,7 @@ func (b *iteratorBuilder) Build() Activity {
 
 func (b *iteratorBuilder) validate() {
 	if len(b.children) != 1 {
-		panic(px.Error(IteratorNotOneActivity, issue.NO_ARGS))
+		panic(px.Error(IteratorNotOneActivity, issue.NoArgs))
 	}
 }
 
