@@ -151,7 +151,7 @@ func (ds *Builder) registerReflectedType(namespace string, tg px.AnnotatedType) 
 	var registerFieldType func(ft reflect.Type)
 	registerFieldType = func(ft reflect.Type) {
 		switch ft.Kind() {
-		case reflect.Slice, reflect.Interface, reflect.Ptr, reflect.Array:
+		case reflect.Slice, reflect.Ptr, reflect.Array, reflect.Map:
 			registerFieldType(ft.Elem())
 		case reflect.Struct:
 			if ft == parent {
