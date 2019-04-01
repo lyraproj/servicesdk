@@ -68,7 +68,7 @@ func (g *tsGenerator) generateType(t px.Type, ns []string, indent int, bld io.Wr
 		write(bld, ` {`)
 		indent += 2
 		ai := pt.AttributesInfo()
-		allAttrs, thisAttrs, superAttrs := g.toTsAttrs(pt, ns, ai.Attributes())
+		allAttrs, thisAttrs, superAttrs := toTsAttrs(pt, ns, ai.Attributes())
 		appendFields(thisAttrs, indent, bld)
 		if len(thisAttrs) > 0 {
 			writeByte(bld, '\n')
@@ -94,6 +94,10 @@ func (g *tsGenerator) generateType(t px.Type, ns []string, indent int, bld io.Wr
 // ToTsType converts the given pType to a string representation of a TypeScript type. The given
 // pType can not be a TypeSet.
 func (g *tsGenerator) ToTsType(ns []string, pType px.Type) string {
+	return toTsType(ns, pType)
+}
+
+func toTsType(ns []string, pType px.Type) string {
 	bld := bytes.NewBufferString(``)
 	appendTsType(ns, pType, bld)
 	return bld.String()
@@ -165,7 +169,7 @@ var keywords = map[string]bool{
 	`symbol`:  true,
 }
 
-func (g *tsGenerator) toTsAttrs(t px.ObjectType, ns []string, attrs []px.Attribute) (allAttrs, thisAttrs, superAttrs []*tsAttribute) {
+func toTsAttrs(t px.ObjectType, ns []string, attrs []px.Attribute) (allAttrs, thisAttrs, superAttrs []*tsAttribute) {
 	allAttrs = make([]*tsAttribute, len(attrs))
 	superAttrs = make([]*tsAttribute, 0)
 	thisAttrs = make([]*tsAttribute, 0)
@@ -175,7 +179,7 @@ func (g *tsGenerator) toTsAttrs(t px.ObjectType, ns []string, attrs []px.Attribu
 		if keywords[n] {
 			tsn = n + `_`
 		}
-		tsAttr := &tsAttribute{tsName: tsn, name: n, typ: g.ToTsType(ns, attr.Type())}
+		tsAttr := &tsAttribute{tsName: tsn, name: n, typ: toTsType(ns, attr.Type())}
 		if attr.HasValue() {
 			tsAttr.value = toTsValue(attr.Value())
 		}
@@ -414,7 +418,21 @@ func appendTsType(ns []string, pType px.Type, bld io.Writer) {
 	case *types.TypeAliasType:
 		write(bld, nsName(ns, pType.Name()))
 	case px.ObjectType:
-		write(bld, nsName(ns, pType.Name()))
+		if pType.Name() == `` {
+			write(bld, `{`)
+			allAttrs, _, _ := toTsAttrs(pType, ns, pType.AttributesInfo().Attributes())
+			for i, a := range allAttrs {
+				if i > 0 {
+					write(bld, `,`)
+				}
+				write(bld, a.tsName)
+				write(bld, `: `)
+				write(bld, a.typ)
+			}
+			write(bld, `}`)
+		} else {
+			write(bld, nsName(ns, pType.Name()))
+		}
 	}
 }
 
