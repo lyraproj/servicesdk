@@ -75,18 +75,12 @@ func ExampleGenerator_GenerateTypes_puppet() {
 	//       attributes => {
 	//         'name' => String,
 	//         'gender' => Enum['male', 'female', 'other'],
-	//         'address' => {
-	//           'type' => Optional[Address],
-	//           'value' => undef
-	//         }
+	//         'address' => Optional[Address]
 	//       }
 	//     },
 	//     ExtendedPerson => Person{
 	//       attributes => {
-	//         'age' => {
-	//           'type' => Optional[Integer],
-	//           'value' => undef
-	//         },
+	//         'age' => Optional[Integer],
 	//         'enabled' => Boolean
 	//       }
 	//     }

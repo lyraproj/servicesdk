@@ -115,10 +115,7 @@ func ExampleBuilder_RegisterTypes_nestedType() {
 	//   types => {
 	//     MyOuterRes => {
 	//       attributes => {
-	//         'who' => {
-	//           'type' => Optional[MyRes],
-	//           'value' => undef
-	//         },
+	//         'who' => Optional[MyRes],
 	//         'what' => String
 	//       }
 	//     },
@@ -166,10 +163,7 @@ func ExampleBuilder_RegisterTypes_recursiveType() {
 	//     },
 	//     Person => {
 	//       attributes => {
-	//         'who' => {
-	//           'type' => Optional[MyRes],
-	//           'value' => undef
-	//         },
+	//         'who' => Optional[MyRes],
 	//         'children' => Array[Optional[Person]],
 	//         'born' => Timestamp
 	//       }
@@ -306,10 +300,7 @@ func ExampleBuilder_RegisterTypes_annotatedTypeSet() {
 	//         }
 	//       },
 	//       attributes => {
-	//         'id' => {
-	//           'type' => Optional[String],
-	//           'value' => undef
-	//         },
+	//         'id' => Optional[String],
 	//         'ownerId' => String,
 	//         'stuff' => String
 	//       }
@@ -330,10 +321,7 @@ func ExampleBuilder_RegisterTypes_annotatedTypeSet() {
 	//         }
 	//       },
 	//       attributes => {
-	//         'id' => {
-	//           'type' => Optional[String],
-	//           'value' => undef
-	//         },
+	//         'id' => Optional[String],
 	//         'telephoneNumber' => String
 	//       }
 	//     }
