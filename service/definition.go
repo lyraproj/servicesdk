@@ -73,7 +73,7 @@ func (d *definition) InitHash() px.OrderedMap {
 
 func (d *definition) Equals(other interface{}, g px.Guard) bool {
 	if o, ok := other.(*definition); ok {
-		return d.identifier == o.identifier && d.serviceId.Equals(o.serviceId, g) && d.properties.Equals(o.properties, g)
+		return d.identifier.Equals(o.identifier, g) && d.serviceId.Equals(o.serviceId, g) && d.properties.Equals(o.properties, g)
 	}
 	return false
 }
