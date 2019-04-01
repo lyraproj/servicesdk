@@ -56,9 +56,9 @@ func (ds *Builder) RegisterAPI(name string, callable interface{}) {
 	} else {
 		rv := reflect.ValueOf(callable)
 		rt := rv.Type()
-		pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
+		_, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
 		if !ok {
-			pt = ds.ctx.Reflector().TypeFromReflect(name, nil, rt)
+			pt := ds.ctx.Reflector().TypeFromReflect(name, nil, rt)
 			ds.registerType(name, pt)
 		}
 		ds.registerCallable(name, rv)
