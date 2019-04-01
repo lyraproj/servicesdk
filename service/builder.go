@@ -59,8 +59,6 @@ func (ds *Builder) RegisterAPI(name string, callable interface{}) {
 		pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(rt)
 		if !ok {
 			pt = ds.ctx.Reflector().TypeFromReflect(name, nil, rt)
-		}
-		if _, ok := ds.types[name]; !ok {
 			ds.registerType(name, pt)
 		}
 		ds.registerCallable(name, rv)
@@ -390,9 +388,12 @@ func (ds *Builder) Server() *Server {
 
 	callableStyle := types.WrapString(`callable`)
 	// Create invokable definitions for callables
-	for k := range ds.callables {
+	for k, v := range ds.callables {
 		props := make([]*types.HashEntry, 0, 2)
-		props = append(props, types.WrapHashEntry2(`interface`, ds.types[k]))
+		if pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(v.Type()); ok {
+			props = append(props, types.WrapHashEntry2(`interface`, pt))
+		}
+
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
