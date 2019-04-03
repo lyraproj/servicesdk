@@ -39,7 +39,7 @@ func (gf *tsGeneratorFactory) GenerateTypes(typeSet px.TypeSet, directory string
 	if len(tts) > 0 {
 		typeToStream(typeSet, directory, `.ts`, func(b io.Writer) {
 			write(b, "// this file is generated\n")
-			write(b, "import {PcoreValue, Value} from 'lyra-workflow';")
+			write(b, "import {PcoreValue, Value} from 'lyra-workflow';\n")
 			g := &tsGenerator{make(map[string]string), strings.Split(typeSet.Name(), `::`), true}
 			for _, t := range tts {
 				g.generateType(t, 0, b)
@@ -52,7 +52,7 @@ func (gf *tsGeneratorFactory) GenerateTypes(typeSet px.TypeSet, directory string
 func (gf *tsGeneratorFactory) GenerateType(typ px.Type, directory string) {
 	typeToStream(typ, directory, `.ts`, func(b io.Writer) {
 		write(b, "// this file is generated\n")
-		write(b, "import {PcoreValue, Value} from 'lyra-workflow';")
+		write(b, "import {PcoreValue, Value} from 'lyra-workflow';\n")
 		g := &tsGenerator{make(map[string]string), namespace(typ.Name()), true}
 		g.generateType(typ, 0, b)
 		g.writeAnonIfds(b)

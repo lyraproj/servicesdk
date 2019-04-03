@@ -8,6 +8,7 @@ require (
 	github.com/lyraproj/issue v0.0.0-20190319145359-029b4266d45b
 	github.com/lyraproj/pcore v0.0.0-20190403083940-12ac86e9d315
 	github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2
+	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	google.golang.org/grpc v1.19.0
 )
