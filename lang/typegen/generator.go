@@ -24,7 +24,7 @@ type Generator interface {
 // All known language generators
 var generators = map[string]Generator{
 	"puppet":     &puppetGenerator{},
-	"typescript": &tsGenerator{},
+	"typescript": &tsGeneratorFactory{},
 }
 
 func GetGenerator(language string) Generator {

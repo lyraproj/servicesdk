@@ -1,11 +1,13 @@
 package typegen_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
@@ -13,7 +15,7 @@ import (
 	"github.com/lyraproj/servicesdk/lang/typegen"
 )
 
-func ExampleGenerator_GenerateTypes() {
+func TestGenerator_GenerateTypes(t *testing.T) {
 	type Address struct {
 		Street  string
 		ZipCode string
@@ -29,131 +31,130 @@ func ExampleGenerator_GenerateTypes() {
 		Active bool `puppet:"name=>import"`
 	}
 
-	pcore.Reset()
-	c := pcore.RootContext()
+	expected := `// this file is generated
+import {PcoreValue, Value} from 'lyra-workflow';
 
-	// Create a TypeSet from a list of Go structs
-	typeSet := c.Reflector().TypeSetFromReflect(`My::Own`, semver.MustParseVersion(`1.0.0`), nil,
-		reflect.TypeOf(&Address{}), reflect.TypeOf(&Person{}), reflect.TypeOf(&ExtendedPerson{}))
+export class Address implements PcoreValue {
+  readonly street: string;
+  readonly zipCode: string;
 
-	// Make the types known to the current loader
-	px.AddTypes(c, typeSet)
+  constructor({
+    street,
+    zipCode
+  }: {
+    street: string,
+    zipCode: string
+  }) {
+    this.street = street;
+    this.zipCode = zipCode;
+  }
 
-	tmpDir, err := ioutil.TempDir("", "tsgen_")
-	if err == nil {
-		//noinspection GoUnhandledErrorResult
-		defer os.RemoveAll(tmpDir)
-		g := typegen.GetGenerator(`typescript`)
-		g.GenerateTypes(typeSet, tmpDir)
+  __pvalue(): {[s: string]: Value} {
+    const ih: {[s: string]: Value} = {};
+    ih['street'] = this.street;
+    ih['zipCode'] = this.zipCode;
+    return ih;
+  }
 
-		content, err := ioutil.ReadFile(filepath.Join(tmpDir, "My", "Own.ts"))
+  __ptype(): string {
+    return 'My::Own::Address';
+  }
+}
+
+export class Person implements PcoreValue {
+  readonly name: string;
+  readonly gender: 'male'|'female'|'other';
+  readonly address: Address|null;
+
+  constructor({
+    name,
+    gender,
+    address = null
+  }: {
+    name: string,
+    gender: 'male'|'female'|'other',
+    address?: Address|null
+  }) {
+    this.name = name;
+    this.gender = gender;
+    this.address = address;
+  }
+
+  __pvalue(): {[s: string]: Value} {
+    const ih: {[s: string]: Value} = {};
+    ih['name'] = this.name;
+    ih['gender'] = this.gender;
+    if (this.address !== null) {
+      ih['address'] = this.address;
+    }
+    return ih;
+  }
+
+  __ptype(): string {
+    return 'My::Own::Person';
+  }
+}
+
+export class ExtendedPerson extends Person {
+  readonly import_: boolean;
+  readonly age: number|null;
+
+  constructor({
+    name,
+    gender,
+    import_,
+    address = null,
+    age = null
+  }: {
+    name: string,
+    gender: 'male'|'female'|'other',
+    import_: boolean,
+    address?: Address|null,
+    age?: number|null
+  }) {
+    super({name: name, gender: gender, address: address});
+    this.import_ = import_;
+    this.age = age;
+  }
+
+  __pvalue(): {[s: string]: Value} {
+    const ih = super.__pvalue();
+    ih['import'] = this.import_;
+    if (this.age !== null) {
+      ih['age'] = this.age;
+    }
+    return ih;
+  }
+
+  __ptype(): string {
+    return 'My::Own::ExtendedPerson';
+  }
+}
+`
+	pcore.Do(func(c px.Context) {
+		// Create a TypeSet from a list of Go structs
+		typeSet := c.Reflector().TypeSetFromReflect(`My::Own`, semver.MustParseVersion(`1.0.0`), nil,
+			reflect.TypeOf(&Address{}), reflect.TypeOf(&Person{}), reflect.TypeOf(&ExtendedPerson{}))
+
+		// Make the types known to the current loader
+		px.AddTypes(c, typeSet)
+
+		tmpDir, err := ioutil.TempDir("", "tsgen_")
+
 		if err == nil {
-			fmt.Println(string(content))
+			//noinspection GoUnhandledErrorResult
+			defer os.RemoveAll(tmpDir)
+			g := typegen.GetGenerator(`typescript`)
+			g.GenerateTypes(typeSet, tmpDir)
+
+			content, err := ioutil.ReadFile(filepath.Join(tmpDir, "My", "Own.ts"))
+			if err == nil {
+				require.Equal(t, string(content), expected)
+			}
 		}
-	}
 
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	// Output:
-	// // this file is generated
-	// import {PcoreValue, Value} from 'lyra-workflow';
-	//
-	// export class Address implements PcoreValue {
-	//   readonly street: string;
-	//   readonly zipCode: string;
-	//
-	//   constructor({
-	//     street,
-	//     zipCode
-	//   }: {
-	//     street: string,
-	//     zipCode: string
-	//   }) {
-	//     this.street = street;
-	//     this.zipCode = zipCode;
-	//   }
-	//
-	//   __pvalue(): {[s: string]: Value} {
-	//     const ih: {[s: string]: Value} = {};
-	//     ih['street'] = this.street;
-	//     ih['zipCode'] = this.zipCode;
-	//     return ih;
-	//   }
-	//
-	//   __ptype(): string {
-	//     return 'My::Own::Address';
-	//   }
-	// }
-	//
-	// export class Person implements PcoreValue {
-	//   readonly name: string;
-	//   readonly gender: 'male'|'female'|'other';
-	//   readonly address: Address|null;
-	//
-	//   constructor({
-	//     name,
-	//     gender,
-	//     address = null
-	//   }: {
-	//     name: string,
-	//     gender: 'male'|'female'|'other',
-	//     address?: Address|null
-	//   }) {
-	//     this.name = name;
-	//     this.gender = gender;
-	//     this.address = address;
-	//   }
-	//
-	//   __pvalue(): {[s: string]: Value} {
-	//     const ih: {[s: string]: Value} = {};
-	//     ih['name'] = this.name;
-	//     ih['gender'] = this.gender;
-	//     if (this.address !== null) {
-	//       ih['address'] = this.address;
-	//     }
-	//     return ih;
-	//   }
-	//
-	//   __ptype(): string {
-	//     return 'My::Own::Person';
-	//   }
-	// }
-	//
-	// export class ExtendedPerson extends Person {
-	//   readonly import_: boolean;
-	//   readonly age: number|null;
-	//
-	//   constructor({
-	//     name,
-	//     gender,
-	//     import_,
-	//     address = null,
-	//     age = null
-	//   }: {
-	//     name: string,
-	//     gender: 'male'|'female'|'other',
-	//     import_: boolean,
-	//     address?: Address|null,
-	//     age?: number|null
-	//   }) {
-	//     super({name: name, gender: gender, address: address});
-	//     this.import_ = import_;
-	//     this.age = age;
-	//   }
-	//
-	//   __pvalue(): {[s: string]: Value} {
-	//     const ih = super.__pvalue();
-	//     ih['import'] = this.import_;
-	//     if (this.age !== null) {
-	//       ih['age'] = this.age;
-	//     }
-	//     return ih;
-	//   }
-	//
-	//   __ptype(): string {
-	//     return 'My::Own::ExtendedPerson';
-	//   }
-	// }
+		if err != nil {
+			t.Error(err)
+		}
+	})
 }
