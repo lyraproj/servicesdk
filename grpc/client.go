@@ -93,6 +93,22 @@ func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 	if logger == nil {
 		logger = hclog.Default()
 	}
+
+	level := "warn"
+	switch {
+	case logger.IsTrace():
+		level = "trace"
+	case logger.IsDebug():
+		level = "debug"
+	case logger.IsInfo():
+		level = "info"
+	case logger.IsWarn():
+		level = "warn"
+	case logger.IsError():
+		level = "error"
+	}
+	cmd.Env = append(cmd.Env, fmt.Sprintf("LYRA_LOG_LEVEL=%s", level))
+
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshake,
 		Plugins: map[string]plugin.Plugin{
