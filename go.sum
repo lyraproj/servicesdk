@@ -44,6 +44,8 @@ github.com/lyraproj/pcore v0.0.0-20190403083940-12ac86e9d315 h1:GWlFZY4ckasl1OPK
 github.com/lyraproj/pcore v0.0.0-20190403083940-12ac86e9d315/go.mod h1:zaYm7Mn2rIKNNpcMGy+QkWUqoTpGAQiAmVwJpJ4wYDc=
 github.com/lyraproj/pcore v0.0.0-20190403155521-a72b635b7c05 h1:DHDepxY8viIusn1/vd3jrVz6NblNWzIZBAVWeFRUWYk=
 github.com/lyraproj/pcore v0.0.0-20190403155521-a72b635b7c05/go.mod h1:zaYm7Mn2rIKNNpcMGy+QkWUqoTpGAQiAmVwJpJ4wYDc=
+github.com/lyraproj/pcore v0.0.0-20190405075742-500ef041fe7e h1:BpZKLbm6kW3W3+WeCnXkIRaUWpHx7mIFTZq/v8s47Bc=
+github.com/lyraproj/pcore v0.0.0-20190405075742-500ef041fe7e/go.mod h1:zaYm7Mn2rIKNNpcMGy+QkWUqoTpGAQiAmVwJpJ4wYDc=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2 h1:vb4PbiMtIXdhsOUinkkcqZiASDIZzXRhSG4yvNfE0tg=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2/go.mod h1:KOdZKnEBdDb2iGPUnHiKpk3M5cvv949xMyj8XPqaMF0=
 github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 h1:7GoSOOW2jpsfkntVKaS2rAr1TJqfcxotyaUcuxoZSzg=
