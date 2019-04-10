@@ -50,7 +50,7 @@ type StateHandlerBuilder interface {
 type IteratorBuilder interface {
 	ChildBuilder
 	Style(IterationStyle)
-	Over(...px.Parameter)
+	Over(px.Value)
 	Variables(...px.Parameter)
 }
 
@@ -217,7 +217,7 @@ func (b *childBuilder) AddChild(child Builder) {
 type iteratorBuilder struct {
 	childBuilder
 	style     IterationStyle
-	over      []px.Parameter
+	over      px.Value
 	variables []px.Parameter
 }
 
@@ -258,12 +258,8 @@ func (b *iteratorBuilder) Style(style IterationStyle) {
 	b.style = style
 }
 
-func (b *iteratorBuilder) Over(over ...px.Parameter) {
-	if len(b.over) == 0 {
-		b.over = over
-	} else {
-		b.over = append(b.over, over...)
-	}
+func (b *iteratorBuilder) Over(over px.Value) {
+	b.over = over
 }
 
 func (b *iteratorBuilder) Variables(variables ...px.Parameter) {

@@ -259,8 +259,11 @@ func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Def
 	case wf.Iterator:
 		style = `iterator`
 		props = append(props, types.WrapHashEntry2(`iterationStyle`, types.WrapString(activity.IterationStyle().String())))
-		props = append(props, types.WrapHashEntry2(`over`, paramsAsList(activity.Over())))
-		props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(activity.Variables())))
+		props = append(props, types.WrapHashEntry2(`over`, activity.Over()))
+		vars := activity.Variables()
+		if len(vars) > 0 {
+			props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(vars)))
+		}
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(activity.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))

@@ -50,9 +50,8 @@ type Iterator interface {
 	// Producer returns the Activity that will be invoked once for each iteration
 	Producer() Activity
 
-	// Over returns what this iterator will iterate over. These parameters will be added
-	// to the declared input set when the final requirements for the activity are computed.
-	Over() []px.Parameter
+	// Over returns what this iterator will iterate over.
+	Over() px.Value
 
 	// Variables returns the variables that this iterator will produce for each iteration. These
 	// variables will be removed from the declared input set when the final requirements
@@ -64,11 +63,11 @@ type iterator struct {
 	activity
 	style     IterationStyle
 	producer  Activity
-	over      []px.Parameter
+	over      px.Value
 	variables []px.Parameter
 }
 
-func MakeIterator(name string, when Condition, input, output []px.Parameter, style IterationStyle, producer Activity, over []px.Parameter, variables []px.Parameter) Iterator {
+func MakeIterator(name string, when Condition, input, output []px.Parameter, style IterationStyle, producer Activity, over px.Value, variables []px.Parameter) Iterator {
 	return &iterator{activity{name, when, input, output}, style, producer, over, variables}
 }
 
@@ -84,7 +83,7 @@ func (it *iterator) Producer() Activity {
 	return it.producer
 }
 
-func (it *iterator) Over() []px.Parameter {
+func (it *iterator) Over() px.Value {
 	return it.over
 }
 
