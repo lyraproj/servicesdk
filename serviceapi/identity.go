@@ -15,5 +15,5 @@ type Identity interface {
 	RemoveInternal(internalID string) error
 	Search(internalIDPrefix string) (px.List, error)
 	Sweep(internalIDPrefix string) error
-	Garbage() (px.List, error)
+	Garbage(internalIDPrefix string) (px.List, error)
 }
