@@ -183,6 +183,7 @@ func (ds *Builder) RegisterActivity(activity wf.Activity) {
 	if _, found := ds.activities[name]; found {
 		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsDefinition, `identifier`: name}))
 	}
+	activity.Resolve(ds.ctx)
 	ds.activities[name] = ds.createActivityDefinition(activity)
 }
 
@@ -253,7 +254,10 @@ func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Def
 		if po, ok := api.(px.PuppetObject); ok {
 			ifd = po.PType()
 		} else {
-			ifd = ds.types[tn]
+			ifd, ok = ds.types[tn]
+			if !ok {
+				ifd, _ = ds.ctx.ImplementationRegistry().ReflectedToType(reflect.TypeOf(api))
+			}
 		}
 		props = append(props, types.WrapHashEntry2(`interface`, ifd))
 	case wf.Iterator:

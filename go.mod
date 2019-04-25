@@ -1,13 +1,16 @@
 module github.com/lyraproj/servicesdk
 
 require (
+	github.com/aws/aws-sdk-go v1.14.31
 	github.com/golang/protobuf v1.3.0
 	github.com/hashicorp/go-hclog v0.8.0
 	github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104
+	github.com/hashicorp/terraform v0.11.13
 	github.com/lyraproj/data-protobuf v0.0.0-20190329160005-a909d9e1f93b
 	github.com/lyraproj/issue v0.0.0-20190329160035-8bc10230f995
 	github.com/lyraproj/pcore v0.0.0-20190408134742-7ef8f288585f
 	github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2
+	github.com/puppetlabs/go-evaluator v0.0.0-20181204150348-3f48b0581f25 // indirect
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	google.golang.org/grpc v1.19.0

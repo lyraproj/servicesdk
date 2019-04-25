@@ -26,3 +26,9 @@ func (s *action) Label() string {
 func (s *action) Function() interface{} {
 	return s.function
 }
+
+func (s *action) Resolve(c px.Context) {
+	if r, ok := s.function.(Resolvable); ok {
+		s.function = r.Resolve(c)
+	}
+}
