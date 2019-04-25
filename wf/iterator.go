@@ -87,6 +87,10 @@ func (it *iterator) Over() px.Value {
 	return it.over
 }
 
+func (it *iterator) Resolve(c px.Context) {
+	it.producer.Resolve(c)
+}
+
 func (it *iterator) Variables() []px.Parameter {
 	return it.variables
 }

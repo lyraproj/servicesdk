@@ -26,3 +26,9 @@ func (w *workflow) Label() string {
 func (w *workflow) Activities() []Activity {
 	return w.activities
 }
+
+func (w *workflow) Resolve(c px.Context) {
+	for _, a := range w.activities {
+		a.Resolve(c)
+	}
+}
