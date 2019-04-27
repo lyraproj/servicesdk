@@ -1,7 +1,6 @@
 package wf
 
 import (
-	"reflect"
 	"strings"
 
 	"github.com/lyraproj/issue/issue"
@@ -219,6 +218,7 @@ type iteratorBuilder struct {
 	style     IterationStyle
 	over      px.Value
 	variables []px.Parameter
+	into      string
 }
 
 func (b *iteratorBuilder) StateHandler(bld func(b StateHandlerBuilder)) {
@@ -262,6 +262,10 @@ func (b *iteratorBuilder) Over(over px.Value) {
 	b.over = over
 }
 
+func (b *iteratorBuilder) Into(into string) {
+	b.into = into
+}
+
 func (b *iteratorBuilder) Variables(variables ...px.Parameter) {
 	if len(b.variables) == 0 {
 		b.variables = variables
@@ -272,7 +276,7 @@ func (b *iteratorBuilder) Variables(variables ...px.Parameter) {
 
 func (b *iteratorBuilder) Build() Activity {
 	b.validate()
-	return MakeIterator(b.GetName(), b.when, b.input, b.output, b.style, b.children[0], b.over, b.variables)
+	return MakeIterator(b.GetName(), b.when, b.input, b.output, b.style, b.children[0], b.over, b.variables, b.into)
 }
 
 func (b *iteratorBuilder) validate() {
@@ -303,13 +307,14 @@ func (b *resourceBuilder) ExternalId(extId string) {
 // RegisterState registers a struct as a state. The state type is inferred from the
 // struct
 func (b *resourceBuilder) StateStruct(state interface{}) {
+	/* TODO: Fix this b.state = newGoState(pt.(px.ObjectType), rv)
 	rv := reflect.ValueOf(state)
 	rt := rv.Type()
 	pt, ok := b.ctx.ImplementationRegistry().ReflectedToType(rt)
 	if !ok {
 		pt = b.ctx.Reflector().TypeFromReflect(b.GetName(), nil, rt)
 	}
-	b.state = NewGoState(pt.(px.ObjectType), rv)
+	*/
 }
 
 type workflowBuilder struct {

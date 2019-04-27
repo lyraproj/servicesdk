@@ -1,6 +1,10 @@
 package typegen
 
 import (
+	"bufio"
+	"io"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -23,6 +27,7 @@ type Generator interface {
 
 // All known language generators
 var generators = map[string]Generator{
+	"go":         &goGeneratorFactory{},
 	"puppet":     &puppetGenerator{},
 	"typescript": &tsGeneratorFactory{},
 }
@@ -39,4 +44,43 @@ func GetGenerator(language string) Generator {
 			issue.H{`language`: language, `supportedLanguages`: strings.Join(sl, `, `)}))
 	}
 	return generator
+}
+
+func writeByte(w io.Writer, b byte) {
+	_, err := w.Write([]byte{b})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func write(w io.Writer, s string) {
+	_, err := io.WriteString(w, s)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func typeFile(typ px.Type, directory, extension string) string {
+	tsp := strings.Split(typ.Name(), `::`)
+	return filepath.Join(directory, filepath.Join(tsp...)) + extension
+}
+
+func typeToStream(directory string, gen func(io.Writer)) {
+	err := os.MkdirAll(filepath.Dir(directory), os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	f, err := os.Create(directory)
+	if err != nil {
+		panic(err)
+	}
+	//noinspection ALL
+	defer f.Close()
+
+	b := bufio.NewWriter(f)
+	gen(b)
+	err = b.Flush()
+	if err != nil {
+		panic(err)
+	}
 }

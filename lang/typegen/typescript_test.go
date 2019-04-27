@@ -7,12 +7,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/semver/semver"
 	"github.com/lyraproj/servicesdk/lang/typegen"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGenerator_GenerateTypes(t *testing.T) {
@@ -147,7 +146,8 @@ export class ExtendedPerson extends Person {
 			g := typegen.GetGenerator(`typescript`)
 			g.GenerateTypes(typeSet, tmpDir)
 
-			content, err := ioutil.ReadFile(filepath.Join(tmpDir, "My", "Own.ts"))
+			var content []byte
+			content, err = ioutil.ReadFile(filepath.Join(tmpDir, "My", "Own.ts"))
 			if err == nil {
 				require.Equal(t, string(content), expected)
 			}
