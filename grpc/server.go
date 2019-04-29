@@ -3,7 +3,6 @@ package grpc
 import (
 	"fmt"
 	"net/rpc"
-	"os"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -15,10 +14,8 @@ import (
 	"github.com/lyraproj/pcore/serialization"
 	"github.com/lyraproj/pcore/threadlocal"
 	"github.com/lyraproj/pcore/types"
-	"github.com/lyraproj/servicesdk/service"
 	"github.com/lyraproj/servicesdk/serviceapi"
 	"github.com/lyraproj/servicesdk/servicepb"
-	"github.com/lyraproj/servicesdk/wf"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -138,23 +135,4 @@ func Serve(c px.Context, s serviceapi.Service) {
 	logger.Debug("Starting to serve", "name", name)
 	plugin.Serve(cfg)
 	logger.Debug("Done serving", "name", name)
-}
-
-func ServeWorkflow(name string, in, out interface{}, activities ...wf.Activity) {
-	// Configuring hclog like this allows Lyra to handle log levels automatically
-	hclog.DefaultOptions = &hclog.LoggerOptions{
-		Name:            "Puppet",
-		Level:           hclog.LevelFromString(os.Getenv("LYRA_LOG_LEVEL")),
-		JSONFormat:      true,
-		IncludeLocation: false,
-		Output:          os.Stderr,
-	}
-	// Tell issue reporting to amend all errors with a stack trace.
-	issue.IncludeStacktrace(hclog.DefaultOptions.Level <= hclog.Debug)
-
-	pcore.Do(func(c px.Context) {
-		sb := service.NewServiceBuilder(c, `My::Service`)
-		sb.RegisterActivity(wf.MakeWorkflow(name, wf.Always, wf.ParametersFromGoStruct(c, in), wf.ParametersFromGoStruct(c, out), activities))
-		Serve(c, sb.Server())
-	})
 }

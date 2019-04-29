@@ -57,6 +57,9 @@ type Iterator interface {
 	// variables will be removed from the declared input set when the final requirements
 	// for the activity are computed.
 	Variables() []px.Parameter
+
+	// Into names the output from the iteration
+	Into() string
 }
 
 type iterator struct {
@@ -65,10 +68,11 @@ type iterator struct {
 	producer  Activity
 	over      px.Value
 	variables []px.Parameter
+	into      string
 }
 
-func MakeIterator(name string, when Condition, input, output []px.Parameter, style IterationStyle, producer Activity, over px.Value, variables []px.Parameter) Iterator {
-	return &iterator{activity{name, when, input, output}, style, producer, over, variables}
+func MakeIterator(name string, when Condition, input, output []px.Parameter, style IterationStyle, producer Activity, over px.Value, variables []px.Parameter, into string) Iterator {
+	return &iterator{activity{name, when, input, output}, style, producer, over, variables, into}
 }
 
 func (it *iterator) Label() string {
@@ -87,8 +91,8 @@ func (it *iterator) Over() px.Value {
 	return it.over
 }
 
-func (it *iterator) Resolve(c px.Context) {
-	it.producer.Resolve(c)
+func (it *iterator) Into() string {
+	return it.into
 }
 
 func (it *iterator) Variables() []px.Parameter {

@@ -5,11 +5,6 @@ import (
 	"github.com/lyraproj/pcore/px"
 )
 
-type Resolvable interface {
-	// Resolve recreates the instance using the given Context and returns something new
-	Resolve(c px.Context) interface{}
-}
-
 // An Activity of a Workflow. The workflow is an Activity in itself and can be used in
 // another Workflow.
 type Activity interface {
@@ -27,9 +22,6 @@ type Activity interface {
 
 	// Output returns the definition of that this Activity will produce
 	Output() []px.Parameter
-
-	// Resolve resolves the activity internals using the given Context
-	Resolve(c px.Context)
 }
 
 type activity struct {

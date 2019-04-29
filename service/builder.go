@@ -183,7 +183,6 @@ func (ds *Builder) RegisterActivity(activity wf.Activity) {
 	if _, found := ds.activities[name]; found {
 		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsDefinition, `identifier`: name}))
 	}
-	activity.Resolve(ds.ctx)
 	ds.activities[name] = ds.createActivityDefinition(activity)
 }
 
@@ -267,6 +266,9 @@ func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Def
 		vars := activity.Variables()
 		if len(vars) > 0 {
 			props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(vars)))
+		}
+		if activity.Into() != `` {
+			props = append(props, types.WrapHashEntry2(`into`, types.WrapString(activity.Into())))
 		}
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(activity.Producer())))
 	}

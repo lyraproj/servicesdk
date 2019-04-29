@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/lyraproj/servicesdk/lang/go/lyra"
+
 	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/serialization"
@@ -177,15 +179,17 @@ func ExampleServer_Metadata_definitions() {
 		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterActivity(wf.NewWorkflow(c, func(b wf.WorkflowBuilder) {
-			b.Name(`My::Test`)
-			b.Resource(func(w wf.ResourceBuilder) {
-				w.Name(`X`)
-				w.Input(w.Parameter(`a`, `String`))
-				w.Input(w.Parameter(`b`, `String`))
-				w.StateStruct(&MyRes{Name: `Bob`, Phone: `12345`})
-			})
-		}))
+		sb.RegisterActivity((&lyra.Workflow{
+			Name: `My::Test`,
+			Activities: []lyra.Activity{
+				&lyra.Resource{
+					Name: `X`,
+					State: func(struct {
+						A string
+						B string
+					}) *MyRes {
+						return &MyRes{Name: `Bob`, Phone: `12345`}
+					}}}}).Resolve(c, ``))
 
 		s := sb.Server()
 		_, defs := s.Metadata(c)
@@ -335,16 +339,18 @@ func ExampleServer_Metadata_state() {
 		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterStateConverter(wf.GoStateConverter)
-		sb.RegisterActivity(wf.NewWorkflow(c, func(b wf.WorkflowBuilder) {
-			b.Name(`My::Test`)
-			b.Resource(func(w wf.ResourceBuilder) {
-				w.Name(`X`)
-				w.Input(w.Parameter(`a`, `String`))
-				w.Input(w.Parameter(`b`, `String`))
-				w.StateStruct(&MyRes{Name: `Bob`, Phone: `12345`})
-			})
-		}))
+		sb.RegisterStateConverter(lyra.StateConverter)
+		sb.RegisterActivity((&lyra.Workflow{
+			Name: `My::Test`,
+			Activities: []lyra.Activity{
+				&lyra.Resource{
+					Name: `X`,
+					State: func(input struct {
+						A string
+						B string
+					}) *MyRes {
+						return &MyRes{Name: `Bob`, Phone: `12345`}
+					}}}}).Resolve(c, ``))
 
 		s := sb.Server()
 		fmt.Println(px.ToPrettyString(s.State(c, `My::Test::X`, px.EmptyMap)))

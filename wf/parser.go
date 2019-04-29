@@ -17,6 +17,9 @@ type parser struct {
 }
 
 func Parse(str string) Condition {
+	if str == `` {
+		return Always
+	}
 	p := &parser{}
 	p.str = str
 	p.scn.Init(strings.NewReader(str))
