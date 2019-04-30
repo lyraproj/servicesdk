@@ -34,6 +34,7 @@ type ChildBuilder interface {
 	Workflow(func(WorkflowBuilder))
 	Action(func(ActionBuilder))
 	AddChild(Builder)
+	Iterator(func(IteratorBuilder))
 }
 
 type APIBuilder interface {
@@ -51,6 +52,7 @@ type IteratorBuilder interface {
 	Style(IterationStyle)
 	Over(px.Value)
 	Variables(...px.Parameter)
+	Into(into string)
 }
 
 type ResourceBuilder interface {
@@ -67,7 +69,6 @@ type ActionBuilder interface {
 
 type WorkflowBuilder interface {
 	ChildBuilder
-	Iterator(func(IteratorBuilder))
 }
 
 func NewStateHandler(ctx px.Context, bf func(StateHandlerBuilder)) StateHandler {
@@ -235,6 +236,12 @@ func (b *iteratorBuilder) Workflow(bld func(b WorkflowBuilder)) {
 
 func (b *iteratorBuilder) Action(bld func(b ActionBuilder)) {
 	actionChild(b, bld)
+}
+
+func (b *iteratorBuilder) Iterator(bld func(b IteratorBuilder)) {
+	ab := &iteratorBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.ctx, when: Always, parameters: noParams, returns: noParams}}}
+	bld(ab)
+	b.AddChild(ab)
 }
 
 func (b *iteratorBuilder) GetName() string {
