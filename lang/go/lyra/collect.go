@@ -9,12 +9,9 @@ import (
 	"github.com/lyraproj/servicesdk/wf"
 )
 
-// Collect is an activity that applies another activity repeatedly in parallel and
-// collects the results into a slice output variable.
+// Collect is an step that applies another step repeatedly in parallel and
+// collects the results into a slice returns variable.
 type Collect struct {
-	// Name of collection. This field is mandatory
-	Name string
-
 	// When is a Condition in string form. Can be left empty
 	When string
 
@@ -22,38 +19,30 @@ type Collect struct {
 	// to Each
 	//
 	// The value must be either a literal integer or the zero value of a struct with one field of
-	// integer type that becomes an input variable of the activity
+	// integer type that becomes an parameters variable of the step
 	Times interface{}
 
 	// Each denotes the values to iterate over. It is mutually exclusive to Times.
 	//
 	// The value must be either a literal slice or the zero value of a struct with one field of
-	// slice type that becomes an input variable of the activity
+	// slice type that becomes an parameters variable of the step
 	Each interface{}
 
-	// As is the variable or variables that is the input of each iteration. The producer
-	// must declare these variables as input. It must be either a single string, a slice
+	// As is the variable or variables that is the parameters of each iteration. The producer
+	// must declare these variables as parameters. It must be either a single string, a slice
 	// of strings, or the zero value of a struct.
 	As interface{}
 
-	// Output is the name of the slice that represents the collected data (the output of this
-	// activity). The element type this slice is the output type of the producer. Can be left empty
-	// in which case the output name is the same as the leaf name of the collect activity.
-	Output string
+	// Return is the name of the slice that represents the collected data (the returns of this
+	// step). The element type this slice is the returns type of the producer. Can be left empty
+	// in which case the returns name is the same as the leaf name of the collect step.
+	Return string
 
-	// Activity gets applied once for each iteration
-	Activity Activity
+	// Step gets applied once for each iteration
+	Step Step
 }
 
-func (e *Collect) Resolve(c px.Context, pn string) wf.Activity {
-	n := e.Name
-	if n == `` {
-		panic(px.Error(MissingRequiredField, issue.H{`type`: `Collect`, `name`: `Name`}))
-	}
-	if pn != `` {
-		n = pn + `::` + n
-	}
-
+func (e *Collect) Resolve(c px.Context, n string) wf.Step {
 	var v px.Value
 	var style wf.IterationStyle
 	if e.Times != nil {
@@ -69,39 +58,16 @@ func (e *Collect) Resolve(c px.Context, pn string) wf.Activity {
 		style = wf.IterationStyleEach
 	}
 
-	var pi Activity
-	switch p := e.Activity.(type) {
-	case nil:
+	if e.Step == nil {
 		panic(px.Error(MissingRequiredField, issue.H{`type`: `Collect`, `name`: `Producer`}))
-	case *Collect:
-		c := Collect{}
-		c = *p
-		c.Name = n
-		pi = &c
-	case *Action:
-		c := Action{}
-		c = *p
-		c.Name = n
-		pi = &c
-	case *Resource:
-		c := Resource{}
-		c = *p
-		c.Name = n
-		pi = &c
-	case *Workflow:
-		c := Workflow{}
-		c = *p
-		c.Name = n
-		pi = &c
-	default:
-		panic(px.Error(px.Failure, issue.H{`message`: `unknown lyra.Activity implementation`}))
 	}
 
 	if e.As == nil {
 		panic(px.Error(MissingRequiredField, issue.H{`type`: `Collect`, `name`: `As`}))
 	}
+
 	return wf.MakeIterator(
-		n, wf.Parse(e.When), nil, nil, style, pi.Resolve(c, pn), v, asParams(c, e.As), issue.FirstToLower(e.Output))
+		n, wf.Parse(e.When), nil, nil, style, e.Step.Resolve(c, n), v, asParams(c, e.As), issue.FirstToLower(e.Return))
 }
 
 // value is like px.Wrap but transforms single element zero element structs into parameters

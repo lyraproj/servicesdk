@@ -94,7 +94,7 @@ func (s *Server) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result 
 
 func (s *Server) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
 	err = s.Do(func(c px.Context) {
-		result = ToDataPB(c, s.impl.State(c, r.Identifier, FromDataPB(c, r.Input).(px.OrderedMap)))
+		result = ToDataPB(c, s.impl.State(c, r.Identifier, FromDataPB(c, r.Parameters).(px.OrderedMap)))
 	})
 	return
 }

@@ -42,37 +42,37 @@ func NewIterationStyle(style string) IterationStyle {
 }
 
 type Iterator interface {
-	Activity
+	Step
 
 	// IterationStyle returns the style of iterator, times, range, each, or eachPair.
 	IterationStyle() IterationStyle
 
-	// Producer returns the Activity that will be invoked once for each iteration
-	Producer() Activity
+	// Producer returns the Step that will be invoked once for each iteration
+	Producer() Step
 
 	// Over returns what this iterator will iterate over.
 	Over() px.Value
 
 	// Variables returns the variables that this iterator will produce for each iteration. These
-	// variables will be removed from the declared input set when the final requirements
-	// for the activity are computed.
+	// variables will be removed from the declared parameters set when the final requirements
+	// for the step are computed.
 	Variables() []px.Parameter
 
-	// Into names the output from the iteration
+	// Into names the returns from the iteration
 	Into() string
 }
 
 type iterator struct {
-	activity
+	step
 	style     IterationStyle
-	producer  Activity
+	producer  Step
 	over      px.Value
 	variables []px.Parameter
 	into      string
 }
 
-func MakeIterator(name string, when Condition, input, output []px.Parameter, style IterationStyle, producer Activity, over px.Value, variables []px.Parameter, into string) Iterator {
-	return &iterator{activity{name, when, input, output}, style, producer, over, variables, into}
+func MakeIterator(name string, when Condition, parameters, returns []px.Parameter, style IterationStyle, producer Step, over px.Value, variables []px.Parameter, into string) Iterator {
+	return &iterator{step{name, when, parameters, returns}, style, producer, over, variables, into}
 }
 
 func (it *iterator) Label() string {
@@ -83,7 +83,7 @@ func (it *iterator) IterationStyle() IterationStyle {
 	return it.style
 }
 
-func (it *iterator) Producer() Activity {
+func (it *iterator) Producer() Step {
 	return it.producer
 }
 

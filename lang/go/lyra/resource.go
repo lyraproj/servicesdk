@@ -2,6 +2,7 @@ package lyra
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
@@ -9,11 +10,8 @@ import (
 	"github.com/lyraproj/servicesdk/wf"
 )
 
-// Resource represents a declarative workflow activity
+// Resource represents a declarative workflow step
 type Resource struct {
-	// Name of resource. This field is mandatory
-	Name string
-
 	// When is a Condition in string form. Can be left empty
 	When string
 
@@ -21,29 +19,21 @@ type Resource struct {
 	// not be managed by Lyra.
 	ExternalId string
 
-	// Output is an optional zero value of a struct or a pointer to a struct. The exported fields
-	// of that struct defines the output of the resource activity
-	Output interface{}
+	// Return is an optional zero value of a struct or a pointer to a struct. The exported fields
+	// of that struct defines the returns of the resource step
+	Return interface{}
 
 	// State is a function that produces the desired state of the resource.
 	//
 	// The function can take one optional parameter which must be a struct or pointer to a struct. The exported fields of
-	// that struct becomes the Input of the action.
+	// that struct becomes the Parameters of the action.
 	//
 	// The function can return one or two values. The first value must be a pointer to a struct. That struct represents
 	// the resource type. If an optional second value is returned, it must be of type error.
 	State interface{}
 }
 
-func (r *Resource) Resolve(c px.Context, pn string) wf.Activity {
-	n := r.Name
-	if n == `` {
-		panic(px.Error(MissingRequiredField, issue.H{`type`: `Resource`, `name`: `Name`}))
-	}
-	if pn != `` {
-		n = pn + `::` + n
-	}
-
+func (r *Resource) Resolve(c px.Context, n string) wf.Step {
 	fv := reflect.ValueOf(r.State)
 	ft := fv.Type()
 	if ft.Kind() != reflect.Func {
@@ -92,11 +82,11 @@ func (r *Resource) Resolve(c px.Context, pn string) wf.Activity {
 		panic(badFunction(n, ft))
 	}
 
-	var input, output []px.Parameter
+	var parameters, returns []px.Parameter
 
-	// Create Output parameters from the Output struct
-	if r.Output != nil {
-		ov := reflect.ValueOf(r.Output)
+	// Create return parameters from the Returns struct
+	if r.Return != nil {
+		ov := reflect.ValueOf(r.Return)
 		out := ov.Type()
 		if out.Kind() == reflect.Ptr {
 			out = out.Elem()
@@ -104,31 +94,31 @@ func (r *Resource) Resolve(c px.Context, pn string) wf.Activity {
 		if out.Kind() != reflect.Struct {
 			panic(px.Error(NotStruct, issue.H{`name`: n, `type`: out.String()}))
 		}
-		output = paramsFromStruct(c, out, func(name string) string {
+		returns = paramsFromStruct(c, out, func(name string) string {
 			// Check if alias maps to a field. If it does, then the puppet name of
 			// that field must be used instead
 			for _, a := range ot.AttributesInfo().Attributes() {
-				if a.Name() == name || a.GoName() == name {
+				if strings.EqualFold(a.Name(), name) || strings.EqualFold(a.GoName(), name) {
 					return a.Name()
 				}
 			}
 			for _, f := range types.Fields(rt) {
-				if f.Name == name {
+				if strings.EqualFold(f.Name, name) {
 					return types.FieldName(&f)
 				}
 			}
-			panic(px.Error(px.AttributeNotFound, issue.H{`type`: rt.Name(), `name`: name}))
+			panic(px.Error(px.AttributeNotFound, issue.H{`type`: ot.Name(), `name`: name}))
 		})
 	}
 
-	// Create Input parameters from the state function struct parameter
+	// Create Parameters parameters from the state function struct parameter
 	inc := ft.NumIn()
 	if ft.IsVariadic() || inc > 1 {
 		panic(badFunction(n, ft))
 	}
 	if inc == 1 {
-		input = paramsFromStruct(c, ft.In(0), nil)
+		parameters = paramsFromStruct(c, ft.In(0), nil)
 	}
 
-	return wf.MakeResource(n, wf.Parse(r.When), input, output, r.ExternalId, newGoState(ot, fv, returnsError))
+	return wf.MakeResource(n, wf.Parse(r.When), parameters, returns, r.ExternalId, newGoState(ot, fv, returnsError))
 }

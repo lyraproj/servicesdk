@@ -79,8 +79,8 @@ func (c *Client) Metadata(ctx px.Context) (typeSet px.TypeSet, definitions []ser
 	return
 }
 
-func (c *Client) State(ctx px.Context, identifier string, input px.OrderedMap) px.PuppetObject {
-	rq := servicepb.StateRequest{Identifier: identifier, Input: ToDataPB(ctx, input)}
+func (c *Client) State(ctx px.Context, identifier string, parameters px.OrderedMap) px.PuppetObject {
+	rq := servicepb.StateRequest{Identifier: identifier, Parameters: ToDataPB(ctx, parameters)}
 	rr, err := c.client.State(ctx, &rq)
 	if err != nil {
 		panic(err)

@@ -6,7 +6,7 @@ import (
 
 const (
 	BadFunction             = `WF_BAD_FUNCTION`
-	MissingRequiredField    = `WF_MISSING_ACTIVITY_NAME`
+	MissingRequiredField    = `WF_MISSING_STEP_NAME`
 	MutuallyExclusiveFields = `WF_MUTUALLY_EXCLUSIVE_FIELDS`
 	NotActionFunction       = `WF_NOT_STATE_FUNCTION`
 	NotOneStructField       = `WF_NOT_ONE_STRUCT_FIELD`

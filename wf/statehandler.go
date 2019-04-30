@@ -5,18 +5,18 @@ import (
 )
 
 type StateHandler interface {
-	Activity
+	Step
 
 	Interface() interface{}
 }
 
 type stateHandler struct {
-	activity
+	step
 	api interface{}
 }
 
-func MakeStateHandler(name string, when Condition, input, output []px.Parameter, api interface{}) StateHandler {
-	return &stateHandler{activity{name, when, input, output}, api}
+func MakeStateHandler(name string, when Condition, parameters, returns []px.Parameter, api interface{}) StateHandler {
+	return &stateHandler{step{name, when, parameters, returns}, api}
 }
 
 func (a *stateHandler) Label() string {

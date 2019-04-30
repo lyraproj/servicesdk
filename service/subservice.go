@@ -46,8 +46,8 @@ func (s *subService) Metadata(c px.Context) (typeSet px.TypeSet, definitions []s
 	return
 }
 
-func (s *subService) State(c px.Context, name string, input px.OrderedMap) px.PuppetObject {
-	return s.Parent(c).Invoke(c, s.def.Identifier().Name(), "state", types.WrapString(name), input).(px.PuppetObject)
+func (s *subService) State(c px.Context, name string, parameters px.OrderedMap) px.PuppetObject {
+	return s.Parent(c).Invoke(c, s.def.Identifier().Name(), "state", types.WrapString(name), parameters).(px.PuppetObject)
 }
 
 func (s *subService) Identifier(px.Context) px.TypedName {

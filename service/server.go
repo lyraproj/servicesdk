@@ -59,13 +59,13 @@ func (s *Server) AddApi(name string, callable interface{}) serviceapi.Definition
 	return def
 }
 
-func (s *Server) State(c px.Context, name string, input px.OrderedMap) px.PuppetObject {
+func (s *Server) State(c px.Context, name string, parameters px.OrderedMap) px.PuppetObject {
 	if s.stateConverter != nil {
 		s.lock.RLock()
 		st, ok := s.states[name]
 		s.lock.RUnlock()
 		if ok {
-			return s.stateConverter(c, st, input)
+			return s.stateConverter(c, st, parameters)
 		}
 		panic(px.Error(NoSuchState, issue.H{`name`: name}))
 	}

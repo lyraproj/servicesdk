@@ -25,12 +25,12 @@ func newGoState(resourceType px.ObjectType, stateFunc reflect.Value, returnsErro
 	return &goState{resourceType, stateFunc, returnsError}
 }
 
-func (s *goState) call(c px.Context, input px.OrderedMap) px.PuppetObject {
+func (s *goState) call(c px.Context, parameters px.OrderedMap) px.PuppetObject {
 	fv := s.stateFunc
 	fvType := fv.Type()
 	var params []reflect.Value
 	if fvType.NumIn() == 1 {
-		params = []reflect.Value{reflectInput(c, fvType.In(0), input)}
+		params = []reflect.Value{reflectParameters(c, fvType.In(0), parameters)}
 	}
 	result := fv.Call(params)
 	var re, rs reflect.Value
@@ -52,6 +52,6 @@ func (s *goState) call(c px.Context, input px.OrderedMap) px.PuppetObject {
 	return px.WrapReflected(c, rs).(px.PuppetObject)
 }
 
-func StateConverter(c px.Context, state wf.State, input px.OrderedMap) px.PuppetObject {
-	return state.(*goState).call(c, input)
+func StateConverter(c px.Context, state wf.State, parameters px.OrderedMap) px.PuppetObject {
+	return state.(*goState).call(c, parameters)
 }

@@ -13,15 +13,15 @@ type boolean bool
 const Always = boolean(true)
 const Never = boolean(false)
 
-// A Condition evaluates to true or false depending on its given input
+// A Condition evaluates to true or false depending on its given parameters
 type Condition interface {
 	fmt.Stringer
 
 	// Precedence returns the operator precedence for this Condition
 	Precedence() int
 
-	// IsTrue returns true if the given input satisfies the condition, false otherwise
-	IsTrue(input px.OrderedMap) bool
+	// IsTrue returns true if the given parameters satisfies the condition, false otherwise
+	IsTrue(parameters px.OrderedMap) bool
 
 	// Returns all names in use by this condition and its nested conditions. The returned
 	// slice is guaranteed to be unique and sorted alphabetically
@@ -44,7 +44,7 @@ func (b boolean) Precedence() int {
 	return 5
 }
 
-func (b boolean) IsTrue(input px.OrderedMap) bool {
+func (b boolean) IsTrue(parameters px.OrderedMap) bool {
 	return bool(b)
 }
 
@@ -60,8 +60,8 @@ func Truthy(name string) Condition {
 	return truthy(name)
 }
 
-func (v truthy) IsTrue(input px.OrderedMap) bool {
-	value, ok := input.Get4(string(v))
+func (v truthy) IsTrue(parameters px.OrderedMap) bool {
+	value, ok := parameters.Get4(string(v))
 	return ok && px.IsTruthy(value)
 }
 
@@ -87,8 +87,8 @@ type not struct {
 	condition Condition
 }
 
-func (n *not) IsTrue(input px.OrderedMap) bool {
-	return !n.condition.IsTrue(input)
+func (n *not) IsTrue(parameters px.OrderedMap) bool {
+	return !n.condition.IsTrue(parameters)
 }
 
 func (n *not) Names() []string {
@@ -115,9 +115,9 @@ func And(conditions []Condition) Condition {
 	return &and{conditions}
 }
 
-func (a *and) IsTrue(input px.OrderedMap) bool {
+func (a *and) IsTrue(parameters px.OrderedMap) bool {
 	for _, condition := range a.conditions {
-		if !condition.IsTrue(input) {
+		if !condition.IsTrue(parameters) {
 			return false
 		}
 	}
@@ -146,9 +146,9 @@ type or struct {
 	conditions []Condition
 }
 
-func (o *or) IsTrue(input px.OrderedMap) bool {
+func (o *or) IsTrue(parameters px.OrderedMap) bool {
 	for _, condition := range o.conditions {
-		if condition.IsTrue(input) {
+		if condition.IsTrue(parameters) {
 			return true
 		}
 	}
