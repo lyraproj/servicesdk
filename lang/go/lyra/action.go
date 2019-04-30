@@ -10,41 +10,30 @@ import (
 	"github.com/lyraproj/servicesdk/wf"
 )
 
-// Action is an imperative workflow activity
+// Action is an imperative workflow step
 type Action struct {
-	// Name of action. This field is mandatory
-	Name string
-
 	// When is a Condition in string form. Can be left empty
 	When string
 
 	// Do is the actual function that is executed by this action.
 	//
 	// The function can take one optional parameter which must be a struct or pointer to a struct. The exported fields of
-	// that struct becomes the Input of the action.
+	// that struct becomes the Parameters of the action.
 	//
 	// The function can return zero, one, or two values. If one value is returned, that value can be either an error, a
 	// struct, or a pointer to a struct. If two values are returned, the first value must be struct or a pointer to a
-	// struct and the second must be an error. The exported fields of a returned struct becomes the output of the action.
+	// struct and the second must be an error. The exported fields of a returned struct becomes the returns of the action.
 	Do interface{}
 }
 
-func (a *Action) Resolve(c px.Context, pn string) wf.Activity {
-	n := a.Name
-	if n == `` {
-		panic(px.Error(MissingRequiredField, issue.H{`type`: `Action`, `name`: `Name`}))
-	}
-	if pn != `` {
-		n = pn + `::` + n
-	}
-
+func (a *Action) Resolve(c px.Context, n string) wf.Step {
 	fv := reflect.ValueOf(a.Do)
 	ft := fv.Type()
 	if ft.Kind() != reflect.Func {
 		panic(px.Error(NotActionFunction, issue.H{`name`: n, `type`: ft.String()}))
 	}
 
-	var input, output []px.Parameter
+	var parameters, returns []px.Parameter
 	inc := ft.NumIn()
 	if ft.IsVariadic() || inc > 1 {
 		panic(badFunction(n, ft))
@@ -59,7 +48,7 @@ func (a *Action) Resolve(c px.Context, pn string) wf.Activity {
 		// Return type must be an error or a struct
 		returnsError = ft.Out(0).AssignableTo(errorInterface)
 		if !returnsError {
-			output = paramsFromStruct(c, ft.Out(0), nil)
+			returns = paramsFromStruct(c, ft.Out(0), nil)
 		}
 	case 2:
 		// First return type must be a struct, second must be an error
@@ -67,16 +56,16 @@ func (a *Action) Resolve(c px.Context, pn string) wf.Activity {
 		if !returnsError {
 			panic(badFunction(n, ft))
 		}
-		output = paramsFromStruct(c, ft.Out(0), nil)
+		returns = paramsFromStruct(c, ft.Out(0), nil)
 	default:
 		panic(badFunction(n, ft))
 	}
 
 	if inc == 1 {
-		input = paramsFromStruct(c, ft.In(0), nil)
+		parameters = paramsFromStruct(c, ft.In(0), nil)
 	}
 
-	return wf.MakeAction(n, wf.Parse(a.When), input, output, &goAction{returnsError: returnsError, doer: fv})
+	return wf.MakeAction(n, wf.Parse(a.When), parameters, returns, &goAction{returnsError: returnsError, doer: fv})
 }
 
 type goAction struct {
@@ -103,11 +92,11 @@ func (a *goAction) Call(ctx px.Context, method px.ObjFunc, args []px.Value, bloc
 	}
 	fvType := a.doer.Type()
 
-	input := args[0].(px.OrderedMap)
+	parameters := args[0].(px.OrderedMap)
 	params := make([]reflect.Value, 0)
 	if fvType.NumIn() > 0 {
 		inType := fvType.In(0)
-		params = append(params, reflectInput(ctx, inType, input))
+		params = append(params, reflectParameters(ctx, inType, parameters))
 	}
 
 	result := a.doer.Call(params)

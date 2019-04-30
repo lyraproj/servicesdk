@@ -71,7 +71,7 @@ func formattedTypeToStream(t px.Type, directory string, pkg string, f func(g *go
 	typeToStream(directory, func(w io.Writer) {
 		g := makeGoGenerator(pkg)
 		g.findAnonymousTypes(t, nil)
-		g.nameAnonumousTypes()
+		g.nameAnonymousTypes()
 		b := bytes.NewBufferString("// this file is generated\n")
 		b.WriteString(`package `)
 		b.WriteString(pkg)
@@ -290,7 +290,7 @@ func (g *goGenerator) anonymousName(t px.Type) string {
 	panic(fmt.Errorf(`unable to find generated name for anonymous type %s`, px.ToPrettyString(t)))
 }
 
-func (g *goGenerator) nameAnonumousTypes() {
+func (g *goGenerator) nameAnonymousTypes() {
 	stuffHappened := true
 	as := g.anonTypes
 	for stuffHappened {
@@ -299,6 +299,7 @@ func (g *goGenerator) nameAnonumousTypes() {
 		// Build map of desired names and what weigh that each anonymous type
 		// have for the desired name.
 		nwsMap := make(map[string]map[int][]*anonType, len(as))
+		keys := make([]string, 0, len(as))
 		for _, a := range as {
 			if a.n != `` {
 				continue
@@ -317,11 +318,16 @@ func (g *goGenerator) nameAnonumousTypes() {
 				}
 			} else {
 				nwsMap[cn] = map[int][]*anonType{weight: {a}}
+				keys = append(keys, cn)
 			}
 		}
 
 		// Assign names to all entries that only have one weight
-		for n, nws := range nwsMap {
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i] < keys[j]
+		})
+		for _, n := range keys {
+			nws := nwsMap[n]
 			var a *anonType
 			if len(nws) == 1 {
 				// Must use range to pick the one and only element
@@ -498,7 +504,10 @@ func (g *goGenerator) generateObjectType(name string, t px.ObjectType, indent in
 		}
 		b.WriteString(n)
 		b.WriteByte(' ')
-		g.writeType(a.Type(), b)
+		if a.HasValue() {
+			b.WriteByte('*')
+		}
+		g.writeRequiredType(a.Type(), b)
 		if g.useCamelCase && issue.FirstToLower(n) != a.Name() {
 			b.WriteString(" `puppet:\"name=>'")
 			b.WriteString(a.Name())
@@ -580,25 +589,29 @@ func (g *goGenerator) writeInit(b *bytes.Buffer) {
 	b.WriteString(`}`)
 }
 
-func (g *goGenerator) writeType(t px.Type, b *bytes.Buffer) bool {
-	annotations := false
+func (g *goGenerator) writeType(t px.Type, b *bytes.Buffer) {
+	if ot, ok := t.(*types.OptionalType); ok {
+		b.WriteByte('*')
+		t = ot.ContainedType()
+	}
+	g.writeRequiredType(t, b)
+}
+
+func (g *goGenerator) writeRequiredType(t px.Type, b *bytes.Buffer) {
 	switch t := t.(type) {
 	case *types.OptionalType:
-		b.WriteByte('*')
-		annotations = g.writeType(t.ContainedType(), b)
+		g.writeRequiredType(t.ContainedType(), b)
 	case *types.ArrayType:
 		b.WriteString("[]")
-		annotations = g.writeType(t.ElementType(), b)
+		g.writeType(t.ElementType(), b)
 	case *types.TupleType:
 		b.WriteString("[]")
 		g.writeType(t.CommonElementType(), b)
-		annotations = true
 	case *types.HashType:
 		b.WriteString("map[")
-		ka := g.writeType(t.KeyType(), b)
+		g.writeType(t.KeyType(), b)
 		b.WriteByte(']')
-		va := g.writeType(t.ValueType(), b)
-		annotations = ka || va
+		g.writeType(t.ValueType(), b)
 	case *types.StructType:
 		b.WriteString(g.anonymousName(t))
 	case px.ObjectType:
@@ -630,7 +643,6 @@ func (g *goGenerator) writeType(t px.Type, b *bytes.Buffer) bool {
 	default:
 		panic(fmt.Errorf("don't know how to generate Go type from: %s", px.ToPrettyString(t)))
 	}
-	return annotations
 }
 
 // formatCode reformats the code as `go fmt` would

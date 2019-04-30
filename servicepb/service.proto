@@ -21,7 +21,7 @@ message EmptyRequest {
 
 message StateRequest {
   string identifier = 1;
-  puppet.datapb.Data input = 2;
+  puppet.datapb.Data parameters = 2;
 }
 
 service DefinitionService {

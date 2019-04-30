@@ -9,8 +9,8 @@ const (
 	ConditionUnexpectedEnd = `WF_CONDITION_UNEXPECTED_END`
 	IllegalIterationStyle  = `WF_ILLEGAL_ITERATION_STYLE`
 	IllegalOperation       = `WF_ILLEGAL_OPERATION`
-	ActivityNoName         = `WF_ACTIVITY_NO_NAME`
-	IteratorNotOneActivity = `WF_ITERATOR_NOT_ONE_ACTIVITY`
+	StepNoName             = `WF_STEP_NO_NAME`
+	IteratorNotOneStep     = `WF_ITERATOR_NOT_ONE_STEP`
 )
 
 func init() {
@@ -20,6 +20,6 @@ func init() {
 	issue.Hard(ConditionUnexpectedEnd, `unexpected end of condition '%{text}' at position %{pos}`)
 	issue.Hard(IllegalIterationStyle, `no such iteration style '%{style}'`)
 	issue.Hard(IllegalOperation, `no such operation '%{operation}'`)
-	issue.Hard(ActivityNoName, `an activity must have a name`)
-	issue.Hard(IteratorNotOneActivity, `an iterator must have exactly one activity`)
+	issue.Hard(StepNoName, `an step must have a name`)
+	issue.Hard(IteratorNotOneStep, `an iterator must have exactly one step`)
 }

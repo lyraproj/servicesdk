@@ -5,18 +5,18 @@ import (
 )
 
 type Action interface {
-	Activity
+	Step
 
 	Function() interface{}
 }
 
 type action struct {
-	activity
+	step
 	function interface{}
 }
 
-func MakeAction(name string, when Condition, input, output []px.Parameter, function interface{}) Action {
-	return &action{activity{name, when, input, output}, function}
+func MakeAction(name string, when Condition, parameters, returns []px.Parameter, function interface{}) Action {
+	return &action{step{name, when, parameters, returns}, function}
 }
 
 func (s *action) Label() string {

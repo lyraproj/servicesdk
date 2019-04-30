@@ -5,24 +5,24 @@ import (
 )
 
 type Workflow interface {
-	Activity
+	Step
 
-	Activities() []Activity
+	Steps() []Step
 }
 
 type workflow struct {
-	activity
-	activities []Activity
+	step
+	steps []Step
 }
 
-func MakeWorkflow(name string, when Condition, input, output []px.Parameter, activities []Activity) Workflow {
-	return &workflow{activity{name, when, input, output}, activities}
+func MakeWorkflow(name string, when Condition, parameters, returns []px.Parameter, steps []Step) Workflow {
+	return &workflow{step{name, when, parameters, returns}, steps}
 }
 
 func (w *workflow) Label() string {
 	return `workflow ` + w.name
 }
 
-func (w *workflow) Activities() []Activity {
-	return w.activities
+func (w *workflow) Steps() []Step {
+	return w.steps
 }

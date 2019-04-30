@@ -102,7 +102,7 @@ func (*EmptyRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []in
 
 type StateRequest struct {
 	Identifier string              `protobuf:"bytes,1,opt,name=identifier" json:"identifier,omitempty"`
-	Input      *puppet_datapb.Data `protobuf:"bytes,2,opt,name=input" json:"input,omitempty"`
+	Parameters *puppet_datapb.Data `protobuf:"bytes,2,opt,name=parameters" json:"parameters,omitempty"`
 }
 
 func (m *StateRequest) Reset()                    { *m = StateRequest{} }
@@ -117,9 +117,9 @@ func (m *StateRequest) GetIdentifier() string {
 	return ""
 }
 
-func (m *StateRequest) GetInput() *puppet_datapb.Data {
+func (m *StateRequest) GetParameters() *puppet_datapb.Data {
 	if m != nil {
-		return m.Input
+		return m.Parameters
 	}
 	return nil
 }

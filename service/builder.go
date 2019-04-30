@@ -18,7 +18,7 @@ type Builder struct {
 	stateConverter  wf.StateConverter
 	types           map[string]px.Type
 	handlerFor      map[string]px.Type
-	activities      map[string]serviceapi.Definition
+	steps           map[string]serviceapi.Definition
 	callables       map[string]reflect.Value
 	states          map[string]wf.State
 	callableObjects map[string]px.PuppetObject
@@ -31,7 +31,7 @@ func NewServiceBuilder(ctx px.Context, serviceName string) *Builder {
 		callables:       make(map[string]reflect.Value),
 		callableObjects: make(map[string]px.PuppetObject),
 		handlerFor:      make(map[string]px.Type),
-		activities:      make(map[string]serviceapi.Definition),
+		steps:           make(map[string]serviceapi.Definition),
 		types:           make(map[string]px.Type),
 		states:          make(map[string]wf.State)}
 }
@@ -177,13 +177,13 @@ func (ds *Builder) registerReflectedType(namespace string, tg px.AnnotatedType) 
 	return et
 }
 
-// RegisterActivity registers an activity
-func (ds *Builder) RegisterActivity(activity wf.Activity) {
-	name := activity.Name()
-	if _, found := ds.activities[name]; found {
+// RegisterStep registers an step
+func (ds *Builder) RegisterStep(step wf.Step) {
+	name := step.Name()
+	if _, found := ds.steps[name]; found {
 		panic(px.Error(AlreadyRegistered, issue.H{`namespace`: px.NsDefinition, `identifier`: name}))
 	}
-	ds.activities[name] = ds.createActivityDefinition(activity)
+	ds.steps[name] = ds.createStepDefinition(step)
 }
 
 func (ds *Builder) registerCallable(name string, callable reflect.Value) {
@@ -204,29 +204,29 @@ func (ds *Builder) registerType(name string, typ px.Type) {
 	ds.types[name] = typ
 }
 
-func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Definition {
+func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 	props := make([]*types.HashEntry, 0, 5)
 
-	if input := paramsAsList(activity.Input()); input != nil {
-		props = append(props, types.WrapHashEntry2(`input`, input))
+	if parameters := paramsAsList(step.Parameters()); parameters != nil {
+		props = append(props, types.WrapHashEntry2(`parameters`, parameters))
 	}
-	if output := paramsAsList(activity.Output()); output != nil {
-		props = append(props, types.WrapHashEntry2(`output`, output))
+	if returns := paramsAsList(step.Returns()); returns != nil {
+		props = append(props, types.WrapHashEntry2(`returns`, returns))
 	}
-	if activity.When() != wf.Always {
-		props = append(props, types.WrapHashEntry2(`when`, types.WrapString(activity.When().String())))
+	if step.When() != wf.Always {
+		props = append(props, types.WrapHashEntry2(`when`, types.WrapString(step.When().String())))
 	}
 
-	name := activity.Name()
+	name := step.Name()
 	var style string
-	switch activity := activity.(type) {
+	switch step := step.(type) {
 	case wf.Workflow:
 		style = `workflow`
-		props = append(props, types.WrapHashEntry2(`activities`, ds.activitiesAsList(activity.Activities())))
+		props = append(props, types.WrapHashEntry2(`steps`, ds.stepsAsList(step.Steps())))
 	case wf.Resource:
 		style = `resource`
-		state := activity.State()
-		extId := activity.ExternalId()
+		state := step.State()
+		extId := step.ExternalId()
 		ds.RegisterState(name, state)
 		props = append(props, types.WrapHashEntry2(`resourceType`, state.Type()))
 		if extId != `` {
@@ -235,7 +235,7 @@ func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Def
 	case wf.StateHandler:
 		style = `stateHandler`
 		tn := strings.Title(name)
-		api := activity.Interface()
+		api := step.Interface()
 		ds.RegisterAPI(tn, api)
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
@@ -247,7 +247,7 @@ func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Def
 	case wf.Action:
 		style = `action`
 		tn := strings.Title(name)
-		api := activity.Function()
+		api := step.Function()
 		ds.RegisterAPI(tn, api)
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
@@ -261,16 +261,16 @@ func (ds *Builder) createActivityDefinition(activity wf.Activity) serviceapi.Def
 		props = append(props, types.WrapHashEntry2(`interface`, ifd))
 	case wf.Iterator:
 		style = `iterator`
-		props = append(props, types.WrapHashEntry2(`iterationStyle`, types.WrapString(activity.IterationStyle().String())))
-		props = append(props, types.WrapHashEntry2(`over`, activity.Over()))
-		vars := activity.Variables()
+		props = append(props, types.WrapHashEntry2(`iterationStyle`, types.WrapString(step.IterationStyle().String())))
+		props = append(props, types.WrapHashEntry2(`over`, step.Over()))
+		vars := step.Variables()
 		if len(vars) > 0 {
 			props = append(props, types.WrapHashEntry2(`variables`, paramsAsList(vars)))
 		}
-		if activity.Into() != `` {
-			props = append(props, types.WrapHashEntry2(`into`, types.WrapString(activity.Into())))
+		if step.Into() != `` {
+			props = append(props, types.WrapHashEntry2(`into`, types.WrapString(step.Into())))
 		}
-		props = append(props, types.WrapHashEntry2(`producer`, ds.createActivityDefinition(activity.Producer())))
+		props = append(props, types.WrapHashEntry2(`producer`, ds.createStepDefinition(step.Producer())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
 	return serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), ds.serviceId, types.WrapHash(props))
@@ -288,10 +288,10 @@ func paramsAsList(params []px.Parameter) px.List {
 	return types.WrapValues(ps)
 }
 
-func (ds *Builder) activitiesAsList(activities []wf.Activity) px.List {
-	as := make([]px.Value, len(activities))
-	for i, a := range activities {
-		as[i] = ds.createActivityDefinition(a)
+func (ds *Builder) stepsAsList(steps []wf.Step) px.List {
+	as := make([]px.Value, len(steps))
+	for i, a := range steps {
+		as[i] = ds.createStepDefinition(a)
 	}
 	return types.WrapValues(as)
 }
@@ -393,7 +393,7 @@ func (ds *Builder) Server() *Server {
 		px.AddTypes(ds.ctx, ts)
 	}
 
-	defs := make([]px.Value, 0, len(ds.callables)+len(ds.activities))
+	defs := make([]px.Value, 0, len(ds.callables)+len(ds.steps))
 
 	callableStyle := types.WrapString(`callable`)
 	// Create invokable definitions for callables
@@ -420,8 +420,8 @@ func (ds *Builder) Server() *Server {
 		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
-	// Add registered activities
-	for _, a := range ds.activities {
+	// Add registered steps
+	for _, a := range ds.steps {
 		defs = append(defs, a)
 	}
 	sort.Slice(defs, func(i, j int) bool {

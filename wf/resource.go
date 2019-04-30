@@ -9,10 +9,10 @@ type State interface {
 	State() interface{}
 }
 
-type StateConverter func(ctx px.Context, state State, input px.OrderedMap) px.PuppetObject
+type StateConverter func(ctx px.Context, state State, parameters px.OrderedMap) px.PuppetObject
 
 type Resource interface {
-	Activity
+	Step
 
 	ExternalId() string
 
@@ -20,13 +20,13 @@ type Resource interface {
 }
 
 type resource struct {
-	activity
+	step
 	state State
 	extId string
 }
 
-func MakeResource(name string, when Condition, input, output []px.Parameter, extId string, state State) Resource {
-	return &resource{activity{name, when, input, output}, state, extId}
+func MakeResource(name string, when Condition, parameters, returns []px.Parameter, extId string, state State) Resource {
+	return &resource{step{name, when, parameters, returns}, state, extId}
 }
 
 func (r *resource) ExternalId() string {

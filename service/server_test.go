@@ -179,17 +179,15 @@ func ExampleServer_Metadata_definitions() {
 		sb := service.NewServiceBuilder(c, `My::Service`)
 
 		sb.RegisterTypes("My", &MyRes{})
-		sb.RegisterActivity((&lyra.Workflow{
-			Name: `My::Test`,
-			Activities: []lyra.Activity{
-				&lyra.Resource{
-					Name: `X`,
+		sb.RegisterStep((&lyra.Workflow{
+			Steps: map[string]lyra.Step{
+				`X`: &lyra.Resource{
 					State: func(struct {
 						A string
 						B string
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
-					}}}}).Resolve(c, ``))
+					}}}}).Resolve(c, `My::Test`))
 
 		s := sb.Server()
 		_, defs := s.Metadata(c)
@@ -209,7 +207,7 @@ func ExampleServer_Metadata_definitions() {
 	//     'name' => 'My::Service'
 	//   ),
 	//   'properties' => {
-	//     'activities' => [
+	//     'steps' => [
 	//       Service::Definition(
 	//         'identifier' => TypedName(
 	//           'namespace' => 'definition',
@@ -220,7 +218,7 @@ func ExampleServer_Metadata_definitions() {
 	//           'name' => 'My::Service'
 	//         ),
 	//         'properties' => {
-	//           'input' => [
+	//           'parameters' => [
 	//             Parameter(
 	//               'name' => 'a',
 	//               'type' => String
@@ -259,11 +257,13 @@ func ExampleBuilder_RegisterTypes_annotatedTypeSet() {
 				rtb.ProvidedAttributes(`id`)
 				rtb.ImmutableAttributes(`telephoneNumber`)
 				rtb.Tags(map[string]string{`Phone`: `name=>telephoneNumber`})
-				rtb.AddRelationship(`mine`, `My::ContainedRes`, annotation.KindContained, annotation.CardinalityMany, ``, []string{`id`, `ownerId`})
+				rtb.AddRelationship(`mine`, `My::ContainedRes`, annotation.KindContained, annotation.CardinalityMany, ``,
+					[]string{`id`, `ownerId`})
 			}),
 			sb.BuildResource(&ContainedRes{}, func(rtb service.ResourceTypeBuilder) {
 				rtb.ProvidedAttributes(`id`)
-				rtb.AddRelationship(`owner`, `My::OwnerRes`, annotation.KindContainer, annotation.CardinalityOne, ``, []string{`ownerId`, `id`})
+				rtb.AddRelationship(`owner`, `My::OwnerRes`, annotation.KindContainer, annotation.CardinalityOne, ``,
+					[]string{`ownerId`, `id`})
 			}),
 		)
 		s := sb.Server()
@@ -340,17 +340,15 @@ func ExampleServer_Metadata_state() {
 
 		sb.RegisterTypes("My", &MyRes{})
 		sb.RegisterStateConverter(lyra.StateConverter)
-		sb.RegisterActivity((&lyra.Workflow{
-			Name: `My::Test`,
-			Activities: []lyra.Activity{
-				&lyra.Resource{
-					Name: `X`,
-					State: func(input struct {
+		sb.RegisterStep((&lyra.Workflow{
+			Steps: map[string]lyra.Step{
+				`X`: &lyra.Resource{
+					State: func(parameters struct {
 						A string
 						B string
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
-					}}}}).Resolve(c, ``))
+					}}}}).Resolve(c, `My::Test`))
 
 		s := sb.Server()
 		fmt.Println(px.ToPrettyString(s.State(c, `My::Test::X`, px.EmptyMap)))

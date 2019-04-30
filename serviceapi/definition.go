@@ -11,7 +11,7 @@ type Definition interface {
 	px.Value
 	issue.Labeled
 
-	// Identifier returns a TypedName that uniquely identifies the activity within the service.
+	// Identifier returns a TypedName that uniquely identifies the step within the service.
 	Identifier() px.TypedName
 
 	// ServiceId is the identifier of the service

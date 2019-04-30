@@ -1,4 +1,4 @@
-// Package lyra provides struct types that implement the Activity interface. The structs can be used to declare
+// Package lyra provides struct types that implement the Step interface. The structs can be used to declare
 // a complete Lyra workflow in Golang
 package lyra
 
@@ -16,15 +16,15 @@ import (
 	"github.com/lyraproj/servicesdk/wf"
 )
 
-// Activity is implemented by Action, Resource, and Workflow
-type Activity interface {
-	// Resolve resolves the activity internals using the given Context
-	Resolve(c px.Context, pn string) wf.Activity
+// Step is implemented by Action, Resource, and Workflow
+type Step interface {
+	// Resolve resolves the step internals using the given Context
+	Resolve(c px.Context, pn string) wf.Step
 }
 
-// Serve initializes the grpc plugin mechanism, resolves the given Activity, and serves it up to the Lyra client. The
+// Serve initializes the grpc plugin mechanism, resolves the given Step, and serves it up to the Lyra client. The
 // given init function can be used to initialize a resource type package.
-func Serve(init func(c px.Context), a Activity) {
+func Serve(n string, init func(c px.Context), a Step) {
 	// Configuring hclog like this allows Lyra to handle log levels automatically
 	hclog.DefaultOptions = &hclog.LoggerOptions{
 		Name:            "Go",
@@ -43,7 +43,7 @@ func Serve(init func(c px.Context), a Activity) {
 			}
 			sb := service.NewServiceBuilder(c, `My::Service`)
 			sb.RegisterStateConverter(StateConverter)
-			sb.RegisterActivity(a.Resolve(c, ``))
+			sb.RegisterStep(a.Resolve(c, n))
 			grpc.Serve(c, sb.Server())
 		})
 	})
@@ -56,7 +56,7 @@ func StringPtr(s string) *string {
 
 var errorInterface = reflect.TypeOf((*error)(nil)).Elem()
 
-func reflectInput(ctx px.Context, param reflect.Type, input px.OrderedMap) reflect.Value {
+func reflectParameters(ctx px.Context, param reflect.Type, parameters px.OrderedMap) reflect.Value {
 	ptr := param.Kind() == reflect.Ptr
 	if ptr {
 		param = param.Elem()
@@ -66,7 +66,7 @@ func reflectInput(ctx px.Context, param reflect.Type, input px.OrderedMap) refle
 	r := ctx.Reflector()
 	for i := 0; i < t; i++ {
 		pn := issue.FirstToLower(param.Field(i).Name)
-		r.ReflectTo(input.Get5(pn, px.Undef), in.Field(i))
+		r.ReflectTo(parameters.Get5(pn, px.Undef), in.Field(i))
 	}
 	if ptr {
 		in = in.Addr()
