@@ -5,6 +5,7 @@ package lyra
 import (
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/lyraproj/issue/issue"
@@ -41,7 +42,7 @@ func Serve(n string, init func(c px.Context), a Step) {
 			if init != nil {
 				init(c)
 			}
-			sb := service.NewServiceBuilder(c, `My::Service`)
+			sb := service.NewServiceBuilder(c, `Step::Service::`+strings.Title(n))
 			sb.RegisterStateConverter(StateConverter)
 			sb.RegisterStep(a.Resolve(c, n))
 			grpc.Serve(c, sb.Server())

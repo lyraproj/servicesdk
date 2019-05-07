@@ -271,6 +271,9 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 			props = append(props, types.WrapHashEntry2(`into`, types.WrapString(step.Into())))
 		}
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createStepDefinition(step.Producer())))
+	case wf.Reference:
+		style = `reference`
+		props = append(props, types.WrapHashEntry2(`reference`, types.WrapString(step.Reference())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
 	return serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), ds.serviceId, types.WrapHash(props))
@@ -407,7 +410,7 @@ func (ds *Builder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k+`::Api`), ds.serviceId, types.WrapHash(props)))
 	}
 
 	for k, po := range ds.callableObjects {
@@ -417,7 +420,7 @@ func (ds *Builder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k+`::Api`), ds.serviceId, types.WrapHash(props)))
 	}
 
 	// Add registered steps

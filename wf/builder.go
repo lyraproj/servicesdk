@@ -33,6 +33,7 @@ type ChildBuilder interface {
 	Resource(func(ResourceBuilder))
 	Workflow(func(WorkflowBuilder))
 	Action(func(ActionBuilder))
+	Reference(func(ReferenceBuilder))
 	AddChild(Builder)
 	Iterator(func(IteratorBuilder))
 }
@@ -67,6 +68,11 @@ type ActionBuilder interface {
 	Doer(interface{})
 }
 
+type ReferenceBuilder interface {
+	Builder
+	ReferenceTo(string)
+}
+
 type WorkflowBuilder interface {
 	ChildBuilder
 }
@@ -93,6 +99,12 @@ func NewAction(ctx px.Context, bf func(ActionBuilder)) Action {
 	bld := &actionBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}
 	bf(bld)
 	return bld.Build().(Action)
+}
+
+func NewReference(ctx px.Context, bf func(ReferenceBuilder)) Reference {
+	bld := &referenceBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}
+	bf(bld)
+	return bld.Build().(Reference)
 }
 
 func NewWorkflow(ctx px.Context, bf func(WorkflowBuilder)) Workflow {
@@ -210,6 +222,12 @@ func actionChild(b ChildBuilder, bld func(b ActionBuilder)) {
 	b.AddChild(ab)
 }
 
+func referenceChild(b ChildBuilder, bld func(b ReferenceBuilder)) {
+	ab := &referenceBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams}}
+	bld(ab)
+	b.AddChild(ab)
+}
+
 func (b *childBuilder) AddChild(child Builder) {
 	b.children = append(b.children, child.Build())
 }
@@ -236,6 +254,10 @@ func (b *iteratorBuilder) Workflow(bld func(b WorkflowBuilder)) {
 
 func (b *iteratorBuilder) Action(bld func(b ActionBuilder)) {
 	actionChild(b, bld)
+}
+
+func (b *iteratorBuilder) Reference(bld func(b ReferenceBuilder)) {
+	referenceChild(b, bld)
 }
 
 func (b *iteratorBuilder) Iterator(bld func(b IteratorBuilder)) {
@@ -349,6 +371,10 @@ func (b *workflowBuilder) Action(bld func(b ActionBuilder)) {
 	actionChild(b, bld)
 }
 
+func (b *workflowBuilder) Reference(bld func(b ReferenceBuilder)) {
+	referenceChild(b, bld)
+}
+
 func (b *workflowBuilder) Iterator(bld func(b IteratorBuilder)) {
 	ab := &iteratorBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.ctx, when: Always, parameters: noParams, returns: noParams}}}
 	bld(ab)
@@ -367,4 +393,18 @@ func (b *actionBuilder) Build() Step {
 
 func (b *actionBuilder) Doer(d interface{}) {
 	b.function = d
+}
+
+type referenceBuilder struct {
+	builder
+	referencedStep string
+}
+
+func (b *referenceBuilder) Build() Step {
+	b.validate()
+	return MakeReference(b.GetName(), b.when, b.parameters, b.returns, b.referencedStep)
+}
+
+func (b *referenceBuilder) ReferenceTo(referencedStep string) {
+	b.referencedStep = referencedStep
 }

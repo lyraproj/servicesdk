@@ -418,7 +418,7 @@ func ExampleServer_Metadata_api() {
 	// Service::Definition(
 	//   'identifier' => TypedName(
 	//     'namespace' => 'definition',
-	//     'name' => 'My::Identity'
+	//     'name' => 'My::Identity::Api'
 	//   ),
 	//   'serviceId' => TypedName(
 	//     'namespace' => 'service',
