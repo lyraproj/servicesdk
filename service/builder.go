@@ -248,7 +248,7 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 		style = `action`
 		tn := strings.Title(name)
 		api := step.Function()
-		ds.RegisterAPI(tn, api)
+		ds.RegisterAPI(tn+`::Api`, api)
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
 			ifd = po.PType()
@@ -410,7 +410,7 @@ func (ds *Builder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k+`::Api`), ds.serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	for k, po := range ds.callableObjects {
@@ -420,7 +420,7 @@ func (ds *Builder) Server() *Server {
 		if stateType, ok := ds.handlerFor[k]; ok {
 			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		}
-		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k+`::Api`), ds.serviceId, types.WrapHash(props)))
+		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	// Add registered steps
