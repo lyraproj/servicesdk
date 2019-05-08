@@ -248,7 +248,7 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 		style = `action`
 		tn := strings.Title(name)
 		api := step.Function()
-		ds.RegisterAPI(tn+`::Api`, api)
+		ds.RegisterAPI(tn, api)
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
 			ifd = po.PType()
@@ -399,27 +399,31 @@ func (ds *Builder) Server() *Server {
 	defs := make([]px.Value, 0, len(ds.callables)+len(ds.steps))
 
 	callableStyle := types.WrapString(`callable`)
-	// Create invokable definitions for callables
+	// Create invokable definitions for callable handlers
 	for k, v := range ds.callables {
+		stateType, ok := ds.handlerFor[k]
+		if !ok {
+			continue
+		}
 		props := make([]*types.HashEntry, 0, 2)
 		if pt, ok := ds.ctx.ImplementationRegistry().ReflectedToType(v.Type()); ok {
 			props = append(props, types.WrapHashEntry2(`interface`, pt))
 		}
 
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
-		if stateType, ok := ds.handlerFor[k]; ok {
-			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
-		}
+		props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	for k, po := range ds.callableObjects {
+		stateType, ok := ds.handlerFor[k]
+		if !ok {
+			continue
+		}
 		props := make([]*types.HashEntry, 0, 2)
 		props = append(props, types.WrapHashEntry2(`interface`, po.PType()))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
-		if stateType, ok := ds.handlerFor[k]; ok {
-			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
-		}
+		props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
 		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
