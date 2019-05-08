@@ -42,32 +42,36 @@ func (s *Server) GRPCClient(context.Context, *plugin.GRPCBroker, *grpc.ClientCon
 	return nil, fmt.Errorf(`%T has no client implementation for rpc`, s)
 }
 
-func (s *Server) Do(doer func(c px.Context)) (err error) {
+func (s *Server) Do(doer func(c px.Context)) (publicErr *datapb.Data, err error) {
+	c := s.ctx.Fork()
 	defer func() {
 		if x := recover(); x != nil {
-			if e, ok := x.(issue.Reported); ok {
+			if e, ok := x.(error); ok {
 				err = e
+				if e, ok := x.(issue.Reported); ok {
+					publicErr = ToDataPB(c, serviceapi.ErrorFromReported(c, e))
+				}
 			} else {
-				panic(x)
+				err = fmt.Errorf(`%+v`, e)
 			}
 		}
 	}()
-	c := s.ctx.Fork()
 	threadlocal.Init()
 	threadlocal.Set(px.PuppetContextKey, c)
 	doer(c)
-	return nil
+	return nil, nil
 }
 
 func (s *Server) Identity(context.Context, *servicepb.EmptyRequest) (result *datapb.Data, err error) {
-	err = s.Do(func(c px.Context) {
+	_, err = s.Do(func(c px.Context) {
 		result = ToDataPB(c, s.impl.Identifier(c))
 	})
 	return
 }
 
 func (s *Server) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *datapb.Data, err error) {
-	err = s.Do(func(c px.Context) {
+	var publicErr *datapb.Data
+	publicErr, err = s.Do(func(c px.Context) {
 		wrappedArgs := FromDataPB(c, r.Arguments)
 		arguments := wrappedArgs.(*types.Array).AppendTo([]px.Value{})
 		rrr := s.impl.Invoke(
@@ -77,11 +81,15 @@ func (s *Server) Invoke(_ context.Context, r *servicepb.InvokeRequest) (result *
 			arguments...)
 		result = ToDataPB(c, rrr)
 	})
+	if publicErr != nil {
+		result = publicErr
+		err = nil
+	}
 	return
 }
 
 func (s *Server) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result *servicepb.MetadataResponse, err error) {
-	err = s.Do(func(c px.Context) {
+	_, err = s.Do(func(c px.Context) {
 		ts, ds := s.impl.Metadata(c)
 		vs := make([]px.Value, len(ds))
 		for i, d := range ds {
@@ -93,7 +101,7 @@ func (s *Server) Metadata(_ context.Context, r *servicepb.EmptyRequest) (result 
 }
 
 func (s *Server) State(_ context.Context, r *servicepb.StateRequest) (result *datapb.Data, err error) {
-	err = s.Do(func(c px.Context) {
+	_, err = s.Do(func(c px.Context) {
 		result = ToDataPB(c, s.impl.State(c, r.Identifier, FromDataPB(c, r.Parameters).(px.OrderedMap)))
 	})
 	return

@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104
 	github.com/lyraproj/data-protobuf v0.0.0-20190329160005-a909d9e1f93b
 	github.com/lyraproj/issue v0.0.0-20190329160035-8bc10230f995
-	github.com/lyraproj/pcore v0.0.0-20190430133451-57d4da316569
+	github.com/lyraproj/pcore v0.0.0-20190502085713-c95bdae56d68
 	github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
