@@ -20,6 +20,7 @@ type Builder struct {
 	handlerFor      map[string]px.Type
 	steps           map[string]serviceapi.Definition
 	callables       map[string]reflect.Value
+	actionApis      map[string]bool
 	states          map[string]wf.State
 	callableObjects map[string]px.PuppetObject
 }
@@ -33,6 +34,7 @@ func NewServiceBuilder(ctx px.Context, serviceName string) *Builder {
 		handlerFor:      make(map[string]px.Type),
 		steps:           make(map[string]serviceapi.Definition),
 		types:           make(map[string]px.Type),
+		actionApis:      make(map[string]bool),
 		states:          make(map[string]wf.State)}
 }
 
@@ -249,6 +251,7 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 		tn := strings.Title(name)
 		api := step.Function()
 		ds.RegisterAPI(tn, api)
+		ds.actionApis[tn] = true
 		var ifd px.Type
 		if po, ok := api.(px.PuppetObject); ok {
 			ifd = po.PType()
@@ -401,8 +404,7 @@ func (ds *Builder) Server() *Server {
 	callableStyle := types.WrapString(`callable`)
 	// Create invokable definitions for callable handlers
 	for k, v := range ds.callables {
-		stateType, ok := ds.handlerFor[k]
-		if !ok {
+		if _, ok := ds.actionApis[k]; ok {
 			continue
 		}
 		props := make([]*types.HashEntry, 0, 2)
@@ -411,19 +413,22 @@ func (ds *Builder) Server() *Server {
 		}
 
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
-		props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
+		if stateType, ok := ds.handlerFor[k]; ok {
+			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
+		}
 		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 
 	for k, po := range ds.callableObjects {
-		stateType, ok := ds.handlerFor[k]
-		if !ok {
+		if _, ok := ds.actionApis[k]; ok {
 			continue
 		}
 		props := make([]*types.HashEntry, 0, 2)
 		props = append(props, types.WrapHashEntry2(`interface`, po.PType()))
 		props = append(props, types.WrapHashEntry2(`style`, callableStyle))
-		props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
+		if stateType, ok := ds.handlerFor[k]; ok {
+			props = append(props, types.WrapHashEntry2(`handlerFor`, stateType))
+		}
 		defs = append(defs, serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, k), ds.serviceId, types.WrapHash(props)))
 	}
 

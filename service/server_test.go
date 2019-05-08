@@ -415,5 +415,19 @@ func ExampleServer_Metadata_api() {
 	//     }
 	//   }
 	// }]
+	// Service::Definition(
+	//   'identifier' => TypedName(
+	//     'namespace' => 'definition',
+	//     'name' => 'My::Identity'
+	//   ),
+	//   'serviceId' => TypedName(
+	//     'namespace' => 'service',
+	//     'name' => 'My::Service'
+	//   ),
+	//   'properties' => {
+	//     'interface' => My::Identity,
+	//     'style' => 'callable'
+	//   }
+	// )
 	//
 }
