@@ -1,6 +1,7 @@
 package wf
 
 import (
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 )
 
@@ -15,8 +16,8 @@ type action struct {
 	function interface{}
 }
 
-func MakeAction(name string, when Condition, parameters, returns []px.Parameter, function interface{}) Action {
-	return &action{step{name, when, parameters, returns}, function}
+func MakeAction(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter, function interface{}) Action {
+	return &action{step{name, origin, when, parameters, returns}, function}
 }
 
 func (s *action) Label() string {

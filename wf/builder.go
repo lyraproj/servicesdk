@@ -78,43 +78,44 @@ type WorkflowBuilder interface {
 }
 
 func NewStateHandler(ctx px.Context, bf func(StateHandlerBuilder)) StateHandler {
-	bld := &stateHandlerBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}
+	bld := &stateHandlerBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}
 	bf(bld)
 	return bld.Build().(StateHandler)
 }
 
 func NewIterator(ctx px.Context, bf func(IteratorBuilder)) Iterator {
-	bld := &iteratorBuilder{childBuilder: childBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}}
+	bld := &iteratorBuilder{childBuilder: childBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}}
 	bf(bld)
 	return bld.Build().(Iterator)
 }
 
 func NewResource(ctx px.Context, bf func(ResourceBuilder)) Resource {
-	bld := &resourceBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}
+	bld := &resourceBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}
 	bf(bld)
 	return bld.Build().(Resource)
 }
 
 func NewAction(ctx px.Context, bf func(ActionBuilder)) Action {
-	bld := &actionBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}
+	bld := &actionBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}
 	bf(bld)
 	return bld.Build().(Action)
 }
 
 func NewReference(ctx px.Context, bf func(ReferenceBuilder)) Reference {
-	bld := &referenceBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}
+	bld := &referenceBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}
 	bf(bld)
 	return bld.Build().(Reference)
 }
 
 func NewWorkflow(ctx px.Context, bf func(WorkflowBuilder)) Workflow {
-	bld := &workflowBuilder{childBuilder: childBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams}}}
+	bld := &workflowBuilder{childBuilder: childBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}}
 	bf(bld)
 	return bld.Build().(Workflow)
 }
 
 type builder struct {
 	ctx        px.Context
+	origin     issue.Location
 	name       string
 	when       Condition
 	parameters []px.Parameter
@@ -150,6 +151,10 @@ func (b *builder) Parameter(name, typeName string) px.Parameter {
 
 func (b *builder) GetParameters() []px.Parameter {
 	return b.parameters
+}
+
+func (b *builder) GetOrigin() issue.Location {
+	return b.origin
 }
 
 func (b *builder) QualifyName(childName string) string {
@@ -190,7 +195,7 @@ func (b *stateHandlerBuilder) API(c interface{}) {
 
 func (b *stateHandlerBuilder) Build() Step {
 	b.validate()
-	return MakeStateHandler(b.GetName(), b.when, b.parameters, b.returns, b.api)
+	return MakeStateHandler(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.api)
 }
 
 type childBuilder struct {
@@ -305,7 +310,7 @@ func (b *iteratorBuilder) Variables(variables ...px.Parameter) {
 
 func (b *iteratorBuilder) Build() Step {
 	b.validate()
-	return MakeIterator(b.GetName(), b.when, b.parameters, b.returns, b.style, b.children[0], b.over, b.variables, b.into)
+	return MakeIterator(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.style, b.children[0], b.over, b.variables, b.into)
 }
 
 func (b *iteratorBuilder) validate() {
@@ -322,7 +327,7 @@ type resourceBuilder struct {
 
 func (b *resourceBuilder) Build() Step {
 	b.validate()
-	return MakeResource(b.GetName(), b.when, b.parameters, b.returns, b.extId, b.state)
+	return MakeResource(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.extId, b.state)
 }
 
 func (b *resourceBuilder) State(state State) {
@@ -352,7 +357,7 @@ type workflowBuilder struct {
 
 func (b *workflowBuilder) Build() Step {
 	b.validate()
-	return MakeWorkflow(b.GetName(), b.when, b.parameters, b.returns, b.children)
+	return MakeWorkflow(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.children)
 }
 
 func (b *workflowBuilder) StateHandler(bld func(b StateHandlerBuilder)) {
@@ -388,7 +393,7 @@ type actionBuilder struct {
 
 func (b *actionBuilder) Build() Step {
 	b.validate()
-	return MakeAction(b.GetName(), b.when, b.parameters, b.returns, b.function)
+	return MakeAction(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.function)
 }
 
 func (b *actionBuilder) Doer(d interface{}) {
@@ -402,7 +407,7 @@ type referenceBuilder struct {
 
 func (b *referenceBuilder) Build() Step {
 	b.validate()
-	return MakeReference(b.GetName(), b.when, b.parameters, b.returns, b.referencedStep)
+	return MakeReference(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.referencedStep)
 }
 
 func (b *referenceBuilder) ReferenceTo(referencedStep string) {

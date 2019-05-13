@@ -10,6 +10,8 @@ import (
 type Step interface {
 	issue.Labeled
 
+	Origin() issue.Location
+
 	// When returns an optional Condition that controls whether or not this step participates
 	// in the workflow.
 	When() Condition
@@ -26,6 +28,7 @@ type Step interface {
 
 type step struct {
 	name       string
+	origin     issue.Location
 	when       Condition
 	parameters []px.Parameter
 	returns    []px.Parameter
@@ -37,6 +40,10 @@ func (a *step) When() Condition {
 
 func (a *step) Name() string {
 	return a.name
+}
+
+func (a *step) Origin() issue.Location {
+	return a.origin
 }
 
 func (a *step) Parameters() []px.Parameter {

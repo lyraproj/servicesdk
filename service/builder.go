@@ -279,6 +279,7 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 		props = append(props, types.WrapHashEntry2(`reference`, types.WrapString(step.Reference())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
+	props = append(props, types.WrapHashEntry2(`origin`, types.WrapString(issue.LocationString(step.Origin()))))
 	return serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), ds.serviceId, types.WrapHash(props))
 }
 

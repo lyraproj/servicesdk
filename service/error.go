@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"io"
 	"reflect"
 
@@ -23,7 +24,7 @@ func init() {
 	  	kind => { type => Optional[String[1]], value => undef },
 		  issue_code => { type => Optional[String[1]], value => undef },
 		  partial_result => { type => Data, value => undef },
-	  	details => { type => Optional[Hash[String[1],Data]], value => undef },
+	  	details => { type => Optional[Hash[String[1],RichData]], value => undef },
 		}}`,
 		func(ctx px.Context, args []px.Value) px.Value {
 			return newError2(ctx, args...)
@@ -82,8 +83,29 @@ func errorFromReported(c px.Context, err issue.Reported) serviceapi.ErrorObject 
 	ev.message = err.Error()
 	ev.kind = `PUPPET_ERROR`
 	ev.issueCode = string(err.Code())
+	ds := make([]*types.HashEntry, 0)
 	if loc := err.Location(); loc != nil {
-		ev.details = px.SingletonMap(`location`, types.WrapString(issue.LocationString(loc)))
+		ds = append(ds, types.WrapHashEntry2(`location`, types.WrapString(issue.LocationString(loc))))
+	}
+	keys := err.Keys()
+	if len(keys) > 0 {
+		args := make([]*types.HashEntry, len(keys))
+		for i, k := range keys {
+			args[i] = types.WrapHashEntry2(k, px.Wrap(c, err.Argument(k)))
+		}
+		ds = append(ds, types.WrapHashEntry2(`arguments`, types.WrapHash(args)))
+	}
+	if cause := err.Cause(); cause != nil {
+		var cv px.Value
+		if cr, ok := cause.(issue.Reported); ok {
+			cv = errorFromReported(c, cr)
+		} else {
+			cv = types.WrapString(cause.Error())
+		}
+		ds = append(ds, types.WrapHashEntry2(`cause`, cv))
+	}
+	if len(ds) > 0 {
+		ev.details = types.WrapHash(ds)
 	}
 	ev.initType(c)
 	return ev
@@ -118,6 +140,43 @@ func (e *errorObj) Message() string {
 
 func (e *errorObj) PartialResult() px.Value {
 	return e.partialResult
+}
+
+func (e *errorObj) ToReported() (issue.Reported, bool) {
+	code := issue.Code(e.issueCode)
+	if _, ok := issue.ForCode2(code); ok {
+		args := issue.NoArgs
+		var loc issue.Location
+		var cause error
+		if e.details.Len() > 0 {
+			if ls, ok := e.details.Get4(`location`); ok {
+				loc = issue.ParseLocation(ls.String())
+			}
+			if am, ok := e.details.Get4(`arguments`); ok {
+				if ah, ok := am.(px.OrderedMap); ok {
+					args = make(issue.H, ah.Len())
+					ah.EachPair(func(k, v px.Value) {
+						args[k.String()] = v
+					})
+				}
+			}
+			if cs, ok := e.details.Get4(`cause`); ok {
+				if cse, ok := cs.(serviceapi.ErrorObject); ok {
+					if cr, ok := cse.ToReported(); ok {
+						cause = cr
+					} else {
+						cause = errors.New(cse.Message())
+					}
+				} else {
+					cause = errors.New(cs.String())
+				}
+			}
+		}
+		return issue.ErrorWithoutStack(code, args, loc, cause), true
+	}
+
+	// Code does not represent a valid issue.
+	return nil, false
 }
 
 func (e *errorObj) String() string {

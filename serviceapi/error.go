@@ -24,6 +24,12 @@ type ErrorObject interface {
 	// Details returns the optional details. It returns
 	// an empty map when no details exist
 	Details() px.OrderedMap
+
+	// ToReported checks if the IssueCode represents a known issue.Reported code in this executable,
+	// and if so, reconstructs the original error using the code and arguments and returns it and true.
+	//
+	// nil, false is returned if the IssueCode is unknown to the current executable.
+	ToReported() (issue.Reported, bool)
 }
 
 var ErrorFromReported func(c px.Context, err issue.Reported) ErrorObject

@@ -5,6 +5,7 @@ package lyra
 import (
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
@@ -20,7 +21,7 @@ import (
 // Step is implemented by Action, Resource, and Workflow
 type Step interface {
 	// Resolve resolves the step internals using the given Context
-	Resolve(c px.Context, pn string) wf.Step
+	Resolve(c px.Context, pn string, loc issue.Location) wf.Step
 }
 
 // Serve initializes the grpc plugin mechanism, resolves the given Step, and serves it up to the Lyra client. The
@@ -37,6 +38,9 @@ func Serve(n string, init func(c px.Context), a Step) {
 	// Tell issue reporting to amend all errors with a stack trace.
 	issue.IncludeStacktrace(hclog.DefaultOptions.Level <= hclog.Debug)
 
+	_, file, _, _ := runtime.Caller(1) // Assume Step declaration resides in Caller
+	loc := issue.NewLocation(file, 0, 0)
+
 	pcore.Do(func(c px.Context) {
 		c.DoWithLoader(service.FederatedLoader(c.Loader()), func() {
 			if init != nil {
@@ -44,7 +48,7 @@ func Serve(n string, init func(c px.Context), a Step) {
 			}
 			sb := service.NewServiceBuilder(c, `Step::Service::`+strings.Title(n))
 			sb.RegisterStateConverter(StateConverter)
-			sb.RegisterStep(a.Resolve(c, n))
+			sb.RegisterStep(a.Resolve(c, n, loc))
 			grpc.Serve(c, sb.Server())
 		})
 	})

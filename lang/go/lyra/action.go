@@ -26,7 +26,7 @@ type Action struct {
 	Do interface{}
 }
 
-func (a *Action) Resolve(c px.Context, n string) wf.Step {
+func (a *Action) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 	fv := reflect.ValueOf(a.Do)
 	ft := fv.Type()
 	if ft.Kind() != reflect.Func {
@@ -65,10 +65,14 @@ func (a *Action) Resolve(c px.Context, n string) wf.Step {
 		parameters = paramsFromStruct(c, ft.In(0), nil)
 	}
 
-	return wf.MakeAction(n, wf.Parse(a.When), parameters, returns, &goAction{returnsError: returnsError, doer: fv})
+	ga := &goAction{returnsError: returnsError, doer: fv}
+	as := wf.MakeAction(n, loc, wf.Parse(a.When), parameters, returns, ga)
+	ga.action = as
+	return as
 }
 
 type goAction struct {
+	action       wf.Action
 	doer         reflect.Value
 	returnsError bool
 }
@@ -98,6 +102,8 @@ func (a *goAction) Call(ctx px.Context, method px.ObjFunc, args []px.Value, bloc
 		inType := fvType.In(0)
 		params = append(params, reflectParameters(ctx, inType, parameters))
 	}
+
+	defer a.amendError()
 
 	result := a.doer.Call(params)
 	var re, rs reflect.Value
@@ -167,4 +173,16 @@ func (a *goAction) Get(key string) (value px.Value, ok bool) {
 
 func (a *goAction) InitHash() px.OrderedMap {
 	return px.EmptyMap
+}
+
+func (a *goAction) amendError() {
+	if r := recover(); r != nil {
+		if rx, ok := r.(issue.Reported); ok {
+			// Location and stack included in nested error
+			r = issue.ErrorWithoutStack(wf.ActionExecutionError, issue.H{`step`: a.action.Label()}, nil, rx)
+		} else {
+			r = issue.NewNested(wf.ActionExecutionError, issue.H{`step`: a.action.Label()}, a.action.Origin(), wf.ToError(r))
+		}
+		panic(r)
+	}
 }

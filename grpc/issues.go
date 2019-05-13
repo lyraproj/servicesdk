@@ -7,5 +7,5 @@ const (
 )
 
 func init() {
-	issue.Hard(InvocationError, `invocation of %{identifier} %{name} failed: %{code} %{message}`)
+	issue.Hard(InvocationError, `invocation of %{identifier} %{name} failed: %{message}`)
 }

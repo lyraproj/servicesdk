@@ -42,7 +42,7 @@ type Collect struct {
 	Step Step
 }
 
-func (e *Collect) Resolve(c px.Context, n string) wf.Step {
+func (e *Collect) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 	var v px.Value
 	var style wf.IterationStyle
 	if e.Times != nil {
@@ -67,7 +67,7 @@ func (e *Collect) Resolve(c px.Context, n string) wf.Step {
 	}
 
 	return wf.MakeIterator(
-		n, wf.Parse(e.When), nil, nil, style, e.Step.Resolve(c, n), v, asParams(c, e.As), issue.FirstToLower(e.Return))
+		n, loc, wf.Parse(e.When), nil, nil, style, e.Step.Resolve(c, n, loc), v, asParams(c, e.As), issue.FirstToLower(e.Return))
 }
 
 // value is like px.Wrap but transforms single element zero element structs into parameters

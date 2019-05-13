@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/lyraproj/issue/issue"
+
 	"github.com/lyraproj/servicesdk/lang/go/lyra"
 
 	"github.com/lyraproj/pcore/pcore"
@@ -187,7 +189,7 @@ func ExampleServer_Metadata_definitions() {
 						B string
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
-					}}}}).Resolve(c, `My::Test`))
+					}}}}).Resolve(c, `My::Test`, issue.ParseLocation(`(file: /test/x.go)`)))
 
 		s := sb.Server()
 		_, defs := s.Metadata(c)
@@ -228,10 +230,12 @@ func ExampleServer_Metadata_definitions() {
 	//               'type' => String
 	//             )],
 	//           'resourceType' => My::MyRes,
-	//           'style' => 'resource'
+	//           'style' => 'resource',
+	//           'origin' => '(file: /test/x.go)'
 	//         }
 	//       )],
-	//     'style' => 'workflow'
+	//     'style' => 'workflow',
+	//     'origin' => '(file: /test/x.go)'
 	//   }
 	// )
 	//
@@ -348,7 +352,7 @@ func ExampleServer_Metadata_state() {
 						B string
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
-					}}}}).Resolve(c, `My::Test`))
+					}}}}).Resolve(c, `My::Test`, issue.ParseLocation(`(file: /test/x.go)`)))
 
 		s := sb.Server()
 		fmt.Println(px.ToPrettyString(s.State(c, `My::Test::X`, px.EmptyMap)))

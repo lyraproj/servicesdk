@@ -1,6 +1,7 @@
 package wf
 
 import (
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 )
 
@@ -25,8 +26,8 @@ type resource struct {
 	extId string
 }
 
-func MakeResource(name string, when Condition, parameters, returns []px.Parameter, extId string, state State) Resource {
-	return &resource{step{name, when, parameters, returns}, state, extId}
+func MakeResource(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter, extId string, state State) Resource {
+	return &resource{step{name, origin, when, parameters, returns}, state, extId}
 }
 
 func (r *resource) ExternalId() string {

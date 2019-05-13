@@ -1,6 +1,7 @@
 package wf
 
 import (
+	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 )
 
@@ -16,8 +17,8 @@ type reference struct {
 	referencedStep string
 }
 
-func MakeReference(name string, when Condition, input, output []px.Parameter, referencedStep string) Reference {
-	return &reference{step{name, when, input, output}, referencedStep}
+func MakeReference(name string, origin issue.Location, when Condition, input, output []px.Parameter, referencedStep string) Reference {
+	return &reference{step{name, origin, when, input, output}, referencedStep}
 }
 
 func (s *reference) Label() string {

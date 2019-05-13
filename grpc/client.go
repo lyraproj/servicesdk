@@ -60,7 +60,10 @@ func (c *Client) Invoke(ctx px.Context, identifier, name string, arguments ...px
 	}
 	result := FromDataPB(ctx, rr)
 	if eo, ok := result.(serviceapi.ErrorObject); ok {
-		panic(px.Error(InvocationError, issue.H{`identifier`: identifier, `name`: name, `code`: eo.IssueCode(), `message`: eo.Message()}))
+		if re, ok := eo.ToReported(); ok {
+			panic(re)
+		}
+		panic(px.Error(InvocationError, issue.H{`identifier`: identifier, `name`: name, `message`: eo.Message()}))
 	}
 	return result
 }
