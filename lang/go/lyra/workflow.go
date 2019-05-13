@@ -3,6 +3,8 @@ package lyra
 import (
 	"sort"
 
+	"github.com/lyraproj/issue/issue"
+
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wf"
 )
@@ -25,14 +27,14 @@ type Workflow struct {
 	Steps map[string]Step
 }
 
-func (w *Workflow) Resolve(c px.Context, n string) wf.Step {
+func (w *Workflow) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 	as := make([]wf.Step, 0, len(w.Steps))
 	for k, a := range w.Steps {
-		as = append(as, a.Resolve(c, n+`::`+k))
+		as = append(as, a.Resolve(c, n+`::`+k, loc))
 	}
 	sort.Slice(as, func(i, j int) bool {
 		return as[i].Name() < as[j].Name()
 	})
 	return wf.MakeWorkflow(
-		n, wf.Parse(w.When), ParametersFromGoStruct(c, w.Parameters), ParametersFromGoStruct(c, w.Return), as)
+		n, loc, wf.Parse(w.When), ParametersFromGoStruct(c, w.Parameters), ParametersFromGoStruct(c, w.Return), as)
 }

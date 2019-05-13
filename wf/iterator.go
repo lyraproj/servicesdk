@@ -71,8 +71,9 @@ type iterator struct {
 	into      string
 }
 
-func MakeIterator(name string, when Condition, parameters, returns []px.Parameter, style IterationStyle, producer Step, over px.Value, variables []px.Parameter, into string) Iterator {
-	return &iterator{step{name, when, parameters, returns}, style, producer, over, variables, into}
+func MakeIterator(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter,
+	style IterationStyle, producer Step, over px.Value, variables []px.Parameter, into string) Iterator {
+	return &iterator{step{name, origin, when, parameters, returns}, style, producer, over, variables, into}
 }
 
 func (it *iterator) Label() string {

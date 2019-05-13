@@ -85,7 +85,7 @@ func (s *Server) Invoke(c px.Context, api, name string, arguments ...px.Value) (
 		if m, ok := iv.PType().(px.TypeWithCallableMembers).Member(name); ok {
 			defer func() {
 				if x := recover(); x != nil {
-					hclog.Default().Error(`Invoke failed`, `error`, x)
+					hclog.Default().Debug(`Invoke failed`, `error`, x)
 					if err, ok := x.(issue.Reported); ok && string(err.Code()) == px.GoFunctionError {
 						result = serviceapi.ErrorFromReported(c, err)
 						return

@@ -33,7 +33,7 @@ type Resource struct {
 	State interface{}
 }
 
-func (r *Resource) Resolve(c px.Context, n string) wf.Step {
+func (r *Resource) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 	fv := reflect.ValueOf(r.State)
 	ft := fv.Type()
 	if ft.Kind() != reflect.Func {
@@ -120,5 +120,8 @@ func (r *Resource) Resolve(c px.Context, n string) wf.Step {
 		parameters = paramsFromStruct(c, ft.In(0), nil)
 	}
 
-	return wf.MakeResource(n, wf.Parse(r.When), parameters, returns, r.ExternalId, newGoState(ot, fv, returnsError))
+	gs := newGoState(ot, fv, returnsError)
+	rs := wf.MakeResource(n, loc, wf.Parse(r.When), parameters, returns, r.ExternalId, gs)
+	gs.resource = rs
+	return rs
 }

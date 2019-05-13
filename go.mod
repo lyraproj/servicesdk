@@ -12,3 +12,6 @@ require (
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	google.golang.org/grpc v1.19.0
 )
+
+// remove once lyraproj/issue#7 is merged
+replace github.com/lyraproj/issue => github.com/thallgren/issue v0.0.0-20190512160618-668e97752cb0

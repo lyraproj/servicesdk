@@ -29,7 +29,7 @@ type Reference struct {
 	StepName string
 }
 
-func (r *Reference) Resolve(c px.Context, n string) wf.Step {
+func (r *Reference) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 	var parameters, returns []px.Parameter
 	if r.Parameters != nil {
 		parameters = paramsFromStruct(c, reflect.TypeOf(r.Parameters), issue.FirstToLower)
@@ -38,5 +38,5 @@ func (r *Reference) Resolve(c px.Context, n string) wf.Step {
 		returns = paramsFromStruct(c, reflect.TypeOf(r.Return), issue.FirstToLower)
 	}
 	return wf.MakeReference(
-		n, wf.Parse(r.When), parameters, returns, r.StepName)
+		n, loc, wf.Parse(r.When), parameters, returns, r.StepName)
 }
