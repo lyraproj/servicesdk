@@ -64,7 +64,7 @@ type Resource interface {
 	//
 	// The second boolean is true when the first is true and the attribute in question is listed in the
 	// immutableAttributes array.
-	Changed(x, y px.PuppetObject) (bool, bool)
+	Changed(c px.Context, x, y px.PuppetObject) (bool, bool)
 
 	ImmutableAttributes() []string
 
@@ -185,7 +185,7 @@ func (r *resource) Validate(c px.Context, annotatedType px.Annotatable) {
 //
 // The second boolean is true when the first is true and the attribute in question is listed in the
 // immutableAttributes array.
-func (r *resource) Changed(desired, actual px.PuppetObject) (bool, bool) {
+func (r *resource) Changed(c px.Context, desired, actual px.PuppetObject) (bool, bool) {
 	typ := desired.PType().(px.ObjectType)
 	for _, a := range typ.AttributesInfo().Attributes() {
 		dv := a.Get(desired)
@@ -195,15 +195,59 @@ func (r *resource) Changed(desired, actual px.PuppetObject) (bool, bool) {
 		av := a.Get(actual)
 		if !dv.Equals(av, nil) {
 			log := hclog.Default()
-			if r.isImmutable(a.Name()) {
-				log.Debug("immutable attribute mismatch", "attribute", a.Label(), "desired", dv, "actual", av)
-				return true, true
+			imc := r.isImmutable(a.Name())
+			if !imc {
+				// Check if nested immutable change is present when both values are Objects
+				if ot, ok := a.Type().(px.ObjectType); ok {
+					imc = immutableChange(c, ot, dv, av)
+				}
 			}
-			log.Debug("mutable attribute mismatch", "attribute", a.Label(), "desired", dv, "actual", av)
-			return true, false
+			if imc {
+				log.Debug("immutable attribute mismatch", "attribute", a.Label(), "desired", dv, "actual", av)
+			} else {
+				log.Debug("mutable attribute mismatch", "attribute", a.Label(), "desired", dv, "actual", av)
+			}
+			return true, imc
 		}
 	}
 	return false, false
+}
+
+func immutableChange(c px.Context, t px.ObjectType, dv, av px.Value) bool {
+	pd, dok := dv.(px.PuppetObject)
+	pa, aok := av.(px.PuppetObject)
+	if ra, ok := t.Annotations(c).Get(ResourceType); ok {
+		r := ra.(*resource)
+		if dok {
+			if aok {
+				_, ic := r.Changed(c, pd, pa)
+				return ic
+			}
+			if len(r.ImmutableAttributes()) > 0 {
+				return true
+			}
+		} else if aok && len(r.ImmutableAttributes()) > 0 {
+			return true
+		}
+	}
+
+	for _, a := range t.AttributesInfo().Attributes() {
+		// Recurse down into Object attributes
+		if ot, ok := a.Type().(px.ObjectType); ok {
+			dv := px.Undef
+			av := px.Undef
+			if dok {
+				dv = a.Get(pd)
+			}
+			if aok {
+				av = a.Get(pa)
+			}
+			if !dv.Equals(av, nil) && immutableChange(c, ot, dv, av) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (r *resource) String() string {
