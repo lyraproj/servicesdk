@@ -204,31 +204,31 @@ type childBuilder struct {
 }
 
 func stateHandlerChild(b ChildBuilder, bld func(b StateHandlerBuilder)) {
-	ab := &stateHandlerBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams}}
+	ab := &stateHandlerBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}
 	bld(ab)
 	b.AddChild(ab)
 }
 
 func resourceChild(b ChildBuilder, bld func(b ResourceBuilder)) {
-	ab := &resourceBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams}}
+	ab := &resourceBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}
 	bld(ab)
 	b.AddChild(ab)
 }
 
 func workflowChild(b ChildBuilder, bld func(b WorkflowBuilder)) {
-	ab := &workflowBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams}}}
+	ab := &workflowBuilder{childBuilder: childBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}}
 	bld(ab)
 	b.AddChild(ab)
 }
 
 func actionChild(b ChildBuilder, bld func(b ActionBuilder)) {
-	ab := &actionBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams}}
+	ab := &actionBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}
 	bld(ab)
 	b.AddChild(ab)
 }
 
 func referenceChild(b ChildBuilder, bld func(b ReferenceBuilder)) {
-	ab := &referenceBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams}}
+	ab := &referenceBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}
 	bld(ab)
 	b.AddChild(ab)
 }
