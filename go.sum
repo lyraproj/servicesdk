@@ -19,10 +19,10 @@ github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb/go.mod h1:+NfK9FKeTrX5uv1uIXGdwYDTeHna2qgaIlx54MXqjAM=
 github.com/lyraproj/data-protobuf v0.0.0-20190329160005-a909d9e1f93b h1:qGgMkFUQVnT5qjIKV4MB0j6RkRBVSZvhuD35vsnvglI=
 github.com/lyraproj/data-protobuf v0.0.0-20190329160005-a909d9e1f93b/go.mod h1:oQIFBu0fmkiSpSRROEgK5gnjQ/ZDrx3UdpRpT3791Gg=
-github.com/lyraproj/issue v0.0.0-20190329160035-8bc10230f995 h1:vAlBUcYalN98yypS75/zwFciwS6WFYGnizRBJdN320o=
-github.com/lyraproj/issue v0.0.0-20190329160035-8bc10230f995/go.mod h1:F3Zu9SjR6zROUIVdxgxuX0/Mi4npwgDRalQCNzCyzU0=
-github.com/lyraproj/pcore v0.0.0-20190502085713-c95bdae56d68 h1:/sZhuQeebUbpjuHL9EZCMBn0OJoHrR7okfYD0pnvlTI=
-github.com/lyraproj/pcore v0.0.0-20190502085713-c95bdae56d68/go.mod h1:rEl2ewvqyi/MUo+sEoADKduVlO971HgiLJmu26EO+vM=
+github.com/lyraproj/issue v0.0.0-20190513084509-faf9b542f594 h1:IcsHRQ3xzCIcK0eXpot8IYgEyUQPEFHmFErZwJcsDqk=
+github.com/lyraproj/issue v0.0.0-20190513084509-faf9b542f594/go.mod h1:jqRRmAiVqjTehhncbKJPoC2AFoxxkritzzlfWioTa00=
+github.com/lyraproj/pcore v0.0.0-20190513085701-7898040af0a8 h1:ZC2NhP2cwC4w6FKd5qAOziPqIxbUxqsJX4osG3xua5k=
+github.com/lyraproj/pcore v0.0.0-20190513085701-7898040af0a8/go.mod h1:NGvVSNVj6tF0acszsfqcu+qtNt5b1hlSiiL3oNSuNMI=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2 h1:vb4PbiMtIXdhsOUinkkcqZiASDIZzXRhSG4yvNfE0tg=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2/go.mod h1:KOdZKnEBdDb2iGPUnHiKpk3M5cvv949xMyj8XPqaMF0=
 github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 h1:7GoSOOW2jpsfkntVKaS2rAr1TJqfcxotyaUcuxoZSzg=
@@ -35,8 +35,6 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/thallgren/issue v0.0.0-20190512160618-668e97752cb0 h1:H+BuJ0XY8YO8DHe08H8gdduqFhNfFthb/kW0J+Ocf9U=
-github.com/thallgren/issue v0.0.0-20190512160618-668e97752cb0/go.mod h1:jqRRmAiVqjTehhncbKJPoC2AFoxxkritzzlfWioTa00=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2 h1:VklqNMn3ovrHsnt90PveolxSbWFaJdECFbxSq0Mqo2M=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
