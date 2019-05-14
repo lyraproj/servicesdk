@@ -3,6 +3,8 @@ package lyra
 import (
 	"reflect"
 
+	"github.com/lyraproj/servicesdk/serviceapi"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/servicesdk/wf"
@@ -30,7 +32,7 @@ type Reference struct {
 }
 
 func (r *Reference) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
-	var parameters, returns []px.Parameter
+	var parameters, returns []serviceapi.Parameter
 	if r.Parameters != nil {
 		parameters = paramsFromStruct(c, reflect.TypeOf(r.Parameters), issue.FirstToLower)
 	}

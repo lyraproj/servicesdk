@@ -3,6 +3,7 @@ package wf
 import (
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type State interface {
@@ -26,7 +27,7 @@ type resource struct {
 	extId string
 }
 
-func MakeResource(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter, extId string, state State) Resource {
+func MakeResource(name string, origin issue.Location, when Condition, parameters, returns []serviceapi.Parameter, extId string, state State) Resource {
 	return &resource{step{name, origin, when, parameters, returns}, state, extId}
 }
 

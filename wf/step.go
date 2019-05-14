@@ -3,6 +3,7 @@ package wf
 import (
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 // An Step of a Workflow. The workflow is an Step in itself and can be used in
@@ -20,18 +21,18 @@ type Step interface {
 	Name() string
 
 	// Parameters returns the parameters requirements for the Step
-	Parameters() []px.Parameter
+	Parameters() []serviceapi.Parameter
 
 	// Returns returns the definition of that this Step will produce
-	Returns() []px.Parameter
+	Returns() []serviceapi.Parameter
 }
 
 type step struct {
 	name       string
 	origin     issue.Location
 	when       Condition
-	parameters []px.Parameter
-	returns    []px.Parameter
+	parameters []serviceapi.Parameter
+	returns    []serviceapi.Parameter
 }
 
 func (a *step) When() Condition {
@@ -46,11 +47,11 @@ func (a *step) Origin() issue.Location {
 	return a.origin
 }
 
-func (a *step) Parameters() []px.Parameter {
+func (a *step) Parameters() []serviceapi.Parameter {
 	return a.parameters
 }
 
-func (a *step) Returns() []px.Parameter {
+func (a *step) Returns() []serviceapi.Parameter {
 	return a.returns
 }
 

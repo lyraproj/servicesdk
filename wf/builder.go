@@ -3,11 +3,13 @@ package wf
 import (
 	"strings"
 
+	"github.com/lyraproj/servicesdk/serviceapi"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 )
 
-var noParams = make([]px.Parameter, 0)
+var noParams = make([]serviceapi.Parameter, 0)
 
 func LeafName(name string) string {
 	names := strings.Split(name, `::`)
@@ -19,12 +21,12 @@ type Builder interface {
 	Build() Step
 	Name(string)
 	When(string)
-	Parameters(...px.Parameter)
-	Returns(...px.Parameter)
+	Parameters(...serviceapi.Parameter)
+	Returns(...serviceapi.Parameter)
 	QualifyName(childName string) string
-	GetParameters() []px.Parameter
+	GetParameters() []serviceapi.Parameter
 	GetName() string
-	Parameter(name, typeName string) px.Parameter
+	Parameter(name, typeName string) serviceapi.Parameter
 }
 
 type ChildBuilder interface {
@@ -52,7 +54,7 @@ type IteratorBuilder interface {
 	ChildBuilder
 	Style(IterationStyle)
 	Over(px.Value)
-	Variables(...px.Parameter)
+	Variables(...serviceapi.Parameter)
 	Into(into string)
 }
 
@@ -118,8 +120,8 @@ type builder struct {
 	origin     issue.Location
 	name       string
 	when       Condition
-	parameters []px.Parameter
-	returns    []px.Parameter
+	parameters []serviceapi.Parameter
+	returns    []serviceapi.Parameter
 	parent     Builder
 }
 
@@ -145,11 +147,11 @@ func (b *builder) validate() {
 	}
 }
 
-func (b *builder) Parameter(name, typeName string) px.Parameter {
-	return px.NewParameter(name, b.ctx.ParseType(typeName), nil, false)
+func (b *builder) Parameter(name, typeName string) serviceapi.Parameter {
+	return serviceapi.NewParameter(name, ``, b.ctx.ParseType(typeName), nil)
 }
 
-func (b *builder) GetParameters() []px.Parameter {
+func (b *builder) GetParameters() []serviceapi.Parameter {
 	return b.parameters
 }
 
@@ -168,7 +170,7 @@ func (b *builder) GetName() string {
 	return b.name
 }
 
-func (b *builder) Parameters(parameters ...px.Parameter) {
+func (b *builder) Parameters(parameters ...serviceapi.Parameter) {
 	if len(b.parameters) == 0 {
 		b.parameters = parameters
 	} else {
@@ -176,7 +178,7 @@ func (b *builder) Parameters(parameters ...px.Parameter) {
 	}
 }
 
-func (b *builder) Returns(returns ...px.Parameter) {
+func (b *builder) Returns(returns ...serviceapi.Parameter) {
 	if len(b.returns) == 0 {
 		b.returns = returns
 	} else {
@@ -241,7 +243,7 @@ type iteratorBuilder struct {
 	childBuilder
 	style     IterationStyle
 	over      px.Value
-	variables []px.Parameter
+	variables []serviceapi.Parameter
 	into      string
 }
 
@@ -300,7 +302,7 @@ func (b *iteratorBuilder) Into(into string) {
 	b.into = into
 }
 
-func (b *iteratorBuilder) Variables(variables ...px.Parameter) {
+func (b *iteratorBuilder) Variables(variables ...serviceapi.Parameter) {
 	if len(b.variables) == 0 {
 		b.variables = variables
 	} else {
