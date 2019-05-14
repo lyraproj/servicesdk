@@ -2,7 +2,7 @@ package wf
 
 import (
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type Action interface {
@@ -16,7 +16,7 @@ type action struct {
 	function interface{}
 }
 
-func MakeAction(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter, function interface{}) Action {
+func MakeAction(name string, origin issue.Location, when Condition, parameters, returns []serviceapi.Parameter, function interface{}) Action {
 	return &action{step{name, origin, when, parameters, returns}, function}
 }
 

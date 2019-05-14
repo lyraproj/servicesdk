@@ -2,7 +2,7 @@ package wf
 
 import (
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type Workflow interface {
@@ -16,7 +16,7 @@ type workflow struct {
 	steps []Step
 }
 
-func MakeWorkflow(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter, steps []Step) Workflow {
+func MakeWorkflow(name string, origin issue.Location, when Condition, parameters, returns []serviceapi.Parameter, steps []Step) Workflow {
 	return &workflow{step{name, origin, when, parameters, returns}, steps}
 }
 

@@ -3,6 +3,7 @@ package wf
 import (
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type IterationStyle int
@@ -56,7 +57,7 @@ type Iterator interface {
 	// Variables returns the variables that this iterator will produce for each iteration. These
 	// variables will be removed from the declared parameters set when the final requirements
 	// for the step are computed.
-	Variables() []px.Parameter
+	Variables() []serviceapi.Parameter
 
 	// Into names the returns from the iteration
 	Into() string
@@ -67,12 +68,12 @@ type iterator struct {
 	style     IterationStyle
 	producer  Step
 	over      px.Value
-	variables []px.Parameter
+	variables []serviceapi.Parameter
 	into      string
 }
 
-func MakeIterator(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter,
-	style IterationStyle, producer Step, over px.Value, variables []px.Parameter, into string) Iterator {
+func MakeIterator(name string, origin issue.Location, when Condition, parameters, returns []serviceapi.Parameter,
+	style IterationStyle, producer Step, over px.Value, variables []serviceapi.Parameter, into string) Iterator {
 	return &iterator{step{name, origin, when, parameters, returns}, style, producer, over, variables, into}
 }
 
@@ -96,6 +97,6 @@ func (it *iterator) Into() string {
 	return it.into
 }
 
-func (it *iterator) Variables() []px.Parameter {
+func (it *iterator) Variables() []serviceapi.Parameter {
 	return it.variables
 }

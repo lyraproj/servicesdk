@@ -2,6 +2,7 @@ package service
 
 import (
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -83,9 +84,12 @@ func (s *Server) Invoke(c px.Context, api, name string, arguments ...px.Value) (
 	s.lock.RUnlock()
 	if ok {
 		if m, ok := iv.PType().(px.TypeWithCallableMembers).Member(name); ok {
+			log := hclog.Default()
 			defer func() {
 				if x := recover(); x != nil {
-					hclog.Default().Debug(`Invoke failed`, `error`, x)
+					if log.IsDebug() {
+						log.Debug(`Invoke failed`, `error`, x, `stack`, string(debug.Stack()))
+					}
 					if err, ok := x.(issue.Reported); ok && string(err.Code()) == px.GoFunctionError {
 						result = serviceapi.ErrorFromReported(c, err)
 						return
@@ -93,7 +97,7 @@ func (s *Server) Invoke(c px.Context, api, name string, arguments ...px.Value) (
 					panic(x)
 				}
 			}()
-			hclog.Default().Debug(`Invoke`, `api`, api, `name`, name)
+			log.Debug(`Invoke`, `api`, api, `name`, name)
 			result = m.Call(c, iv, nil, arguments)
 			return
 		}

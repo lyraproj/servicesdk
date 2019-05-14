@@ -2,7 +2,7 @@ package wf
 
 import (
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type Reference interface {
@@ -17,7 +17,7 @@ type reference struct {
 	referencedStep string
 }
 
-func MakeReference(name string, origin issue.Location, when Condition, input, output []px.Parameter, referencedStep string) Reference {
+func MakeReference(name string, origin issue.Location, when Condition, input, output []serviceapi.Parameter, referencedStep string) Reference {
 	return &reference{step{name, origin, when, input, output}, referencedStep}
 }
 

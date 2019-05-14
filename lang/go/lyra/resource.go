@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/lyraproj/servicesdk/serviceapi"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
@@ -82,7 +84,7 @@ func (r *Resource) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 		panic(badFunction(n, ft))
 	}
 
-	var parameters, returns []px.Parameter
+	var parameters, returns []serviceapi.Parameter
 
 	// Create return parameters from the Returns struct
 	if r.Return != nil {

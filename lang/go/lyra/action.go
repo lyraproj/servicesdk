@@ -4,6 +4,8 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/lyraproj/servicesdk/serviceapi"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
@@ -33,7 +35,7 @@ func (a *Action) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 		panic(px.Error(NotActionFunction, issue.H{`name`: n, `type`: ft.String()}))
 	}
 
-	var parameters, returns []px.Parameter
+	var parameters, returns []serviceapi.Parameter
 	inc := ft.NumIn()
 	if ft.IsVariadic() || inc > 1 {
 		panic(badFunction(n, ft))

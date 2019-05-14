@@ -2,7 +2,7 @@ package wf
 
 import (
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/pcore/px"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type StateHandler interface {
@@ -16,7 +16,7 @@ type stateHandler struct {
 	api interface{}
 }
 
-func MakeStateHandler(name string, origin issue.Location, when Condition, parameters, returns []px.Parameter, api interface{}) StateHandler {
+func MakeStateHandler(name string, origin issue.Location, when Condition, parameters, returns []serviceapi.Parameter, api interface{}) StateHandler {
 	return &stateHandler{step{name, origin, when, parameters, returns}, api}
 }
 

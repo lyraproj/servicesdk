@@ -283,7 +283,7 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 	return serviceapi.NewDefinition(px.NewTypedName(px.NsDefinition, name), ds.serviceId, types.WrapHash(props))
 }
 
-func paramsAsList(params []px.Parameter) px.List {
+func paramsAsList(params []serviceapi.Parameter) px.List {
 	np := len(params)
 	if np == 0 {
 		return nil

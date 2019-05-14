@@ -8,9 +8,12 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/lyraproj/pcore/pcore"
+
+	"github.com/lyraproj/servicesdk/serviceapi"
+
 	"github.com/hashicorp/go-hclog"
 	"github.com/lyraproj/issue/issue"
-	"github.com/lyraproj/pcore/pcore"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
 	"github.com/lyraproj/servicesdk/grpc"
@@ -83,14 +86,14 @@ func badFunction(name string, typ reflect.Type) error {
 	return px.Error(BadFunction, issue.H{`name`: name, `type`: typ.String()})
 }
 
-func ParametersFromGoStruct(c px.Context, v interface{}) []px.Parameter {
+func ParametersFromGoStruct(c px.Context, v interface{}) []serviceapi.Parameter {
 	if v == nil {
 		return nil
 	}
 	return paramsFromStruct(c, reflect.TypeOf(v), nil)
 }
 
-func paramsFromStruct(c px.Context, s reflect.Type, nameMapper func(string) string) []px.Parameter {
+func paramsFromStruct(c px.Context, s reflect.Type, nameMapper func(string) string) []serviceapi.Parameter {
 	if s.Kind() == reflect.Ptr {
 		s = s.Elem()
 	}
@@ -101,7 +104,7 @@ func paramsFromStruct(c px.Context, s reflect.Type, nameMapper func(string) stri
 	attrs := av.(px.OrderedMap)
 
 	outCount := attrs.Len()
-	params := make([]px.Parameter, 0, outCount)
+	params := make([]serviceapi.Parameter, 0, outCount)
 	var value px.Value
 	attrs.EachPair(func(k, v px.Value) {
 		ad := v.(px.OrderedMap)
@@ -114,13 +117,12 @@ func paramsFromStruct(c px.Context, s reflect.Type, nameMapper func(string) stri
 			if an, ok := ad.Get4(`annotations`); ok {
 				if tags, ok := an.(px.OrderedMap).Get(types.TagsAnnotationType); ok {
 					tm := tags.(px.OrderedMap)
-					if nameMapper == nil {
-						if v, ok := tm.Get4(`value`); ok {
-							value = types.CoerceTo(c, `value annotation`, tp, v)
-						} else if v, ok := tm.Get4(`lookup`); ok {
-							value = types.NewDeferred(`lookup`, v)
-						}
-					} else if v, ok := tm.Get4(`alias`); ok {
+					if v, ok := tm.Get4(`value`); ok {
+						value = types.CoerceTo(c, `value annotation`, tp, v)
+					} else if v, ok := tm.Get4(`lookup`); ok {
+						value = types.NewDeferred(`lookup`, v)
+					}
+					if v, ok := tm.Get4(`alias`); ok {
 						alias = v.String()
 					}
 				}
@@ -129,11 +131,8 @@ func paramsFromStruct(c px.Context, s reflect.Type, nameMapper func(string) stri
 
 		if nameMapper != nil {
 			alias = nameMapper(alias)
-			if alias != an {
-				value = types.WrapString(alias)
-			}
 		}
-		params = append(params, px.NewParameter(an, tp, value, false))
+		params = append(params, serviceapi.NewParameter(an, alias, tp, value))
 	})
 	return params
 }

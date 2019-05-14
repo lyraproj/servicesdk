@@ -3,6 +3,8 @@ package lyra
 import (
 	"reflect"
 
+	"github.com/lyraproj/servicesdk/serviceapi"
+
 	"github.com/lyraproj/issue/issue"
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
@@ -102,16 +104,16 @@ func value(c px.Context, uv interface{}) px.Value {
 	return px.Wrap(c, uv)
 }
 
-func paramsFromString(n string) []px.Parameter {
-	return []px.Parameter{paramFromString(n)}
+func paramsFromString(n string) []serviceapi.Parameter {
+	return []serviceapi.Parameter{paramFromString(n)}
 }
 
-func asParams(c px.Context, ns interface{}) []px.Parameter {
+func asParams(c px.Context, ns interface{}) []serviceapi.Parameter {
 	switch ns := ns.(type) {
 	case string:
 		return paramsFromString(ns)
 	case []string:
-		ps := make([]px.Parameter, len(ns))
+		ps := make([]serviceapi.Parameter, len(ns))
 		for i, n := range ns {
 			ps[i] = paramFromString(n)
 		}
@@ -121,11 +123,11 @@ func asParams(c px.Context, ns interface{}) []px.Parameter {
 	}
 }
 
-func paramFromString(n string) px.Parameter {
-	return px.NewParameter(issue.FirstToLower(n), types.DefaultAnyType(), nil, false)
+func paramFromString(n string) serviceapi.Parameter {
+	return serviceapi.NewParameter(issue.FirstToLower(n), ``, types.DefaultAnyType(), nil)
 }
 
-func paramFromStruct(c px.Context, s reflect.Value) px.Parameter {
+func paramFromStruct(c px.Context, s reflect.Value) serviceapi.Parameter {
 	params := paramsFromStruct(c, s.Type(), nil)
 	if len(params) != 1 {
 		panic(px.Error(NotOneStructField, issue.H{`type`: s.Type().String()}))

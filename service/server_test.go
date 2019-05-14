@@ -186,10 +186,16 @@ func ExampleServer_Metadata_definitions() {
 				`X`: &lyra.Resource{
 					State: func(struct {
 						A string
-						B string
+						B string `lookup:"foo"`
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
-					}}}}).Resolve(c, `My::Test`, issue.ParseLocation(`(file: /test/x.go)`)))
+					}},
+				`Y`: &lyra.Reference{
+					Parameters: struct {
+						P string `lookup:"foo" alias:"B"`
+					}{},
+					StepName: `z`,
+				}}}).Resolve(c, `My::Test`, issue.ParseLocation(`(file: /test/x.go)`)))
 
 		s := sb.Server()
 		_, defs := s.Metadata(c)
@@ -221,16 +227,45 @@ func ExampleServer_Metadata_definitions() {
 	//         ),
 	//         'properties' => {
 	//           'parameters' => [
-	//             Parameter(
+	//             Lyra::Parameter(
 	//               'name' => 'a',
 	//               'type' => String
 	//             ),
-	//             Parameter(
+	//             Lyra::Parameter(
 	//               'name' => 'b',
-	//               'type' => String
+	//               'type' => String,
+	//               'value' => Deferred(
+	//                 'name' => 'lookup',
+	//                 'arguments' => ['foo']
+	//               )
 	//             )],
 	//           'resourceType' => My::MyRes,
 	//           'style' => 'resource',
+	//           'origin' => '(file: /test/x.go)'
+	//         }
+	//       ),
+	//       Service::Definition(
+	//         'identifier' => TypedName(
+	//           'namespace' => 'definition',
+	//           'name' => 'My::Test::Y'
+	//         ),
+	//         'serviceId' => TypedName(
+	//           'namespace' => 'service',
+	//           'name' => 'My::Service'
+	//         ),
+	//         'properties' => {
+	//           'parameters' => [
+	//             Lyra::Parameter(
+	//               'name' => 'p',
+	//               'alias' => 'b',
+	//               'type' => String,
+	//               'value' => Deferred(
+	//                 'name' => 'lookup',
+	//                 'arguments' => ['foo']
+	//               )
+	//             )],
+	//           'reference' => 'z',
+	//           'style' => 'reference',
 	//           'origin' => '(file: /test/x.go)'
 	//         }
 	//       )],
