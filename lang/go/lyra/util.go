@@ -100,30 +100,42 @@ func paramsFromStruct(c px.Context, s reflect.Type, nameMapper func(string) stri
 	if s.Kind() != reflect.Struct {
 		panic(px.Error(NotStruct, issue.H{`type`: s.String()}))
 	}
-	av, _ := c.Reflector().InitializerFromTagged(`Tmp`, nil, px.NewTaggedType(s, nil)).Get4(`attributes`)
+	tgt := px.NewTaggedType(s, nil)
+	av, _ := c.Reflector().InitializerFromTagged(`Tmp`, nil, tgt).Get4(`attributes`)
 	attrs := av.(px.OrderedMap)
 
 	outCount := attrs.Len()
 	params := make([]serviceapi.Parameter, 0, outCount)
-	var value px.Value
 	attrs.EachPair(func(k, v px.Value) {
 		ad := v.(px.OrderedMap)
 		tp := ad.Get5(`type`, types.DefaultAnyType()).(px.Type)
 		an := k.String()
+		var gn string
+		if gv, ok := ad.Get4(`go_name`); ok {
+			gn = gv.String()
+		}
 		alias := an
-		if v, ok := ad.Get4(`value`); ok {
-			value = v
-		} else {
-			if an, ok := ad.Get4(`annotations`); ok {
-				if tags, ok := an.(px.OrderedMap).Get(types.TagsAnnotationType); ok {
-					tm := tags.(px.OrderedMap)
-					if v, ok := tm.Get4(`value`); ok {
-						value = types.CoerceTo(c, `value annotation`, tp, v)
-					} else if v, ok := tm.Get4(`lookup`); ok {
-						value = types.NewDeferred(`lookup`, v)
-					}
-					if v, ok := tm.Get4(`alias`); ok {
-						alias = v.String()
+
+		var value px.Value
+		if tags, ok := tgt.OtherTags()[gn]; ok {
+			if v, ok := tags[`value`]; ok {
+				value = types.CoerceTo(c, `value annotation`, tp, types.WrapString(v))
+			} else if v, ok := tags[`lookup`]; ok {
+				value = types.NewDeferred(`lookup`, types.WrapString(v))
+			}
+			if v, ok := tags[`alias`]; ok {
+				alias = v
+			}
+		}
+
+		if value == nil {
+			if v, ok := ad.Get4(`value`); ok {
+				// InitializerFromTagged will assign an Undef as the default value for an Optional. A Parameter
+				// is however never optional unless it has an explicit value (or lookup) declared in a 'puppet'
+				// tag.
+				if puppetTags, ok := tgt.Tags()[gn]; ok {
+					if _, ok = puppetTags.Get4(`value`); ok {
+						value = v
 					}
 				}
 			}

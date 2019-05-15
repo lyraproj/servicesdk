@@ -186,7 +186,11 @@ func ExampleServer_Metadata_definitions() {
 				`X`: &lyra.Resource{
 					State: func(struct {
 						A string
-						B string `lookup:"foo"`
+						B string  `lookup:"foo"`
+						C int     `puppet:"value=>23"`
+						D *string `puppet:"value=>undef"`
+						E *string
+						F *string `value:"77"`
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
 					}},
@@ -238,6 +242,25 @@ func ExampleServer_Metadata_definitions() {
 	//                 'name' => 'lookup',
 	//                 'arguments' => ['foo']
 	//               )
+	//             ),
+	//             Lyra::Parameter(
+	//               'name' => 'c',
+	//               'type' => Integer,
+	//               'value' => 23
+	//             ),
+	//             Lyra::Parameter(
+	//               'name' => 'd',
+	//               'type' => Optional[String],
+	//               'value' => undef
+	//             ),
+	//             Lyra::Parameter(
+	//               'name' => 'e',
+	//               'type' => Optional[String]
+	//             ),
+	//             Lyra::Parameter(
+	//               'name' => 'f',
+	//               'type' => Optional[String],
+	//               'value' => '77'
 	//             )],
 	//           'resourceType' => My::MyRes,
 	//           'style' => 'resource',
