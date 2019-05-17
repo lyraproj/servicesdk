@@ -194,7 +194,7 @@ func ExampleServer_Metadata_definitions() {
 					}) *MyRes {
 						return &MyRes{Name: `Bob`, Phone: `12345`}
 					}},
-				`Y`: &lyra.Reference{
+				`Y`: &lyra.Call{
 					Parameters: struct {
 						P string `lookup:"foo" alias:"B"`
 					}{},
@@ -287,8 +287,8 @@ func ExampleServer_Metadata_definitions() {
 	//                 'arguments' => ['foo']
 	//               )
 	//             )],
-	//           'reference' => 'z',
-	//           'style' => 'reference',
+	//           'call' => 'z',
+	//           'style' => 'call',
 	//           'origin' => '(file: /test/x.go)'
 	//         }
 	//       )],

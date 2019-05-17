@@ -35,7 +35,7 @@ type ChildBuilder interface {
 	Resource(func(ResourceBuilder))
 	Workflow(func(WorkflowBuilder))
 	Action(func(ActionBuilder))
-	Reference(func(ReferenceBuilder))
+	Call(func(CallBuilder))
 	AddChild(Builder)
 	Iterator(func(IteratorBuilder))
 }
@@ -70,9 +70,9 @@ type ActionBuilder interface {
 	Doer(interface{})
 }
 
-type ReferenceBuilder interface {
+type CallBuilder interface {
 	Builder
-	ReferenceTo(string)
+	CallTo(string)
 }
 
 type WorkflowBuilder interface {
@@ -103,10 +103,10 @@ func NewAction(ctx px.Context, bf func(ActionBuilder)) Action {
 	return bld.Build().(Action)
 }
 
-func NewReference(ctx px.Context, bf func(ReferenceBuilder)) Reference {
-	bld := &referenceBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}
+func NewCall(ctx px.Context, bf func(CallBuilder)) Call {
+	bld := &callBuilder{builder: builder{ctx: ctx, when: Always, parameters: noParams, returns: noParams, origin: ctx.StackTop()}}
 	bf(bld)
-	return bld.Build().(Reference)
+	return bld.Build().(Call)
 }
 
 func NewWorkflow(ctx px.Context, bf func(WorkflowBuilder)) Workflow {
@@ -229,8 +229,8 @@ func actionChild(b ChildBuilder, bld func(b ActionBuilder)) {
 	b.AddChild(ab)
 }
 
-func referenceChild(b ChildBuilder, bld func(b ReferenceBuilder)) {
-	ab := &referenceBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}
+func callChild(b ChildBuilder, bld func(b CallBuilder)) {
+	ab := &callBuilder{builder: builder{parent: b, ctx: b.Context(), when: Always, parameters: noParams, returns: noParams, origin: b.Context().StackTop()}}
 	bld(ab)
 	b.AddChild(ab)
 }
@@ -263,8 +263,8 @@ func (b *iteratorBuilder) Action(bld func(b ActionBuilder)) {
 	actionChild(b, bld)
 }
 
-func (b *iteratorBuilder) Reference(bld func(b ReferenceBuilder)) {
-	referenceChild(b, bld)
+func (b *iteratorBuilder) Call(bld func(b CallBuilder)) {
+	callChild(b, bld)
 }
 
 func (b *iteratorBuilder) Iterator(bld func(b IteratorBuilder)) {
@@ -378,8 +378,8 @@ func (b *workflowBuilder) Action(bld func(b ActionBuilder)) {
 	actionChild(b, bld)
 }
 
-func (b *workflowBuilder) Reference(bld func(b ReferenceBuilder)) {
-	referenceChild(b, bld)
+func (b *workflowBuilder) Call(bld func(b CallBuilder)) {
+	callChild(b, bld)
 }
 
 func (b *workflowBuilder) Iterator(bld func(b IteratorBuilder)) {
@@ -402,16 +402,16 @@ func (b *actionBuilder) Doer(d interface{}) {
 	b.function = d
 }
 
-type referenceBuilder struct {
+type callBuilder struct {
 	builder
-	referencedStep string
+	calledStep string
 }
 
-func (b *referenceBuilder) Build() Step {
+func (b *callBuilder) Build() Step {
 	b.validate()
-	return MakeReference(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.referencedStep)
+	return MakeCall(b.GetName(), b.origin, b.when, b.parameters, b.returns, b.calledStep)
 }
 
-func (b *referenceBuilder) ReferenceTo(referencedStep string) {
-	b.referencedStep = referencedStep
+func (b *callBuilder) CallTo(calledStep string) {
+	b.calledStep = calledStep
 }
