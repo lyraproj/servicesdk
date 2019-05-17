@@ -274,9 +274,9 @@ func (ds *Builder) createStepDefinition(step wf.Step) serviceapi.Definition {
 			props = append(props, types.WrapHashEntry2(`into`, types.WrapString(step.Into())))
 		}
 		props = append(props, types.WrapHashEntry2(`producer`, ds.createStepDefinition(step.Producer())))
-	case wf.Reference:
-		style = `reference`
-		props = append(props, types.WrapHashEntry2(`reference`, types.WrapString(step.Reference())))
+	case wf.Call:
+		style = `call`
+		props = append(props, types.WrapHashEntry2(`call`, types.WrapString(step.Call())))
 	}
 	props = append(props, types.WrapHashEntry2(`style`, types.WrapString(style)))
 	props = append(props, types.WrapHashEntry2(`origin`, types.WrapString(issue.LocationString(step.Origin()))))
