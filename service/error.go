@@ -91,7 +91,14 @@ func errorFromReported(c px.Context, err issue.Reported) serviceapi.ErrorObject 
 	if len(keys) > 0 {
 		args := make([]*types.HashEntry, len(keys))
 		for i, k := range keys {
-			args[i] = types.WrapHashEntry2(k, px.Wrap(c, err.Argument(k)))
+			av := err.Argument(k)
+			var arg px.Value
+			if ea, ok := av.(error); ok {
+				arg = types.WrapString(ea.Error())
+			} else {
+				arg = px.Wrap(c, av)
+			}
+			args[i] = types.WrapHashEntry2(k, arg)
 		}
 		ds = append(ds, types.WrapHashEntry2(`arguments`, types.WrapHash(args)))
 	}
