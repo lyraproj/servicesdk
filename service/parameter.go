@@ -102,7 +102,7 @@ func init() {
       'name' => String,
       'type' => Type,
       'alias' => Optional[String],
-      'value' => Optional[Variant[Deferred,Data]],
+      'value' => Optional[RichData],
       'has_value' => { type => Boolean, kind => derived }
     }
   }`, func(ctx px.Context, args []px.Value) px.Value {
