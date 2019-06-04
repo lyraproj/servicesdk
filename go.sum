@@ -21,8 +21,8 @@ github.com/lyraproj/data-protobuf v0.0.0-20190329160005-a909d9e1f93b h1:qGgMkFUQ
 github.com/lyraproj/data-protobuf v0.0.0-20190329160005-a909d9e1f93b/go.mod h1:oQIFBu0fmkiSpSRROEgK5gnjQ/ZDrx3UdpRpT3791Gg=
 github.com/lyraproj/issue v0.0.0-20190513084509-faf9b542f594 h1:IcsHRQ3xzCIcK0eXpot8IYgEyUQPEFHmFErZwJcsDqk=
 github.com/lyraproj/issue v0.0.0-20190513084509-faf9b542f594/go.mod h1:jqRRmAiVqjTehhncbKJPoC2AFoxxkritzzlfWioTa00=
-github.com/lyraproj/pcore v0.0.0-20190522151013-7e0d4b53ab56 h1:fj8bSDDwaZJpVjLkzv1dEKiShGgOvuusLeHU1asw55c=
-github.com/lyraproj/pcore v0.0.0-20190522151013-7e0d4b53ab56/go.mod h1:NEsDhoJnhU6dqrNy3M2W4AWryrwPhADubXu6RWVdAl4=
+github.com/lyraproj/pcore v0.0.0-20190604084249-96c922091533 h1:wfjjlWN0OIUcjOaAfqsgqzbu0+F3jY5cehtuKlPAjHA=
+github.com/lyraproj/pcore v0.0.0-20190604084249-96c922091533/go.mod h1:NEsDhoJnhU6dqrNy3M2W4AWryrwPhADubXu6RWVdAl4=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2 h1:vb4PbiMtIXdhsOUinkkcqZiASDIZzXRhSG4yvNfE0tg=
 github.com/lyraproj/semver v0.0.0-20181213164306-02ecea2cd6a2/go.mod h1:KOdZKnEBdDb2iGPUnHiKpk3M5cvv949xMyj8XPqaMF0=
 github.com/mitchellh/go-testing-interface v0.0.0-20171004221916-a61a99592b77 h1:7GoSOOW2jpsfkntVKaS2rAr1TJqfcxotyaUcuxoZSzg=
