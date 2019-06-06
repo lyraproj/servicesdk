@@ -3,10 +3,9 @@ package service
 import (
 	"io"
 
-	"github.com/lyraproj/servicesdk/serviceapi"
-
 	"github.com/lyraproj/pcore/px"
 	"github.com/lyraproj/pcore/types"
+	"github.com/lyraproj/servicesdk/serviceapi"
 )
 
 type parameter struct {
@@ -23,6 +22,9 @@ func init() {
 func newParameter(name, alias string, typ px.Type, value px.Value) serviceapi.Parameter {
 	if alias == name {
 		alias = ``
+	}
+	if typ == nil {
+		typ = types.DefaultRichDataType()
 	}
 	return &parameter{name, alias, typ, value}
 }
