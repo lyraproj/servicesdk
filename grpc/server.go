@@ -52,7 +52,7 @@ func (s *Server) Do(doer func(c px.Context)) (publicErr *datapb.Data, err error)
 					publicErr = ToDataPB(c, serviceapi.ErrorFromReported(c, e))
 				}
 			} else {
-				err = fmt.Errorf(`%+v`, e)
+				err = fmt.Errorf(`%v`, e)
 			}
 		}
 	}()

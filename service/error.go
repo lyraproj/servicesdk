@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"io"
+	"os"
 	"reflect"
 
 	"github.com/lyraproj/issue/issue"
@@ -111,6 +112,16 @@ func errorFromReported(c px.Context, err issue.Reported) serviceapi.ErrorObject 
 		}
 		ds = append(ds, types.WrapHashEntry2(`cause`, cv))
 	}
+	stack := err.Stack()
+	if stack != `` {
+		ds = append(ds, types.WrapHashEntry2(`stack`, types.WrapString(stack)))
+	}
+	if host, err := os.Hostname(); err == nil {
+		ds = append(ds, types.WrapHashEntry2(`host`, types.WrapString(host)))
+	}
+	if exec, err := os.Executable(); err == nil {
+		ds = append(ds, types.WrapHashEntry2(`executable`, types.WrapString(exec)))
+	}
 	if len(ds) > 0 {
 		ev.details = types.WrapHash(ds)
 	}
@@ -155,6 +166,7 @@ func (e *errorObj) ToReported() (issue.Reported, bool) {
 		args := issue.NoArgs
 		var loc issue.Location
 		var cause error
+		stack := ``
 		if e.details.Len() > 0 {
 			if ls, ok := e.details.Get4(`location`); ok {
 				loc = issue.ParseLocation(ls.String())
@@ -178,8 +190,12 @@ func (e *errorObj) ToReported() (issue.Reported, bool) {
 					cause = errors.New(cs.String())
 				}
 			}
+
+			if ss, ok := e.details.Get4(`stack`); ok {
+				stack = ss.String()
+			}
 		}
-		return issue.ErrorWithoutStack(code, args, loc, cause), true
+		return issue.ErrorWithStack(code, args, loc, cause, stack), true
 	}
 
 	// Code does not represent a valid issue.

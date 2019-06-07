@@ -181,7 +181,7 @@ func (a *goAction) amendError() {
 	if r := recover(); r != nil {
 		if rx, ok := r.(issue.Reported); ok {
 			// Location and stack included in nested error
-			r = issue.ErrorWithoutStack(wf.ActionExecutionError, issue.H{`step`: a.action.Label()}, nil, rx)
+			r = issue.ErrorWithStack(wf.ActionExecutionError, issue.H{`step`: a.action.Label()}, nil, rx, ``)
 		} else {
 			r = issue.NewNested(wf.ActionExecutionError, issue.H{`step`: a.action.Label()}, a.action.Origin(), wf.ToError(r))
 		}

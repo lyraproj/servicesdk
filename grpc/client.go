@@ -2,8 +2,11 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/go-plugin"
@@ -60,10 +63,53 @@ func (c *Client) Invoke(ctx px.Context, identifier, name string, arguments ...px
 	}
 	result := FromDataPB(ctx, rr)
 	if eo, ok := result.(serviceapi.ErrorObject); ok {
+		var cause error
 		if re, ok := eo.ToReported(); ok {
-			panic(re)
+			cause = re
+		} else {
+			cause = errors.New(eo.Message())
 		}
-		panic(px.Error(InvocationError, issue.H{`identifier`: identifier, `name`: name, `message`: eo.Message()}))
+		var errHost, errExe string
+		dm := eo.Details()
+		if dm != nil {
+			var v px.Value
+			if v, ok = dm.Get4(`host`); ok {
+				errHost = v.String()
+				host, _ := os.Hostname()
+				if host == errHost {
+					errHost = ``
+				}
+			}
+			if v, ok = dm.Get4(`executable`); ok {
+				errExe = v.String()
+				if errHost == `` {
+					exe, _ := os.Executable()
+					if exe == errExe {
+						errExe = ``
+					} else {
+						// Strip working dir from the executable if it is relative to it
+						if wd, err := os.Getwd(); err == nil {
+							if strings.HasPrefix(errExe, wd) {
+								errExe = errExe[len(wd)+1:]
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if errExe != `` {
+			if errHost != `` {
+				cause = issue.NewNested(RemoteInvocationError, issue.H{
+					`host`: errHost, `executable`: errExe, `identifier`: identifier, `name`: name}, 0, cause)
+			} else {
+				cause = issue.NewNested(ProcInvocationError, issue.H{
+					`executable`: errExe, `identifier`: identifier, `name`: name}, 0, cause)
+			}
+		} else {
+			cause = issue.NewNested(InvocationError, issue.H{`identifier`: identifier, `name`: name}, 0, cause)
+		}
+		panic(cause)
 	}
 	return result
 }

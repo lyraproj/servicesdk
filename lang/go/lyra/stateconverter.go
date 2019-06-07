@@ -65,7 +65,7 @@ func (a *goState) amendError() {
 	if r := recover(); r != nil {
 		if rx, ok := r.(issue.Reported); ok {
 			// Location and stack included in nested error
-			r = issue.ErrorWithoutStack(wf.StateCreationError, issue.H{`step`: a.resource.Label()}, nil, rx)
+			r = issue.ErrorWithStack(wf.StateCreationError, issue.H{`step`: a.resource.Label()}, nil, rx, ``)
 		} else {
 			r = issue.NewNested(wf.StateCreationError, issue.H{`step`: a.resource.Label()}, a.resource.Origin(), wf.ToError(r))
 		}
