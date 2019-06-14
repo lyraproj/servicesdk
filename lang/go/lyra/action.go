@@ -37,6 +37,17 @@ func (a *Action) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 
 	var parameters, returns []serviceapi.Parameter
 	inc := ft.NumIn()
+	if inc > 0 {
+		idx := 0
+		if ft.In(0).AssignableTo(px.ContextType) {
+			inc--
+			idx++
+		}
+		if inc == 1 {
+			parameters = paramsFromStruct(c, ft.In(idx), nil)
+		}
+	}
+
 	if ft.IsVariadic() || inc > 1 {
 		panic(badFunction(n, ft))
 	}
@@ -61,10 +72,6 @@ func (a *Action) Resolve(c px.Context, n string, loc issue.Location) wf.Step {
 		returns = paramsFromStruct(c, ft.Out(0), nil)
 	default:
 		panic(badFunction(n, ft))
-	}
-
-	if inc == 1 {
-		parameters = paramsFromStruct(c, ft.In(0), nil)
 	}
 
 	ga := &goAction{returnsError: returnsError, doer: fv}
@@ -102,7 +109,14 @@ func (a *goAction) Call(ctx px.Context, method px.ObjFunc, args []px.Value, bloc
 	params := make([]reflect.Value, 0)
 	if fvType.NumIn() > 0 {
 		inType := fvType.In(0)
-		params = append(params, reflectParameters(ctx, inType, parameters))
+		if inType.AssignableTo(px.ContextType) {
+			params = append(params, reflect.ValueOf(ctx))
+			if fvType.NumIn() > 1 {
+				params = append(params, reflectParameters(ctx, fvType.In(1), parameters))
+			}
+		} else {
+			params = append(params, reflectParameters(ctx, inType, parameters))
+		}
 	}
 
 	defer a.amendError()
