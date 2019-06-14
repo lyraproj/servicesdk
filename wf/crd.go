@@ -1,6 +1,11 @@
 package wf
 
-import "github.com/lyraproj/pcore/px"
+import (
+	"github.com/lyraproj/pcore/px"
+
+	// NewObjectType must be initialized
+	_ "github.com/lyraproj/pcore/pcore"
+)
 
 type ErrorConstant string
 
