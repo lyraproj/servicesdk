@@ -79,6 +79,10 @@ type resource struct {
 	relationships       map[string]*Relationship
 }
 
+func DefaultResource() Resource {
+	return &resource{}
+}
+
 func NewResource(ctx px.Context, immutableAttributes, providedAttributes px.Value, relationships px.Value) Resource {
 	r := &resource{}
 
