@@ -24,6 +24,14 @@ func init() {
 	// - WORKING_DIR/workflows
 	// - EXECUTABLE_DIR/../workflows (to support brew and running build\lyra irrespective of working dir)
 	defaultWorkflowsPath = []string{".", executableParentDir}
+
+	lyraExeDir := os.Getenv(`LYRA_EXEDIR`)
+	if lyraExeDir != `` {
+		lyraExeDir = filepath.Dir(lyraExeDir)
+		if lyraExeDir != executableParentDir {
+			defaultWorkflowsPath = append(defaultWorkflowsPath, lyraExeDir)
+		}
+	}
 }
 
 // New creates a new federated loader instance
