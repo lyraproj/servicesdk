@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/go-hclog"
@@ -157,6 +158,9 @@ func Load(cmd *exec.Cmd, logger hclog.Logger) (serviceapi.Service, error) {
 		level = "error"
 	}
 	cmd.Env = append(cmd.Env, fmt.Sprintf("LYRA_LOG_LEVEL=%s", level))
+	if exe, err := os.Executable(); err == nil {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("LYRA_EXEDIR=%s", filepath.Dir(exe)))
+	}
 
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: handshake,
