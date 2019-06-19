@@ -12,3 +12,5 @@ require (
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	google.golang.org/grpc v1.19.0
 )
+
+replace github.com/lyraproj/pcore => github.com/thallgren/pcore v0.0.0-20190619151240-bebc8c351bb4

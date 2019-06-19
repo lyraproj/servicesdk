@@ -4,18 +4,17 @@ import "github.com/lyraproj/pcore/px"
 
 // Identity defines the API for services that track mappings between internal and external IDs
 type Identity interface {
-	BumpEra() error
-	ReadEra() (era int64, err error)
-	AddReference(internalId, otherId string) error
-	Associate(internalID string, externalID string) error
-	GetExternal(internalID string) (string, error)
-	GetInternal(externalID string) (string, error)
-	PurgeExternal(externalID string) error
-	PurgeInternal(internalID string) error
-	PurgeReferences(internalIDPrefix string) error
-	RemoveExternal(externalID string) error
-	RemoveInternal(internalID string) error
-	Search(internalIDPrefix string) (px.List, error)
-	Sweep(internalIDPrefix string) error
-	Garbage(internalIDPrefix string) (px.List, error)
+	BumpEra(px.Context)
+	AddReference(ctx px.Context, internalId, otherId string)
+	Associate(ctx px.Context, internalID string, externalID string)
+	GetExternal(ctx px.Context, internalID string) (string, bool)
+	GetInternal(ctx px.Context, externalID string) (string, bool)
+	PurgeExternal(ctx px.Context, externalID string)
+	PurgeInternal(ctx px.Context, internalID string)
+	PurgeReferences(ctx px.Context, internalIDPrefix string)
+	RemoveExternal(ctx px.Context, externalID string)
+	RemoveInternal(ctx px.Context, internalID string)
+	Search(ctx px.Context, internalIDPrefix string) px.List
+	Sweep(ctx px.Context, internalIDPrefix string)
+	Garbage(ctx px.Context, internalIDPrefix string) px.List
 }
