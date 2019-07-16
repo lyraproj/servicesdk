@@ -25,7 +25,7 @@ func init() {
 	  	kind => { type => Optional[String[1]], value => undef },
 		  issue_code => { type => Optional[String[1]], value => undef },
 		  partial_result => { type => Data, value => undef },
-	  	details => { type => Optional[Hash[String[1],RichData]], value => undef },
+	  	details => { type => Optional[Hash[String[1],RichData]], value => {} },
 		}}`,
 		func(ctx px.Context, args []px.Value) px.Value {
 			return newError2(ctx, args...)
@@ -251,6 +251,9 @@ func (e *errorObj) InitHash() px.OrderedMap {
 }
 
 func (e *errorObj) initType(c px.Context) {
+	if e.details == nil {
+		e.details = px.EmptyMap
+	}
 	if e.kind == `` && e.issueCode == `` {
 		e.typ = ErrorMetaType
 	} else {
