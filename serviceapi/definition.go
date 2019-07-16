@@ -5,7 +5,7 @@ import (
 	"github.com/lyraproj/pcore/px"
 )
 
-var DefinitionMetaType px.Type
+var DefinitionMetaType px.ObjectType
 
 type Definition interface {
 	px.Value

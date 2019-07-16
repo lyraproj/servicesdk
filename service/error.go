@@ -228,8 +228,14 @@ func (e *errorObj) Get(key string) (value px.Value, ok bool) {
 	case `message`:
 		return types.WrapString(e.message), true
 	case `kind`:
+		if e.kind == `` {
+			return px.Undef, true
+		}
 		return types.WrapString(e.kind), true
 	case `issue_code`:
+		if e.issueCode == `` {
+			return px.Undef, true
+		}
 		return types.WrapString(e.issueCode), true
 	case `partial_result`:
 		return e.partialResult, true
@@ -241,20 +247,7 @@ func (e *errorObj) Get(key string) (value px.Value, ok bool) {
 }
 
 func (e *errorObj) InitHash() px.OrderedMap {
-	entries := []*types.HashEntry{types.WrapHashEntry2(`message`, types.WrapString(e.message))}
-	if e.kind != `` {
-		entries = append(entries, types.WrapHashEntry2(`kind`, types.WrapString(e.kind)))
-	}
-	if e.issueCode != `` {
-		entries = append(entries, types.WrapHashEntry2(`issue_code`, types.WrapString(e.issueCode)))
-	}
-	if !e.partialResult.Equals(px.Undef, nil) {
-		entries = append(entries, types.WrapHashEntry2(`partial_result`, e.partialResult))
-	}
-	if !e.details.Equals(px.EmptyMap, nil) {
-		entries = append(entries, types.WrapHashEntry2(`details`, e.details))
-	}
-	return types.WrapHash(entries)
+	return ErrorMetaType.InstanceHash(e)
 }
 
 func (e *errorObj) initType(c px.Context) {

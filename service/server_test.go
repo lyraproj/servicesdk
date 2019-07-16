@@ -250,8 +250,7 @@ func ExampleServer_Metadata_definitions() {
 	//             ),
 	//             Lyra::Parameter(
 	//               'name' => 'd',
-	//               'type' => Optional[String],
-	//               'value' => undef
+	//               'type' => Optional[String]
 	//             ),
 	//             Lyra::Parameter(
 	//               'name' => 'e',
@@ -280,8 +279,8 @@ func ExampleServer_Metadata_definitions() {
 	//           'parameters' => [
 	//             Lyra::Parameter(
 	//               'name' => 'p',
-	//               'alias' => 'b',
 	//               'type' => String,
+	//               'alias' => 'b',
 	//               'value' => Deferred(
 	//                 'name' => 'lookup',
 	//                 'arguments' => ['foo']
