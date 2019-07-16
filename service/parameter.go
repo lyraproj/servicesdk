@@ -68,19 +68,10 @@ func (p *parameter) Get(key string) (value px.Value, ok bool) {
 }
 
 func (p *parameter) InitHash() px.OrderedMap {
-	es := make([]*types.HashEntry, 0, 3)
-	es = append(es, types.WrapHashEntry2(`name`, types.WrapString(p.name)))
-	if p.alias != `` {
-		es = append(es, types.WrapHashEntry2(`alias`, types.WrapString(p.alias)))
-	}
-	es = append(es, types.WrapHashEntry2(`type`, p.typ))
-	if p.value != nil {
-		es = append(es, types.WrapHashEntry2(`value`, p.value))
-	}
-	return types.WrapHash(es)
+	return ParameterMetaType.InstanceHash(p)
 }
 
-var ParameterMetaType px.Type
+var ParameterMetaType px.ObjectType
 
 func (p *parameter) Equals(other interface{}, guard px.Guard) bool {
 	return p == other

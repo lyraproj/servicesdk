@@ -286,17 +286,7 @@ func (r *resource) Get(key string) (value px.Value, ok bool) {
 }
 
 func (r *resource) InitHash() px.OrderedMap {
-	es := make([]*types.HashEntry, 3)
-	if r.immutableAttributes != nil {
-		es = append(es, types.WrapHashEntry2(`immutableAttributes`, r.ImmutableAttributesList()))
-	}
-	if r.providedAttributes != nil {
-		es = append(es, types.WrapHashEntry2(`providedAttributes`, r.ProvidedAttributesList()))
-	}
-	if r.relationships != nil {
-		es = append(es, types.WrapHashEntry2(`relationships`, r.RelationshipsMap()))
-	}
-	return types.WrapHash(es)
+	return ResourceType.InstanceHash(r)
 }
 
 func assertAttribute(ot px.ObjectType, n string) (a px.Attribute) {

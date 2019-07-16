@@ -64,11 +64,7 @@ func (d *definition) Get(key string) (value px.Value, ok bool) {
 }
 
 func (d *definition) InitHash() px.OrderedMap {
-	es := make([]*types.HashEntry, 0, 3)
-	es = append(es, types.WrapHashEntry2(`identifier`, d.identifier))
-	es = append(es, types.WrapHashEntry2(`serviceId`, d.serviceId))
-	es = append(es, types.WrapHashEntry2(`properties`, d.properties))
-	return types.WrapHash(es)
+	return serviceapi.DefinitionMetaType.InstanceHash(d)
 }
 
 func (d *definition) Equals(other interface{}, g px.Guard) bool {
